@@ -1,13 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NxWelcome } from './nx-welcome';
+import { HttpClient } from '@angular/common/http';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { JsonPipe } from '@angular/common';
 
 @Component({
-  imports: [NxWelcome, RouterModule],
+  imports: [RouterModule, JsonPipe],
   selector: 'app-root',
   templateUrl: './app.html',
-  styleUrl: './app.scss',
+  styleUrl: './app.scss'
 })
 export class App {
-  protected title = 'dinoconfig-fe';
+  private httpClient = inject(HttpClient);
+  private api = this.httpClient.get('http://localhost:4200/api');
+  
+  protected apiResponse = toSignal(this.api);
 }

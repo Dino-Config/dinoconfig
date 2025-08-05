@@ -58,7 +58,11 @@
           "buildTarget": "dinoconfig-fe:build:development"
         }
       },
-      "defaultConfiguration": "development"
+      "defaultConfiguration": "development",
+      "dependsOn": ["dinoconfig-be:serve"],
+      "options": {
+        "proxyConfig": "apps/dinoconfig-fe/proxy.conf.json"
+      }
     },
     "extract-i18n": {
       "executor": "@angular/build:extract-i18n",
