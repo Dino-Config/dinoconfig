@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "https://dinoconfig-be.onrender.com/api",
+    "target": "http://localhost:3000",
     "secure": false
   }
 }
