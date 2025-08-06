@@ -6,15 +6,21 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
+import { ConfigService } from '@nestjs/config';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const configService = app.get(ConfigService);
+
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   app.enableCors({
-    origin: 'https://incandescent-tiramisu-29939e.netlify.app'
-  })
-  const port = process.env.PORT || 3000;
+    origin: configService.get<string>('CORS_ORIGIN' as any)
+  });
+
+  const port = configService.get<string>('PORT' as any) || 3000;
   await app.listen(port);
   Logger.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`
