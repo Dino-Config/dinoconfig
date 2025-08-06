@@ -1,4 +1,4 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://dinoconfig-be.onrender.com/api'
+    apiUrl: 'https://incandescent-tiramisu-29939e.netlify.app/api'
 };
