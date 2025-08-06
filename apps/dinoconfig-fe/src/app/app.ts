@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
+import { environment } from '../environments/environment';
 
 @Component({
   imports: [RouterModule, JsonPipe],
@@ -12,7 +13,7 @@ import { JsonPipe } from '@angular/common';
 })
 export class App {
   private httpClient = inject(HttpClient);
-  private api = this.httpClient.get('http://localhost:4200/api');
+  private api = this.httpClient.get(environment.apiUrl);
   
   protected apiResponse = toSignal(this.api);
 }
