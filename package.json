@@ -5,10 +5,13 @@
   "scripts": {},
   "private": true,
   "dependencies": {
+    "@angular/animations": "^20.1.6",
+    "@angular/cdk": "^20.1.5",
     "@angular/common": "~20.1.0",
     "@angular/compiler": "~20.1.0",
     "@angular/core": "~20.1.0",
     "@angular/forms": "~20.1.0",
+    "@angular/material": "^20.1.5",
     "@angular/platform-browser": "~20.1.0",
     "@angular/router": "~20.1.0",
     "@nestjs/common": "^11.0.0",
