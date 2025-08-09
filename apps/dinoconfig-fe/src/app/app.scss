@@ -741,6 +741,19 @@
   }
 }
 
+// Auth Dialog Styles
+::ng-deep .auth-dialog {
+  .mat-mdc-dialog-container {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  .mat-mdc-dialog-surface {
+    padding: 0;
+    border-radius: 16px;
+  }
+}
+
 // Responsive Design
 @media (max-width: 768px) {
   .toolbar {

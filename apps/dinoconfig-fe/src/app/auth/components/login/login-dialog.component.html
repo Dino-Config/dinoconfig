@@ -1,4 +1,4 @@
-<div class="login-container">
+<div class="login-dialog-container">
   <div class="login-header">
     <h2>Welcome back</h2>
     <p>Sign in to your DinoConfig account</p>
@@ -48,7 +48,7 @@
       <mat-checkbox formControlName="rememberMe" color="primary">
         Remember me
       </mat-checkbox>
-      <a href="#" (click)="navigateToForgotPassword()" class="forgot-link">
+      <a href="#" class="forgot-link">
         Forgot password?
       </a>
     </div>
@@ -85,7 +85,7 @@
 
   <div class="login-footer">
     <p>Don't have an account? 
-      <a href="#" (click)="navigateToSignup()" class="signup-link">Sign up</a>
+      <a href="#" (click)="openSignupDialog()" class="signup-link">Sign up</a>
     </p>
   </div>
-</div>
+</div> 

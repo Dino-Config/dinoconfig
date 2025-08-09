@@ -1,8 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { Observable, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface User {
@@ -45,16 +44,19 @@ export interface ResetPasswordRequest {
   providedIn: 'root'
 })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
-  
-  private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
-  public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+  private http = inject(HttpClient);
 
-  constructor(
-    private http: HttpClient,
-    private router: Router
-  ) {
+  // Signals
+  private _currentUser = signal<User | null>(null);
+  private _isAuthenticated = signal<boolean>(false);
+  private _isLoading = signal<boolean>(false);
+
+  // Computed signals
+  public currentUser = this._currentUser.asReadonly();
+  public isAuthenticated = this._isAuthenticated.asReadonly();
+  public isLoading = this._isLoading.asReadonly();
+
+  constructor() {
     this.checkAuthStatus();
   }
 
@@ -63,20 +65,24 @@ export class AuthService {
     const user = this.getUser();
     
     if (token && user) {
-      this.currentUserSubject.next(user);
-      this.isAuthenticatedSubject.next(true);
+      this._currentUser.set(user);
+      this._isAuthenticated.set(true);
     }
   }
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
+    this._isLoading.set(true);
+    
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, credentials)
       .pipe(
         tap(response => {
           this.setSession(response);
-          this.currentUserSubject.next(response.user);
-          this.isAuthenticatedSubject.next(true);
+          this._currentUser.set(response.user);
+          this._isAuthenticated.set(true);
+          this._isLoading.set(false);
         }),
         catchError(error => {
+          this._isLoading.set(false);
           console.error('Login error:', error);
           return throwError(() => error);
         })
@@ -84,14 +90,18 @@ export class AuthService {
   }
 
   signup(userData: SignupRequest): Observable<AuthResponse> {
+    this._isLoading.set(true);
+    
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/signup`, userData)
       .pipe(
         tap(response => {
           this.setSession(response);
-          this.currentUserSubject.next(response.user);
-          this.isAuthenticatedSubject.next(true);
+          this._currentUser.set(response.user);
+          this._isAuthenticated.set(true);
+          this._isLoading.set(false);
         }),
         catchError(error => {
+          this._isLoading.set(false);
           console.error('Signup error:', error);
           return throwError(() => error);
         })
@@ -100,9 +110,8 @@ export class AuthService {
 
   logout(): void {
     this.clearSession();
-    this.currentUserSubject.next(null);
-    this.isAuthenticatedSubject.next(false);
-    this.router.navigate(['/auth/login']);
+    this._currentUser.set(null);
+    this._isAuthenticated.set(false);
   }
 
   forgotPassword(request: ForgotPasswordRequest): Observable<any> {
@@ -144,7 +153,7 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    return this._currentUser();
   }
 
   getToken(): string | null {
@@ -179,7 +188,7 @@ export class AuthService {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.exp * 1000 < Date.now();
-    } catch (error) {
+    } catch {
       return true;
     }
   }

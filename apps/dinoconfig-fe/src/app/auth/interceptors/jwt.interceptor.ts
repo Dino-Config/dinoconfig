@@ -1,69 +1,61 @@
-import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, filter, take, switchMap } from 'rxjs/operators';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { catchError, switchMap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
-@Injectable()
-export class JwtInterceptor implements HttpInterceptor {
-  private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+let isRefreshing = false;
 
-  constructor(private authService: AuthService) {}
+export const JwtInterceptor: HttpInterceptorFn = (request, next) => {
+  const authService = inject(AuthService);
 
-  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Skip auth endpoints to avoid infinite loops
-    if (request.url.includes('/auth/')) {
-      return next.handle(request);
+  // Skip auth endpoints to avoid infinite loops
+  if (request.url.includes('/auth/')) {
+    return next(request);
+  }
+
+  const token = authService.getToken();
+  
+  if (token) {
+    request = addToken(request, token);
+  }
+
+  return next(request).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401 && !request.url.includes('/auth/refresh')) {
+        return handle401Error(request, next, authService);
+      }
+      return throwError(() => error);
+    })
+  );
+};
+
+function addToken(request: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
+  return request.clone({
+    setHeaders: {
+      Authorization: `Bearer ${token}`
     }
+  });
+}
 
-    const token = this.authService.getToken();
-    
-    if (token) {
-      request = this.addToken(request, token);
-    }
+function handle401Error(request: HttpRequest<unknown>, next: HttpHandlerFn, authService: AuthService): Observable<HttpEvent<unknown>> {
+  if (!isRefreshing) {
+    isRefreshing = true;
 
-    return next.handle(request).pipe(
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 && !request.url.includes('/auth/refresh')) {
-          return this.handle401Error(request, next);
-        }
+    return authService.refreshToken().pipe(
+      switchMap((response: any) => {
+        isRefreshing = false;
+        return next(addToken(request, response.accessToken));
+      }),
+      catchError((error) => {
+        isRefreshing = false;
+        authService.logout();
         return throwError(() => error);
       })
     );
-  }
-
-  private addToken(request: HttpRequest<any>, token: string): HttpRequest<any> {
-    return request.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-  }
-
-  private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (!this.isRefreshing) {
-      this.isRefreshing = true;
-      this.refreshTokenSubject.next(null);
-
-      return this.authService.refreshToken().pipe(
-        switchMap((response: any) => {
-          this.isRefreshing = false;
-          this.refreshTokenSubject.next(response.accessToken);
-          return next.handle(this.addToken(request, response.accessToken));
-        }),
-        catchError((error) => {
-          this.isRefreshing = false;
-          this.authService.logout();
-          return throwError(() => error);
-        })
-      );
-    } else {
-      return this.refreshTokenSubject.pipe(
-        filter(token => token !== null),
-        take(1),
-        switchMap(token => next.handle(this.addToken(request, token)))
-      );
-    }
+  } else {
+    // If already refreshing, just return the original request
+    // The user will be redirected to login if refresh fails
+    return next(request);
   }
 }

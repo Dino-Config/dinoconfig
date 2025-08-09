@@ -1,27 +1,52 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { CommonModule } from '@angular/common';
+import { MatDialogRef } from '@angular/material/dialog';
 import { AuthService } from '../../services/auth.service';
 
+// Angular Material imports
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+
 @Component({
-  selector: 'app-signup',
-  standalone: false,
-  templateUrl: './signup.component.html',
-  styleUrls: ['./signup.component.scss']
+  selector: 'app-signup-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatDividerModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule,
+    MatCheckboxModule
+  ],
+  templateUrl: './signup-dialog.component.html',
+  styleUrls: ['./signup-dialog.component.scss']
 })
-export class SignupComponent implements OnInit {
+export class SignupDialogComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
+  private dialogRef = inject(MatDialogRef<SignupDialogComponent>);
+
   signupForm: FormGroup;
   isLoading = false;
   hidePassword = true;
   hideConfirmPassword = true;
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-    private snackBar: MatSnackBar
-  ) {
+  constructor() {
     this.signupForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
@@ -36,7 +61,7 @@ export class SignupComponent implements OnInit {
   ngOnInit(): void {
     // Check if user is already logged in
     if (this.authService.getCurrentUser()) {
-      this.router.navigate(['/']);
+      this.dialogRef.close();
     }
   }
 
@@ -63,14 +88,14 @@ export class SignupComponent implements OnInit {
       };
 
       this.authService.signup(userData).subscribe({
-        next: (response) => {
+        next: () => {
           this.isLoading = false;
           this.snackBar.open('Account created successfully! Welcome to DinoConfig!', 'Close', {
             duration: 5000,
             horizontalPosition: 'center',
             verticalPosition: 'top'
           });
-          this.router.navigate(['/']);
+          this.dialogRef.close();
         },
         error: (error) => {
           this.isLoading = false;
@@ -137,8 +162,12 @@ export class SignupComponent implements OnInit {
     return '';
   }
 
-  navigateToLogin(): void {
-    this.router.navigate(['/auth/login']);
+  openLoginDialog(): void {
+    this.dialogRef.close('login');
+  }
+
+  closeDialog(): void {
+    this.dialogRef.close();
   }
 
   togglePasswordVisibility(field: 'password' | 'confirmPassword'): void {
@@ -148,4 +177,4 @@ export class SignupComponent implements OnInit {
       this.hideConfirmPassword = !this.hideConfirmPassword;
     }
   }
-}
+} 

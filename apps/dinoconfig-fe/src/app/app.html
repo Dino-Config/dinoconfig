@@ -12,8 +12,8 @@
     <a href="#docs">Docs</a>
   </nav>
   <div class="auth-buttons">
-    <button mat-button class="login-btn" routerLink="/login">Log in</button>
-    <button mat-raised-button color="accent" class="signup-btn" routerLink="/signup">Sign up</button>
+    <button mat-button class="login-btn" (click)="openLoginDialog()">Log in</button>
+    <button mat-raised-button color="accent" class="signup-btn" (click)="openSignupDialog()">Sign up</button>
   </div>
 </mat-toolbar>
 
@@ -26,7 +26,7 @@
       awesome developer experience, and enterprise-grade security.
     </p>
     <div class="hero-buttons">
-      <button mat-raised-button color="primary" class="cta-button">
+      <button mat-raised-button color="primary" class="cta-button" (click)="openSignupDialog()">
         Sign up
       </button>
       <button mat-button class="demo-button">
@@ -64,8 +64,6 @@
     </div>
   </div>
 </section>
-
-<router-outlet></router-outlet>
 
 <!-- Trusted By Section -->
 <section class="trusted-section">
@@ -163,7 +161,7 @@
         <p>Store your configurations centrally via our REST API or use our SDKs for seamless integration.</p>
         <div class="step-visual">
           <div class="code-preview">
-            <div class="code-line">npm install @dinoconfig/sdk</div>
+            <div class="code-line">npm install &#64;dinoconfig/sdk</div>
             <div class="code-line">const config = await dinoConfig.get('my-app');</div>
           </div>
         </div>
@@ -274,7 +272,7 @@
             <span>SSO & 2FA</span>
           </div>
         </div>
-        <button mat-outlined-button class="pricing-button">Get started free</button>
+        <button mat-outlined-button class="pricing-button" (click)="openSignupDialog()">Get started free</button>
       </div>
       
       <div class="pricing-card featured">
@@ -309,7 +307,7 @@
             <span>Analytics & insights</span>
           </div>
         </div>
-        <button mat-raised-button color="primary" class="pricing-button">Start free trial</button>
+        <button mat-raised-button color="primary" class="pricing-button" (click)="openSignupDialog()">Start free trial</button>
       </div>
       
       <div class="pricing-card">
@@ -356,7 +354,7 @@
       <h2>Ready to get started?</h2>
       <p>Join thousands of developers who trust DinoConfig for their configuration management needs.</p>
       <div class="cta-buttons">
-        <button mat-raised-button color="primary" class="cta-button">Sign up for free</button>
+        <button mat-raised-button color="primary" class="cta-button" (click)="openSignupDialog()">Sign up for free</button>
         <button mat-button class="demo-button">Schedule a demo</button>
       </div>
     </div>
