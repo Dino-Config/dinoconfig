@@ -7,10 +7,6 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private readonly configService: ConfigService) {
-
-    console.log('AUTH0_ISSUER_URL:', configService.get<string>('AUTH0_ISSUER_URL'));
-    console.log('AUTH0_AUDIENCE:', configService.get<string>('AUTH0_AUDIENCE'));
-    console.log('JWKS_URI:', `${configService.get<string>('AUTH0_ISSUER_URL')}.well-known/jwks.json`);
     super({
       secretOrKeyProvider: jwksRsa.passportJwtSecret({
         cache: true,
