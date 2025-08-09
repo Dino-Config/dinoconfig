@@ -1,22 +1,21 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface User {
   id: string;
   email: string;
-  firstName?: string;
-  lastName?: string;
-  role: string;
-  createdAt: Date;
+  name?: string;
+  nickname?: string;
 }
 
-export interface AuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+interface AuthResponse {
+  access_token: string;
+  id_token: string;
+  expires_in: number;
+  token_type: string;
 }
 
 export interface LoginRequest {
@@ -70,48 +69,62 @@ export class AuthService {
     }
   }
 
-  login(credentials: LoginRequest): Observable<AuthResponse> {
+  login(email: string, password: string): Observable<AuthResponse> {
     this._isLoading.set(true);
-    
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, credentials)
-      .pipe(
-        tap(response => {
-          this.setSession(response);
-          this._currentUser.set(response.user);
-          this._isAuthenticated.set(true);
-          this._isLoading.set(false);
-        }),
-        catchError(error => {
-          this._isLoading.set(false);
-          console.error('Login error:', error);
-          return throwError(() => error);
-        })
-      );
+  
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }).pipe(
+      tap(response => {
+        this.setSession(response);
+        this._isAuthenticated.set(true);
+        this._isLoading.set(false);
+        this.checkAuthStatus();
+      }),
+
+      catchError(error => {
+        this._isLoading.set(false);
+        return throwError(() => error);
+      })
+    );
   }
 
-  signup(userData: SignupRequest): Observable<AuthResponse> {
-    this._isLoading.set(true);
-    
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/signup`, userData)
-      .pipe(
-        tap(response => {
-          this.setSession(response);
-          this._currentUser.set(response.user);
-          this._isAuthenticated.set(true);
-          this._isLoading.set(false);
-        }),
-        catchError(error => {
-          this._isLoading.set(false);
-          console.error('Signup error:', error);
-          return throwError(() => error);
-        })
-      );
-  }
-
-  logout(): void {
-    this.clearSession();
+  logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('id_token');
     this._currentUser.set(null);
     this._isAuthenticated.set(false);
+  }
+
+  
+  signup(userData: SignupRequest): Observable<AuthResponse> {
+    this._isLoading.set(true);
+  
+    return this.http.get<{ access_token: string }>(`${environment.apiUrl}/auth/token`).pipe(
+      switchMap(tokenResponse => {
+        const accessToken = tokenResponse.access_token;
+        const headers = { Authorization: `Bearer ${accessToken}` };
+  
+        // Signup request
+        return this.http.post(`${environment.apiUrl}/auth/signup`, userData, { headers });
+      }),
+      switchMap(() => {
+        // After successful signup, call login to get JWT token
+        return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, {
+          email: userData.email,
+          password: userData.password,
+        });
+      }),
+      tap(loginResponse => {
+        this.setSession(loginResponse);
+        this._isAuthenticated.set(true);
+        this._isLoading.set(false);
+        this.checkAuthStatus();
+      }),
+      catchError(error => {
+        this._isLoading.set(false);
+        console.error('Signup error:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   forgotPassword(request: ForgotPasswordRequest): Observable<any> {
@@ -152,6 +165,7 @@ export class AuthService {
       );
   }
 
+
   getCurrentUser(): User | null {
     return this._currentUser();
   }
@@ -164,21 +178,28 @@ export class AuthService {
     return localStorage.getItem('refresh_token');
   }
 
+  getUserNickname(): string | null {
+    const token = localStorage.getItem('id_token');
+    if (!token || token === 'undefined') return null;
+  
+    const userPayload = this.decodeJwt(token);
+    return userPayload.nickname || null;
+  }
+
   getUser(): User | null {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
-  }
-
-  private setSession(authResult: AuthResponse): void {
-    localStorage.setItem('access_token', authResult.accessToken);
-    localStorage.setItem('refresh_token', authResult.refreshToken);
-    localStorage.setItem('user', JSON.stringify(authResult.user));
-  }
-
-  private clearSession(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    const token = localStorage.getItem('id_token');
+    if (!token || token === 'undefined') return null;
+  
+    const payload = this.decodeJwt(token);
+  
+    const user: User = {
+      id: payload.sub || '',       
+      email: payload.email || '',
+      name: payload.given_name || undefined,
+      nickname: payload.nickname || undefined,
+    };
+  
+    return user;
   }
 
   isTokenExpired(): boolean {
@@ -193,8 +214,26 @@ export class AuthService {
     }
   }
 
-  hasRole(role: string): boolean {
-    const user = this.getCurrentUser();
-    return user ? user.role === role : false;
+  private decodeJwt(token: string): any {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => `%${('00' + c.charCodeAt(0).toString(16)).slice(-2)}`)
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  }
+
+  private setSession(authResult: AuthResponse): void {
+    localStorage.setItem('access_token', authResult.access_token);
+    localStorage.setItem('id_token', authResult.id_token);
+  }
+
+  private clearSession(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
   }
 }

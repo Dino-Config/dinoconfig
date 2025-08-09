@@ -106,6 +106,17 @@
       border-radius: 8px;
       padding: 8px 20px;
     }
+
+    .welcome {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .logout-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 500;
+    }
   }
 }
 

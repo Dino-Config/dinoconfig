@@ -11,10 +11,16 @@
     <a href="#pricing">Pricing</a>
     <a href="#docs">Docs</a>
   </nav>
-  <div class="auth-buttons">
-    <button mat-button class="login-btn" (click)="openLoginDialog()">Log in</button>
-    <button mat-raised-button color="accent" class="signup-btn" (click)="openSignupDialog()">Sign up</button>
+  <div class="auth-buttons" *ngIf="currentUser() as user; else loggedOut">
+    <span class="welcome" >Welcome, {{ user.nickname }}</span>
+    <button mat-raised-button color="accent" class="logout-btn" (click)="logout()">Logout</button>
   </div>
+  <ng-template #loggedOut>
+    <div class="auth-buttons">
+      <button mat-button class="login-btn" (click)="openLoginDialog()">Log in</button>
+      <button mat-raised-button color="accent" class="signup-btn" (click)="openSignupDialog()">Sign up</button>
+    </div>
+  </ng-template>
 </mat-toolbar>
 
 <!-- Hero Section -->

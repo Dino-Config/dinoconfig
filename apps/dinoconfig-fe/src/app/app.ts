@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { environment } from '../environments/environment';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -12,6 +12,8 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { AuthService, User } from './auth/services/auth.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   imports: [
@@ -21,7 +23,8 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatCardModule,
     MatGridListModule,
     MatSlideToggleModule,
-    MatDialogModule
+    MatDialogModule,
+    CommonModule
   ],
   selector: 'app-root',
   templateUrl: './app.html',
@@ -32,9 +35,12 @@ export class App {
   private httpClient = inject(HttpClient);
   private dialog = inject(MatDialog);
   private api = this.httpClient.get(environment.apiUrl);
+  private authService = inject(AuthService);
 
   protected apiResponse = toSignal(this.api);
-
+  
+  currentUser = this.authService.currentUser;
+  
   openLoginDialog(): void {
     import('./auth/components/login/login-dialog.component').then(m => {
       const dialogRef = this.dialog.open(m.LoginDialogComponent, {
@@ -67,5 +73,9 @@ export class App {
         }
       });
     });
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 }

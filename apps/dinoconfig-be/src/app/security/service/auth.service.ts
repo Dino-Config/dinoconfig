@@ -7,6 +7,14 @@ interface Auth0User {
   name?: string;
 }
 
+interface Auth0LoginResponse {
+  access_token: string;
+  expires_in: number;
+  token_type: string;
+  scope?: string;
+  id_token?: string;
+}
+
 @Injectable()
 export class AuthService {
   private managementApiToken: string;
@@ -95,5 +103,28 @@ export class AuthService {
 
     const users = await response.json();
     return users.length > 0 ? users[0] : null;
+  }
+
+  async login(email: string, password: string): Promise<Auth0LoginResponse> {
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'password',
+        username: email,
+        password,
+        audience: `https://${this.AUTH0_DOMAIN}/api/v2/`,
+        client_id: this.configService.get<string>('AUTH0_CLIENT_ID'),
+        client_secret: this.configService.get<string>('AUTH0_CLIENT_SECRET'),
+        scope: 'openid profile email'
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new HttpException(error || 'Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    return response.json();
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Query, HttpCode, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, HttpCode, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthService } from '../service/auth.service';
 import { JwtAuthGuard } from '../guard/jwt.guard';
 
@@ -22,13 +22,13 @@ export class AuthController {
     return this.authService.createUser(req.headers.authorization, body.email, body.password, body.name);
   }
 
-  @Get('login')
+  @Post('login')
   @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
-  async login(@Query('email') email: string, @Req() req) {
-    const user = await this.authService.getUserByEmail(email, req.headers.authorization);
+  async login(@Body() body: { email: string; password: string }) {
+    const { email, password } = body;
+    const user = await this.authService.login(email, password);
     if (!user) {
-      return { message: 'User not found' };
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return user;
   }

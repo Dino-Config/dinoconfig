@@ -69,7 +69,7 @@ export class LoginDialogComponent implements OnInit {
         password: this.loginForm.value.password
       };
 
-      this.authService.login(credentials).subscribe({
+      this.authService.login(credentials.email, credentials.password).subscribe({
         next: () => {
           this.isLoading = false;
           this.snackBar.open('Welcome back!', 'Close', {
