@@ -22,7 +22,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: any) {
-    console.log('JWT Payload:', payload);
     if (payload.gty === 'client-credentials') {
       return { clientId: payload.sub };
     }

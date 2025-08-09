@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { AuthModule } from './auth/auth.module';
 
 @Component({
   imports: [
@@ -20,6 +21,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     MatCardModule,
     MatGridListModule,
     MatSlideToggleModule,
+    AuthModule
   ],
   selector: 'app-root',
   templateUrl: './app.html',
