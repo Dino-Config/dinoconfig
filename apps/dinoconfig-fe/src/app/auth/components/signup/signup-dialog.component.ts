@@ -53,8 +53,7 @@ export class SignupDialogComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]],
-      acceptTerms: [false, [Validators.requiredTrue]],
-      marketingEmails: [false]
+      agreeToTerms: [false, [Validators.requiredTrue]]
     }, { validators: this.passwordMatchValidator });
   }
 
@@ -129,37 +128,45 @@ export class SignupDialogComponent implements OnInit {
   }
 
   getErrorMessage(fieldName: string): string {
-    const field = this.signupForm.get(fieldName);
+    const control = this.signupForm.get(fieldName);
     
-    if (field?.hasError('required')) {
-      return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+    if (control?.hasError('required')) {
+      return `${this.getFieldDisplayName(fieldName)} is required`;
     }
     
-    if (fieldName === 'email' && field?.hasError('email')) {
+    if (control?.hasError('email')) {
       return 'Please enter a valid email address';
     }
     
-    if (fieldName === 'password' && field?.hasError('minlength')) {
-      return 'Password must be at least 8 characters long';
-    }
-    
-    if (fieldName === 'firstName' && field?.hasError('minlength')) {
-      return 'First name must be at least 2 characters long';
-    }
-    
-    if (fieldName === 'lastName' && field?.hasError('minlength')) {
-      return 'Last name must be at least 2 characters long';
+    if (control?.hasError('minlength')) {
+      const minLength = control.getError('minlength').requiredLength;
+      if (fieldName === 'password') {
+        return `Password must be at least ${minLength} characters long`;
+      }
+      return `${this.getFieldDisplayName(fieldName)} must be at least ${minLength} characters long`;
     }
     
     if (fieldName === 'confirmPassword' && this.signupForm.hasError('passwordMismatch')) {
       return 'Passwords do not match';
     }
     
-    if (fieldName === 'acceptTerms' && field?.hasError('required')) {
-      return 'You must accept the terms and conditions';
+    if (fieldName === 'agreeToTerms' && control?.hasError('required')) {
+      return 'You must agree to the terms to continue';
     }
     
-    return '';
+    return 'Invalid input';
+  }
+
+  private getFieldDisplayName(fieldName: string): string {
+    const fieldNames: { [key: string]: string } = {
+      firstName: 'First name',
+      lastName: 'Last name',
+      email: 'Email',
+      password: 'Password',
+      confirmPassword: 'Confirm password',
+      agreeToTerms: 'Terms agreement'
+    };
+    return fieldNames[fieldName] || fieldName;
   }
 
   openLoginDialog(): void {
@@ -170,11 +177,9 @@ export class SignupDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
-  togglePasswordVisibility(field: 'password' | 'confirmPassword'): void {
-    if (field === 'password') {
-      this.hidePassword = !this.hidePassword;
-    } else {
-      this.hideConfirmPassword = !this.hideConfirmPassword;
+  onBackdropClick(event: Event): void {
+    if (event.target === event.currentTarget) {
+      this.closeDialog();
     }
   }
 } 
