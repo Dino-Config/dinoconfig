@@ -135,4 +135,8 @@ export class LoginDialogComponent implements OnInit {
   closeDialog(): void {
     this.dialogRef.close();
   }
+
+  onBackdropClick(event: Event): void {
+    this.dialogRef.close();
+  }
 } 
