@@ -57,6 +57,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative; // Add this for absolute positioning context
   
   // Ensure proper centering in parent container
   align-self: center;
@@ -74,7 +75,6 @@
   }
   
   // Prevent backdrop blur from affecting dialog content
-  position: relative;
   z-index: 1000;
   background: white;
   border-radius: 16px;
@@ -90,6 +90,40 @@
   input, button, mat-form-field {
     max-width: 100%;
     box-sizing: border-box;
+  }
+  
+  .close-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      background-color: #e5e7eb;
+      border-color: #d1d5db;
+      color: #374151;
+      transform: scale(1.05);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+    
+    .mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
   }
   
   .login-header {
@@ -423,6 +457,19 @@
     width: 100%;
     margin: 0 auto;
     
+    .close-button {
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      
+      .mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+    
     .login-header {
       margin-bottom: 20px;
       
@@ -485,6 +532,19 @@
   .login-dialog-container {
     padding: 12px;
     
+    .close-button {
+      top: 6px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      
+      .mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+      }
+    }
+    
     .login-header {
       h2 {
         font-size: 20px;
@@ -528,6 +588,19 @@
 @media (max-height: 500px) and (orientation: landscape) {
   .login-dialog-container {
     padding: 12px;
+    
+    .close-button {
+      top: 6px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      
+      .mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+      }
+    }
     
     .login-header {
       margin-bottom: 16px;

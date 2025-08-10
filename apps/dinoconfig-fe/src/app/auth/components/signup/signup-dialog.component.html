@@ -1,6 +1,14 @@
 <div class="signup-dialog-backdrop" (click)="onBackdropClick($event)">
   <div class="signup-dialog-container" (click)="$event.stopPropagation()">
     <div class="signup-header">
+      <button 
+        mat-icon-button 
+        class="close-button" 
+        (click)="closeDialog()"
+        aria-label="Close dialog"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
       <h2>Create Account</h2>
       <p>Join DinoConfig and start managing your configurations</p>
     </div>

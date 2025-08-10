@@ -1,6 +1,14 @@
 <div class="login-dialog-backdrop" (click)="onBackdropClick($event)">
   <div class="login-dialog-container" (click)="$event.stopPropagation()">
     <div class="login-header">
+      <button 
+        mat-icon-button 
+        class="close-button" 
+        (click)="closeDialog()"
+        aria-label="Close dialog"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
       <h2>Welcome back</h2>
       <p>Sign in to your DinoConfig account</p>
     </div>

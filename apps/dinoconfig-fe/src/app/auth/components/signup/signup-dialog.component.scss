@@ -92,6 +92,41 @@
   .signup-header {
     text-align: center;
     margin-bottom: clamp(24px, 6vw, 40px);
+    position: relative;
+    
+    .close-button {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      color: #6b7280;
+      transition: all 0.2s ease;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &:hover {
+        background-color: #e5e7eb;
+        border-color: #d1d5db;
+        color: #374151;
+        transform: scale(1.05);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+      
+      .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
     
     h2 {
       margin: 0 0 12px 0;
@@ -334,6 +369,19 @@
     
     .signup-header {
       margin-bottom: 20px;
+      
+      .close-button {
+        top: -4px;
+        right: -4px;
+        width: 28px;
+        height: 28px;
+        
+        .mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
       
       h2 {
         color: #393939;
