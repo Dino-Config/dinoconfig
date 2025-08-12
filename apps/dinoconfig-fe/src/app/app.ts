@@ -89,7 +89,9 @@ export class App {
       });
 
       dialogRef.afterClosed().subscribe(result => {
-       
+        if (result === 'login') {
+          this.openLoginDialog();
+        }
       });
     });
   }

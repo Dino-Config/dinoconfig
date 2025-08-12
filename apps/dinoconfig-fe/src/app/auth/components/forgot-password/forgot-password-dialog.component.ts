@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialogRef } from '@angular/material/dialog';
 import { ForgotPasswordRequest } from '../../services/auth.service';
 
 @Component({
@@ -27,6 +28,7 @@ import { ForgotPasswordRequest } from '../../services/auth.service';
 export class ForgotPasswordDialogComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private dialogRef = inject(MatDialogRef<ForgotPasswordDialogComponent>);
 
   isLoading = false;
   successMessage = '';
@@ -36,14 +38,12 @@ export class ForgotPasswordDialogComponent {
     email: ['', [Validators.required, Validators.email]]
   });
 
-  closeDialog() {
-    // TODO: Hook into your dialog close logic
+  closeDialog(): void {
+    this.dialogRef.close();
   }
 
-  onBackdropClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('forgot-dialog-backdrop')) {
-      this.closeDialog();
-    }
+  onBackdropClick(event: Event): void {
+    this.dialogRef.close();
   }
 
   getErrorMessage(field: string): string {
@@ -52,7 +52,7 @@ export class ForgotPasswordDialogComponent {
     return '';
   }
 
-  submit() {
+  submit(): void {
     if (this.forgotForm.invalid) return;
 
     this.isLoading = true;
@@ -67,11 +67,20 @@ export class ForgotPasswordDialogComponent {
       next: () => {
         this.isLoading = false;
         this.successMessage = 'Password reset email sent. Please check your inbox.';
+        
+        // Auto-close after 5 seconds of success
+        setTimeout(() => {
+          this.dialogRef.close();
+        }, 5000);
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.error?.message || 'Failed to send password reset email.';
       }
     });
+  }
+
+  openLoginDialog(): void {
+    this.dialogRef.close('login');
   }
 }
