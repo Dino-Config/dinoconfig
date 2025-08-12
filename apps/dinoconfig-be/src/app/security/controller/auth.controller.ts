@@ -32,4 +32,14 @@ export class AuthController {
     }
     return user;
   }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @Post('send-verification')
+  async sendVerification(@Body() body: { userId: string }) {
+    return this.authService.sendEmailVerification(body.userId);
+  }
 }

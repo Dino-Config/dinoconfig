@@ -44,7 +44,7 @@ export class LoginDialogComponent implements OnInit {
   loginForm: FormGroup;
   isLoading = false;
   hidePassword = true;
-
+  
   constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -126,6 +126,10 @@ export class LoginDialogComponent implements OnInit {
     }
     
     return '';
+  }
+
+  openForgotPasswordDialog(): void {
+    this.dialogRef.close('forgot-password');
   }
 
   openSignupDialog(): void {

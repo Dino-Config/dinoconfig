@@ -34,11 +34,6 @@ export interface ForgotPasswordRequest {
   email: string;
 }
 
-export interface ResetPasswordRequest {
-  token: string;
-  password: string;
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -127,18 +122,18 @@ export class AuthService {
     );
   }
 
-  forgotPassword(request: ForgotPasswordRequest): Observable<any> {
-    return this.http.post(`${environment.apiUrl}/auth/forgot-password`, request)
+  verifyEmail(userId: string): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/send-verification`, { userId })
       .pipe(
         catchError(error => {
-          console.error('Forgot password error:', error);
+          console.error('Email verification error:', error);
           return throwError(() => error);
         })
       );
   }
 
-  resetPassword(request: ResetPasswordRequest): Observable<any> {
-    return this.http.post(`${environment.apiUrl}/auth/reset-password`, request)
+  forgotPassword(request: ForgotPasswordRequest): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/forgot-password`, request)
       .pipe(
         catchError(error => {
           console.error('Reset password error:', error);

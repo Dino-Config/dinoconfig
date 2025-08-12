@@ -43,6 +43,7 @@ export class AuthService {
         client_secret: this.CLIENT_SECRET,
         audience: `https://${this.AUTH0_DOMAIN}/api/v2/`,
         grant_type: 'client_credentials',
+        scope: 'update:users read:users'
       }),
     });
 
@@ -126,5 +127,50 @@ export class AuthService {
     }
 
     return response.json();
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/dbconnections/change_password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: this.configService.get<string>('AUTH0_CLIENT_ID'),
+        email,
+        connection: this.DB_CONNECTION,
+      }),
+    });
+  
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new HttpException(error || 'Failed to send reset password email', response.status);
+    }
+  
+
+    const message = await response.text();
+    return { message };
+  }
+
+  async sendEmailVerification(userId: string): Promise<{ jobId: string }> {
+    const token = await this.getManagementApiToken();
+  
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/jobs/verification-email`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        client_id: this.configService.get<string>('AUTH0_CLIENT_ID'),
+      }),
+    });
+  
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new HttpException(error || 'Failed to send verification email', response.status);
+    }
+  
+    const data = await response.json();
+    return { jobId: data.id };
   }
 }

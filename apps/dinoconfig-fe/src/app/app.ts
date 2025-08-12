@@ -40,7 +40,7 @@ export class App {
   protected apiResponse = toSignal(this.api);
   
   currentUser = this.authService.currentUser;
-  
+
   openLoginDialog(): void {
     import('./auth/components/login/login-dialog.component').then(m => {
       const dialogRef = this.dialog.open(m.LoginDialogComponent, {
@@ -53,6 +53,10 @@ export class App {
       dialogRef.afterClosed().subscribe(result => {
         if (result === 'signup') {
           this.openSignupDialog();
+        }
+
+        if (result === 'forgot-password') {
+          this.openForgotPasswordDialog();
         }
       });
     });
@@ -71,6 +75,21 @@ export class App {
         if (result === 'login') {
           this.openLoginDialog();
         }
+      });
+    });
+  }
+
+  openForgotPasswordDialog(): void {
+    import('./auth/components/forgot-password/forgot-password-dialog.component').then(m => {
+      const dialogRef = this.dialog.open(m.ForgotPasswordDialogComponent, {
+        width: '550px',
+        maxHeight: '90vh',
+        disableClose: false,
+        panelClass: 'auth-dialog'
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+       
       });
     });
   }
