@@ -48,7 +48,8 @@
           "outputHashing": "all",
           "customWebpackConfig": {
             "path": "apps/dinoconfig-host-fe/webpack.prod.config.ts"
-          }
+          },
+          "deployUrl": "/apps/dinoconfig-host-fe/"
         },
         "development": {
           "buildOptimizer": false,

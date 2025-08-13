@@ -44,7 +44,9 @@
           "namedChunks": false,
           "extractLicenses": true,
           "vendorChunk": false,
-          "webpackConfig": "apps/dinoconfig_builder/webpack.config.prod.ts"
+          "webpackConfig": "apps/dinoconfig_builder/webpack.config.prod.ts",
+          "deployUrl": "/apps/dinoconfig_builder/",
+          "baseHref": "/apps/dinoconfig_builder/"
         }
       }
     },
