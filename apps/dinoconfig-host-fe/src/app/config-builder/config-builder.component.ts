@@ -14,7 +14,7 @@ export class ConfigBuilderComponent {
             remotes: [
                 {
                     name: 'dinoconfig_builder',
-                    entry: 'http://localhost:4201/remoteEntry.js',
+                    entry: 'https://dinoconfig.com/remoteEntry.js',
                 },
             ],
         });
