@@ -1,0 +1,91 @@
+// Navigation
+.toolbar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 0 24px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+    }
+    
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    margin: 0 48px;
+    
+    a {
+      text-decoration: none;
+      color: #666;
+      font-weight: 500;
+      transition: color 0.2s ease;
+      
+      &:hover {
+        color: #667eea;
+      }
+    }
+  }
+
+  .auth-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    
+    .login-btn {
+      color: #666;
+      font-weight: 500;
+    }
+    
+    .signup-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 500;
+      border-radius: 8px;
+      padding: 8px 20px;
+    }
+
+    .welcome {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .logout-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 500;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    .nav-links {
+      display: none;
+    }
+  }
+}
