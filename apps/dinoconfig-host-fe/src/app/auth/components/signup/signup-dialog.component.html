@@ -33,6 +33,15 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Company</mat-label>
+        <input matInput formControlName="company" placeholder="Enter your company name" autocomplete="company-name">
+        <mat-icon matSuffix class="field-icon">add_business</mat-icon>
+        <mat-error *ngIf="signupForm.get('company')?.invalid && signupForm.get('company')?.touched">
+          {{ getErrorMessage('company') }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="form-field">
         <mat-label>Email</mat-label>
         <input matInput formControlName="email" type="email" placeholder="Enter your email address" autocomplete="email">
         <mat-icon matSuffix class="field-icon">email</mat-icon>

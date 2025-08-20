@@ -93,16 +93,8 @@ export class AuthService {
   signup(userData: SignupRequest): Observable<AuthResponse> {
     this._isLoading.set(true);
   
-    return this.http.get<{ access_token: string }>(`${environment.apiUrl}/auth/token`).pipe(
-      switchMap(tokenResponse => {
-        const accessToken = tokenResponse.access_token;
-        const headers = { Authorization: `Bearer ${accessToken}` };
-  
-        // Signup request
-        return this.http.post(`${environment.apiUrl}/auth/signup`, userData, { headers });
-      }),
+    return this.http.post(`${environment.apiUrl}/auth/signup`, userData).pipe(
       switchMap(() => {
-        // After successful signup, call login to get JWT token
         return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, {
           email: userData.email,
           password: userData.password,

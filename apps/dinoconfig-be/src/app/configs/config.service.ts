@@ -1,4 +1,3 @@
-// configs.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,12 +13,18 @@ export class ConfigsService {
     @InjectRepository(Brand) private brandRepo: Repository<Brand>
   ) {}
 
-  async create(brandId: number, dto: CreateConfigDto): Promise<Config> {
-    const brand = await this.brandRepo.findOne({ where: { id: brandId } });
-    if (!brand) throw new NotFoundException('Brand not found');
-    
+  async getBrandForUser(userId: number): Promise<Brand> {
+    const brand = await this.brandRepo.findOne({
+      where: { user: { id: userId } },
+    });
 
-    // First version is always 1
+    if (!brand) throw new NotFoundException('Brand not found for this user');
+    return brand;
+  }
+
+  async create(userId: number, dto: CreateConfigDto): Promise<Config> {
+    const brand = await this.getBrandForUser(userId);
+
     const config = this.configRepo.create({
       ...dto,
       brand,
@@ -30,35 +35,41 @@ export class ConfigsService {
     return this.configRepo.save(config);
   }
 
-  async update(brandId: number, configKey: string, dto: UpdateConfigDto): Promise<Config> {
+  async update(userId: number, configKey: string, dto: UpdateConfigDto): Promise<Config> {
+    const brand = await this.getBrandForUser(userId);
+
     const latest = await this.configRepo.findOne({
-      where: { brand: { id: brandId }, configKey },
+      where: { brand: { id: brand.id }, configKey },
       order: { version: 'DESC' },
     });
 
     if (!latest) throw new NotFoundException('Config not found');
 
     const newVersion = this.configRepo.create({
-      ...latest,          // copy old config
-      ...dto,             // override with new data
+      ...latest,
+      ...dto,
       brand: latest.brand,
       version: latest.version + 1,
-      createdAt: undefined, // will be set automatically
+      createdAt: undefined,
     });
 
     return this.configRepo.save(newVersion);
   }
 
-  async findLatest(brandId: number, configKey: string): Promise<Config> {
+  async findLatest(userId: number, configKey: string): Promise<Config> {
+    const brand = await this.getBrandForUser(userId);
+
     return this.configRepo.findOne({
-      where: { brand: { id: brandId }, configKey },
+      where: { brand: { id: brand.id }, configKey },
       order: { version: 'DESC' },
     });
   }
 
-  async findAllVersions(brandId: number, configKey: string): Promise<Config[]> {
+  async findAllVersions(userId: number, configKey: string): Promise<Config[]> {
+    const brand = await this.getBrandForUser(userId);
+
     return this.configRepo.find({
-      where: { brand: { id: brandId }, configKey },
+      where: { brand: { id: brand.id }, configKey },
       order: { version: 'DESC' },
     });
   }

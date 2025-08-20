@@ -1,37 +1,28 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, ParseIntPipe, Req, UseGuards } from '@nestjs/common';
 import { UsersService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from '../security/guard/jwt.guard';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
-  }
-
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async getUser(@Req() req) {
+    const { sub } = req.user;
+    return this.usersService.findByAuth0Id(sub);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
+  @Patch()
+  async updateUser(@Req() req, @Body() dto: UpdateUserDto) {
+    const { sub } = req.user;
+    return this.usersService.updateByAuth0Id(sub, dto);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateUserDto
-  ) {
-    return this.usersService.update(id, dto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  @Delete()
+  async deleteUser(@Req() req) {
+    const { sub } = req.user;
+    return this.usersService.removeByAuth0Id(sub);
   }
 }

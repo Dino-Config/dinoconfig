@@ -1,16 +1,15 @@
-import { Controller, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { BrandsService } from './brand.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
+import { JwtAuthGuard } from '../security/guard/jwt.guard';
 
 @Controller('brands')
+@UseGuards(JwtAuthGuard)
 export class BrandsController {
   constructor(private brandsService: BrandsService) {}
 
-  @Post(':userId')
-  create(
-    @Param('userId', ParseIntPipe) userId: number,
-    @Body() dto: CreateBrandDto
-  ) {
-    return this.brandsService.create(userId, dto);
+  @Post()
+  async create(@Body() dto: CreateBrandDto, @Req() req) {
+    return this.brandsService.create(req.user.id, dto);
   }
 }

@@ -9,17 +9,16 @@ export class AuthController {
   @Get('token')
   @HttpCode(200)
   async token() {
-    const token = await this.authService.getManagementApiToken();
+    const token = await this.authService.getManagementToken();
     return { access_token: token };
   }
 
   @Post('signup')
-  @UseGuards(JwtAuthGuard)
   async signup(
     @Req() req,
-    @Body() body: { email: string; password: string; name?: string },
+    @Body() body: { email: string; password: string; name?: string; company?: string },
   ) {
-    return this.authService.createUser(req.headers.authorization, body.email, body.password, body.name);
+    return this.authService.createUser(body.email, body.password, body.name, body.company);
   }
 
   @Post('login')

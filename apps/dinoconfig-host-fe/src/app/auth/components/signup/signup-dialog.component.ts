@@ -50,6 +50,7 @@ export class SignupDialogComponent implements OnInit {
     this.signupForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
+      company: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]],
@@ -83,7 +84,8 @@ export class SignupDialogComponent implements OnInit {
         firstName: this.signupForm.value.firstName,
         lastName: this.signupForm.value.lastName,
         email: this.signupForm.value.email,
-        password: this.signupForm.value.password
+        password: this.signupForm.value.password,
+        company: this.signupForm.value.company
       };
 
       this.authService.signup(userData).subscribe({
@@ -137,6 +139,10 @@ export class SignupDialogComponent implements OnInit {
     if (control?.hasError('email')) {
       return 'Please enter a valid email address';
     }
+
+    if (control?.hasError('company')) {
+      return 'Please enter a valid company name';
+    }
     
     if (control?.hasError('minlength')) {
       const minLength = control.getError('minlength').requiredLength;
@@ -161,6 +167,7 @@ export class SignupDialogComponent implements OnInit {
     const fieldNames: { [key: string]: string } = {
       firstName: 'First name',
       lastName: 'Last name',
+      company: "Company",
       email: 'Email',
       password: 'Password',
       confirmPassword: 'Confirm password',

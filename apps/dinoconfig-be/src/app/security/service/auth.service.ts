@@ -1,10 +1,12 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../../users/user.service';
 
 interface Auth0User {
   user_id: string;
   email: string;
   name?: string;
+  app_metadata?: Record<string, any>;
 }
 
 interface Auth0LoginResponse {
@@ -24,7 +26,9 @@ export class AuthService {
   private CLIENT_SECRET: string;
   private DB_CONNECTION: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private usersService: UsersService) {
     this.AUTH0_DOMAIN = this.configService.get<string>('AUTH0_DOMAIN');
     this.CLIENT_ID = this.configService.get<string>('AUTH0_M2M_CLIENT_ID');
     this.CLIENT_SECRET = this.configService.get<string>('AUTH0_M2M_CLIENT_SECRET');
@@ -32,10 +36,9 @@ export class AuthService {
   }
 
 
-  async getManagementApiToken(): Promise<string> {
-    if (this.managementApiToken) return this.managementApiToken;
-
-    const response = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
+  // Get Auth0 Management API token
+  async getManagementToken(): Promise<string> {
+    const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -43,47 +46,56 @@ export class AuthService {
         client_secret: this.CLIENT_SECRET,
         audience: `https://${this.AUTH0_DOMAIN}/api/v2/`,
         grant_type: 'client_credentials',
-        scope: 'update:users read:users'
       }),
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new HttpException(
-        error || 'Failed to get management API token',
-        response.status,
-      );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new HttpException(err || 'Failed to get management token', res.status);
     }
 
-    const data = await response.json();
-    this.managementApiToken = data.access_token;
-    return this.managementApiToken;
+    const data = await res.json();
+    return data.access_token;
   }
 
-  async createUser(token: string, email: string, password: string, name?: string): Promise<Auth0User> {
-    const response = await fetch(
-      `https://${this.AUTH0_DOMAIN}/api/v2/users`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `${token}`,
-          'Content-Type': 'application/json',
+  async createUser(
+    email: string,
+    password: string,
+    name?: string,
+    company?: string
+  ): Promise<Auth0User> {
+    const token = await this.getManagementToken();
+
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
-        body: JSON.stringify({
-          email,
-          password,
-          connection: 'Username-Password-Authentication',
-          name,
-        }),
-      },
-    );
+      body: JSON.stringify({
+        connection: this.DB_CONNECTION,
+        email,
+        password,
+        name,
+        app_metadata: { company },
+      }),
+    });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new HttpException(error || 'Failed to create user', response.status);
     }
 
-    return response.json();
+    const auth0User: Auth0User = await response.json();
+
+    await this.usersService.createFromAuth0({
+      user_id: auth0User.user_id,
+      email: auth0User.email,
+      name: auth0User.name,
+      company: company,
+    });
+
+    return auth0User;
   }
 
   async getUserByEmail(email: string, token: string): Promise<Auth0User | null> {
@@ -107,26 +119,26 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<Auth0LoginResponse> {
-    const response = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
+    const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         grant_type: 'password',
         username: email,
         password,
-        audience: `https://${this.AUTH0_DOMAIN}/api/v2/`,
-        client_id: this.configService.get<string>('AUTH0_CLIENT_ID'),
-        client_secret: this.configService.get<string>('AUTH0_CLIENT_SECRET'),
-        scope: 'openid profile email'
+        audience: this.configService.get('AUTH0_AUDIENCE'),
+        client_id: this.configService.get('AUTH0_CLIENT_ID'),
+        client_secret: this.configService.get('AUTH0_CLIENT_SECRET'),
+        scope: 'openid profile email',
       }),
     });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new HttpException(error || 'Invalid credentials', HttpStatus.UNAUTHORIZED);
+  
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new HttpException(err || 'Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
-
-    return response.json();
+  
+    return res.json();
   }
 
   async forgotPassword(email: string): Promise<{ message: string }> {
@@ -151,7 +163,7 @@ export class AuthService {
   }
 
   async sendEmailVerification(userId: string): Promise<{ jobId: string }> {
-    const token = await this.getManagementApiToken();
+    const token = await this.getManagementToken();
   
     const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/jobs/verification-email`, {
       method: 'POST',

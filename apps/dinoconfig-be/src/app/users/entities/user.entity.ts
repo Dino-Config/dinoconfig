@@ -6,6 +6,9 @@ export class User {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
+  @Column({ unique: true })
+  auth0Id: string;
+
   @Column({ length: 100 })
   firstName: string;
 
@@ -13,7 +16,7 @@ export class User {
   lastName: string;
 
   @Index({ unique: true })
-  @Column({ type: 'citext' }) // Make sure citext extension is enabled in Postgres
+  @Column({ type: 'citext' })
   email: string;
 
   @Column({ length: 20, nullable: true })
@@ -43,6 +46,6 @@ export class User {
   @CreateDateColumn()
   createdAt: Date;
 
-  @OneToMany(() => Brand, brand => brand.user)
+  @OneToMany(() => Brand, brand => brand.user, { cascade: true })
   brands: Brand[];
 }
