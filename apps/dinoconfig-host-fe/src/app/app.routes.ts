@@ -7,6 +7,6 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'builder',
-    loadComponent: () => import('./config-builder/config-builder.component').then(m => m.ConfigBuilderComponent)
+    loadComponent: () => import('./config-builder/config-builder.component').then(m => m.DinoconfigBuilderWrapperComponent)
   }
 ];

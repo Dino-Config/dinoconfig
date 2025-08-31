@@ -1,6 +1,6 @@
 // MultiConfigBuilder.tsx
 import React, { useEffect, useState, ChangeEvent } from "react";
-import Form, { IChangeEvent } from "@rjsf/core";
+import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
 import {
@@ -10,6 +10,8 @@ import {
   deleteConfig,
   SavedConfig,
 } from "./storageService";
+import { IChangeEvent } from "@rjsf/core";
+import "./config-builder.scss";
 
 type FieldType =
   | "text"
@@ -229,10 +231,10 @@ export default function MultiConfigBuilder({ companyId }: Props) {
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "220px 1fr 420px", gap: 16 }}>
+    <div className="multi-config">
       {/* Left: Config list */}
-      <div style={{ padding: 12, borderRadius: 8, background: "#fafafa", minHeight: 360 }}>
-        <h3 style={{ marginTop: 0 }}>Configs</h3>
+      <div className="sidebar">
+        <h3 className="section-title">Configs</h3>
         <ConfigList
           configs={configs}
           selectedId={selectedId}
@@ -244,116 +246,174 @@ export default function MultiConfigBuilder({ companyId }: Props) {
       </div>
 
       {/* Middle: Builder + Preview */}
-      <div style={{ padding: 12 }}>
-        <h3 style={{ marginTop: 0 }}>{selectedId ? `Editing: ${configs.find(c => c.id === selectedId)?.name}` : "Create or select a config"}</h3>
+      <div className="builder">
+        <h3 className="section-title">
+          {selectedId
+            ? `Editing: ${configs.find(c => c.id === selectedId)?.name}`
+            : "Create or select a config"}
+        </h3>
 
         {/* Builder */}
-        <div style={{ padding: 12, borderRadius: 8, background: "#f5f7fb", marginBottom: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <input placeholder="Field name" value={field.name} onChange={handleFieldChange("name")} style={inputStyle} />
-            <input placeholder="Label (optional)" value={field.label} onChange={handleFieldChange("label")} style={inputStyle} />
+        <div className="field-builder">
+          <input placeholder="Field name" value={field.name} onChange={handleFieldChange("name")} />
+          <input placeholder="Label (optional)" value={field.label} onChange={handleFieldChange("label")} />
 
-            <select value={field.type} onChange={handleFieldChange("type")} style={inputStyle}>
-              {fieldTypes.map(ft => <option key={ft} value={ft}>{ft}</option>)}
-            </select>
+          <select value={field.type} onChange={handleFieldChange("type")}>
+            {fieldTypes.map(ft => (
+              <option key={ft} value={ft}>{ft}</option>
+            ))}
+          </select>
 
-            {(field.type === "select" || field.type === "radio") && (
-              <input placeholder="Options (comma separated)" value={field.options} onChange={handleFieldChange("options")} style={inputStyle} />
-            )}
-          </div>
+          {(field.type === "select" || field.type === "radio") && (
+            <input placeholder="Options (comma separated)" value={field.options} onChange={handleFieldChange("options")} />
+          )}
 
-          <label style={{ display: "block", marginTop: 8 }}>
-            <input type="checkbox" checked={showValidations} onChange={() => setShowValidations(s => !s)} /> Show validation settings
+
+          <label className="toggle">
+            <input type="checkbox" checked={showValidations} onChange={() => setShowValidations(s => !s)} />
+            Show validation settings
           </label>
 
           {showValidations && (
-            <div style={{ marginTop: 8, padding: 8, background: "#fff", borderRadius: 6 }}>
-              <label style={{ display: "block", marginBottom: 6 }}>
-                <input type="checkbox" checked={!!field.required} onChange={(e) => setField({ ...field, required: e.target.checked })} /> Required
+            <div className="validation">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={!!field.required}
+                  onChange={e => setField({ ...field, required: e.target.checked })}
+                /> Required
               </label>
 
               {["number", "range"].includes(field.type) && (
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input type="number" placeholder="Min" value={field.min ?? ""} onChange={e => setField({ ...field, min: e.target.value ? Number(e.target.value) : undefined })} style={inputStyle} />
-                  <input type="number" placeholder="Max" value={field.max ?? ""} onChange={e => setField({ ...field, max: e.target.value ? Number(e.target.value) : undefined })} style={inputStyle} />
+                <div className="number-range">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={field.min ?? ""}
+                    onChange={e => setField({ ...field, min: e.target.value ? Number(e.target.value) : undefined })}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={field.max ?? ""}
+                    onChange={e => setField({ ...field, max: e.target.value ? Number(e.target.value) : undefined })}
+                  />
                 </div>
               )}
 
               {["text", "textarea", "email", "search", "url", "tel"].includes(field.type) && (
                 <>
-                  <input type="number" placeholder="Max Length" value={field.maxLength ?? ""} onChange={e => setField({ ...field, maxLength: e.target.value ? Number(e.target.value) : undefined })} style={{ ...inputStyle, marginTop: 6 }} />
-                  <input placeholder="Pattern (regex)" value={field.pattern ?? ""} onChange={e => setField({ ...field, pattern: e.target.value || undefined })} style={{ ...inputStyle, marginTop: 6 }} />
+                  <input
+                    type="number"
+                    placeholder="Max Length"
+                    value={field.maxLength ?? ""}
+                    onChange={e => setField({ ...field, maxLength: e.target.value ? Number(e.target.value) : undefined })}
+                  />
+                  <input
+                    placeholder="Pattern (regex)"
+                    value={field.pattern ?? ""}
+                    onChange={e => setField({ ...field, pattern: e.target.value || undefined })}
+                  />
                 </>
               )}
             </div>
           )}
 
-          <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-            <button onClick={addFieldToSchema} style={primaryBtn}>Add field</button>
-            <button onClick={() => { setField({ name: "", type: "text", label: "", options: "", required: false }); }} style={mutedBtn}>Clear</button>
-            <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-              <button onClick={handleSaveConfig} disabled={!selectedId} style={selectedId ? primaryBtn : disabledBtn}>Save config</button>
-              <button onClick={exportSelected} disabled={!selectedId} style={selectedId ? primaryBtn : disabledBtn}>Export</button>
-            </div>
+          <div className="actions">
+            <button className="btn primary" onClick={addFieldToSchema}>Add field</button>
+            <button
+              className="btn muted"
+              onClick={() => setField({ name: "", type: "text", label: "", options: "", required: false })}
+            >
+              Clear
+            </button>
           </div>
         </div>
 
         {/* Live preview */}
-        <div style={{ padding: 12, borderRadius: 8, background: "#fff" }}>
-          <h4 style={{ marginTop: 0 }}>Live Preview</h4>
-          <Form schema={schema} uiSchema={uiSchema} formData={formData} validator={validator}
+        <div className="preview">
+          <h4>Live Preview</h4>
+          <Form
+            schema={schema}
+            uiSchema={uiSchema}
+            formData={formData}
+            validator={validator}
             onChange={(e: IChangeEvent) => setFormData(e.formData)}
             onSubmit={({ formData }) => { alert("Preview submit — data in console"); console.log("submitted:", formData); }}
           />
         </div>
+        <div className="save-config-actions">
+          <button
+            className={`btn primary ${!selectedId ? "disabled" : ""}`}
+            onClick={handleSaveConfig}
+            disabled={!selectedId}
+          >
+            Save config
+          </button>
+          <button
+            className={`btn primary ${!selectedId ? "disabled" : ""}`}
+            onClick={exportSelected}
+            disabled={!selectedId}
+          >
+            Export
+          </button>
+        </div>
       </div>
 
-      {/* Right: Schema viewers */}
-      <div style={{ padding: 12 }}>
-        <div style={{ marginBottom: 12 }}>
-          <h4 style={{ marginTop: 0 }}>JSON Schema</h4>
-          <pre style={codeBox}>{JSON.stringify(schema, null, 2)}</pre>
+      {/* Right: Schema viewers
+      <div className="schema-view">
+        <div className="block">
+          <h4>JSON Schema</h4>
+          <pre>{JSON.stringify(schema, null, 2)}</pre>
         </div>
-
-        <div>
+        <div className="block">
           <h4>UI Schema</h4>
-          <pre style={codeBox}>{JSON.stringify(uiSchema, null, 2)}</pre>
+          <pre>{JSON.stringify(uiSchema, null, 2)}</pre>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
 
 /* small helper components / styles below */
-
 function ConfigList({ configs, selectedId, onSelect, onDelete, onRename }: {
   configs: SavedConfig[], selectedId: string | null,
   onSelect: (id: string | null) => void, onDelete: (id: string) => void, onRename: (id: string) => void
 }) {
+  if (!configs.length) return <div className="empty">No configs yet</div>;
   return (
-    <div>
-      {configs.length === 0 && <div style={{ color: "#666" }}>No configs yet</div>}
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {configs.map(c => (
-          <li key={c.id} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <button onClick={() => onSelect(c.id)} style={{ background: selectedId === c.id ? "#2f6fed" : "#fff", color: selectedId === c.id ? "#fff" : "#111", borderRadius: 6, padding: "6px 8px", border: "1px solid #ddd" }}>{c.name}</button>
-            <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-              <button onClick={() => onRename(c.id)} style={mutedBtn}>Rename</button>
-              <button onClick={() => onDelete(c.id)} style={{ ...mutedBtn, background: "#fee" }}>Delete</button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul className="config-list">
+      {configs.map(c => (
+        <li key={c.id}>
+          <button
+            onClick={() => onSelect(c.id)}
+            className={`config-btn ${selectedId === c.id ? "selected" : ""}`}
+          >
+            {c.name}
+          </button>
+          <div className="row-actions">
+            <button onClick={() => onRename(c.id)} className="btn-ghost">Rename</button>
+            <button onClick={() => onDelete(c.id)} className="btn-delete">Delete</button>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 
 function NewConfigCreator({ onCreate }: { onCreate: (name: string) => void }) {
   const [name, setName] = useState("");
   return (
-    <div style={{ marginTop: 12 }}>
-      <input placeholder="New config name" value={name} onChange={e => setName(e.target.value)} style={{ width: "100%", padding: 8, marginBottom: 6 }} />
-      <button onClick={() => { onCreate(name); setName(""); }} style={primaryBtn}>Create</button>
+    <div className="new-config">
+      <input
+        className="input"
+        placeholder="New config name"
+        value={name}
+        onChange={e => setName(e.target.value)}
+      />
+      <button className="btn primary create-btn" onClick={() => { onCreate(name); setName(""); }}>
+        Create
+      </button>
     </div>
   );
 }
@@ -362,10 +422,9 @@ const fieldTypes: FieldType[] = [
   "text", "password", "select", "checkbox", "radio", "number",
   "textarea", "email", "range", "search", "tel", "url", "time",
   "datetime", "datetime-local", "week", "month"
-];
-
-const inputStyle: React.CSSProperties = { padding: 8, borderRadius: 6, border: "1px solid #d0d7e6", width: "100%" };
+]; const inputStyle: React.CSSProperties = { padding: 8, borderRadius: 6, border: "1px solid #d0d7e6", width: "100%" };
 const primaryBtn: React.CSSProperties = { background: "#2f6fed", color: "#fff", border: "none", padding: "8px 12px", borderRadius: 6, cursor: "pointer" };
 const mutedBtn: React.CSSProperties = { background: "#f3f6fb", color: "#333", border: "1px solid #e6edf8", padding: "6px 10px", borderRadius: 6, cursor: "pointer" };
 const disabledBtn: React.CSSProperties = { background: "#e6eefc", color: "#aac", border: "none", padding: "6px 10px", borderRadius: 6 };
 const codeBox: React.CSSProperties = { background: "#0b1220", color: "#e6eef8", padding: 12, borderRadius: 6, height: 260, overflow: "auto", fontSize: 12, lineHeight: 1.4 };
+
