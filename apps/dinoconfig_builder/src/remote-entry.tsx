@@ -7,18 +7,16 @@ class DinoconfigBuilder extends HTMLElement {
   connectedCallback() {
     const shadowRoot = this.attachShadow({ mode: "open" });
 
-
-    // Tell MUI/Emotion to inject styles into shadowRoot
     const cache = createCache({
       key: "mui",
-      container: shadowRoot, // 👈 inject styles into shadowRoot
+      container: shadowRoot,
     });
 
     const root = createRoot(shadowRoot);
 
     root.render(
       <CacheProvider value={cache}>
-        <App shadowRoot={shadowRoot} />
+        <App />
       </CacheProvider>
     );
 
