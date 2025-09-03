@@ -3,7 +3,7 @@ import { ModuleFederationConfig } from '@nx/module-federation';
 const config: ModuleFederationConfig = {
   name: 'dinoconfig_builder',
   exposes: {
-    './Module': './src/remote-entry.tsx',
+    './Module': './src/remote-entry.tsx'
   },
 };
 
