@@ -1,5 +1,6 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, ViewEncapsulation } from '@angular/core';
 import { createInstance } from '@module-federation/enhanced/runtime';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-dinoconfig-builder-wrapper',
@@ -15,7 +16,7 @@ export class DinoconfigBuilderWrapperComponent {
             remotes: [
                 {
                     name: 'dinoconfig_builder',
-                    entry: 'http://localhost:4201/remoteEntry.js',
+                    entry: environment.configBuilderEntryPoint,
                 },
             ],
         });
