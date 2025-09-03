@@ -7,11 +7,13 @@ class DinoconfigBuilder extends HTMLElement {
   connectedCallback() {
     const shadowRoot = this.attachShadow({ mode: "open" });
 
-    const remoteCssLink = document.querySelector(
-      'link[href*="__federation_expose_Module.css"]'
-    ) as HTMLLinkElement;
-    const clonedLink = remoteCssLink.cloneNode(true) as HTMLLinkElement;
-    shadowRoot.appendChild(clonedLink);
+    const remoteCssLink = Array.from<HTMLLinkElement>(document.querySelectorAll('link[rel="stylesheet"]'))
+    .find(link => link.href.match(/__federation_expose_Module.*\.css$/));
+  
+  if (remoteCssLink) {
+    const cloned = remoteCssLink.cloneNode(true) as HTMLLinkElement;
+    shadowRoot.appendChild(cloned);
+  }
 
     const cache = createCache({
       key: "mui",
