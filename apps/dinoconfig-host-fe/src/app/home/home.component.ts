@@ -4,11 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { DialogService } from '../dialogs/dialog.service';
+import { DinoconfigBuilderWrapperComponent } from '../config-builder/config-builder.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatSlideToggleModule, DinoconfigBuilderWrapperComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })

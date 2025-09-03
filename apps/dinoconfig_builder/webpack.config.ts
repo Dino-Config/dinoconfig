@@ -5,7 +5,7 @@ import { withModuleFederation } from '@nx/module-federation/webpack.js';
 import baseConfig from './module-federation.config';
 
 const config = {
-  ...baseConfig,
+  ...baseConfig
 };
 
 // Nx plugins for webpack to build config object from Nx options and context.
