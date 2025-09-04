@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Get, Query, HttpCode, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, HttpCode, Req, UseGuards, HttpException, HttpStatus, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from '../service/auth.service';
 import { JwtAuthGuard } from '../guard/jwt.guard';
 
@@ -23,12 +24,34 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
-  async login(@Body() body: { email: string; password: string }) {
+  async login(
+    @Body() body: { email: string; password: string },
+    @Res({ passthrough: true }) res: Response,) {
     const { email, password } = body;
     const user = await this.authService.login(email, password);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
+
+     const { access_token, id_token } = user;
+
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      domain: '.dinoconfig.com',
+      path: '/',
+      maxAge: 15 * 60 * 1000
+    });
+
+    res.cookie('id_token', id_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      domain: '.dinoconfig.com',
+      path: '/',
+      maxAge: 15 * 60 * 1000
+    });
     return user;
   }
 
