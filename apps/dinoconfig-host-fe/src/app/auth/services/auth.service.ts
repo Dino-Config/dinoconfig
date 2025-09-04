@@ -67,7 +67,9 @@ export class AuthService {
   login(email: string, password: string): Observable<AuthResponse> {
     this._isLoading.set(true);
   
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }).pipe(
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`,
+       { email, password },
+       { withCredentials: true }).pipe(
       tap(response => {
         this.setSession(response);
         this._isAuthenticated.set(true);

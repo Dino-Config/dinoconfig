@@ -17,7 +17,8 @@ async function bootstrap() {
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   app.enableCors({
-    origin: [configService.get<string>('CORS_ORIGIN' as any), configService.get<string>('CORS_ORIGIN_ORG' as any)]
+    origin: [configService.get<string>('CORS_ORIGIN' as any), configService.get<string>('CORS_ORIGIN_ORG' as any)],
+    credentials: true
   });
 
   const port = configService.get<string>('PORT' as any) || 3000;
