@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { DialogService } from '../dialogs/dialog.service';
 import { DinoconfigBuilderWrapperComponent } from '../config-builder/config-builder.component';
+import { AuthService } from '../auth/services/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -15,8 +16,14 @@ import { DinoconfigBuilderWrapperComponent } from '../config-builder/config-buil
 })
 export class HomeComponent {
   private dialogService = inject(DialogService);
+  private authService = inject(AuthService);
+  private location = inject(Location);
 
   openSignupDialog() {
-    this.dialogService.openSignupDialog();
+    if (this.authService.isAuthenticated()) {
+      this.location.go('builder.dinoconfig.com');
+    } else {
+      this.dialogService.openSignupDialog();
+    }
   }
 }

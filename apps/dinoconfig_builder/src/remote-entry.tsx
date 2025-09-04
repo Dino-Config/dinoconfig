@@ -27,8 +27,6 @@ class DinoconfigBuilder extends HTMLElement {
         <App />
       </CacheProvider>
     );
-
-    console.log("DinoconfigBuilder mounted");
   }
 }
 
