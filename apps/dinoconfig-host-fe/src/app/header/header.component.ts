@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../auth/services/auth.service';
@@ -16,7 +16,6 @@ import { RouterModule } from '@angular/router';
 export class HeaderComponent {
   private dialogService = inject(DialogService);
   private authService = inject(AuthService);
-  private location = inject(Location);
 
   currentUser() {
     return this.authService.currentUser();
@@ -32,7 +31,7 @@ export class HeaderComponent {
 
   openBuilder() {
     if (this.authService.isAuthenticated()) {
-      this.location.go('builder.dinoconfig.com');
+      window.open('https://builder.dinoconfig.com', '_blank');
     } else {
       this.dialogService.openSignupDialog();
     }
