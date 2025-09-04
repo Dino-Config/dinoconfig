@@ -18,7 +18,8 @@
         "tsConfig": "apps/dinoconfig_builder/tsconfig.app.json",
         "assets": [
           "apps/dinoconfig_builder/src/favicon.ico",
-          "apps/dinoconfig_builder/src/assets"
+          "apps/dinoconfig_builder/src/assets",
+          "apps/dinoconfig_builder/src/_redirects"
         ],
         "styles": ["apps/dinoconfig_builder/src/styles.scss"],
         "scripts": [],
