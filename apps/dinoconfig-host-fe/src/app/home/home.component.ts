@@ -4,13 +4,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { DialogService } from '../dialogs/dialog.service';
-import { DinoconfigBuilderWrapperComponent } from '../config-builder/config-builder.component';
 import { AuthService } from '../auth/services/auth.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatSlideToggleModule, DinoconfigBuilderWrapperComponent],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
@@ -20,7 +20,7 @@ export class HomeComponent {
 
   openSignupDialog() {
     if (this.authService.isAuthenticated()) {
-      window.open('https://builder.dinoconfig.com', '_blank');
+      window.open(environment.builderUrl, '_blank');
     } else {
       this.dialogService.openSignupDialog();
     }
