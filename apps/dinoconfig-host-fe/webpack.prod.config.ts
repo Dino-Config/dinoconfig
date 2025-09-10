@@ -9,9 +9,7 @@ import config from './module-federation.config';
 export default withModuleFederation(
   {
     ...config,
-    remotes: [
-      ['dinoconfig_builder', 'https://dinoconfig.com/apps/dinoconfig_builder/remoteEntry.js']
-    ],
+    remotes: [],
   },
   { dts: false }
 );

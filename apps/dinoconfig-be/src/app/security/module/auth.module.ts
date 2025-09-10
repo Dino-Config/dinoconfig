@@ -9,7 +9,8 @@ import { UsersModule } from '../../users/users.module';
 imports: [
     UsersModule,
     ConfigModule.forRoot({ isGlobal: true }),
-    PassportModule.register({ defaultStrategy: 'jwt' })],
+    PassportModule.register({ defaultStrategy: 'jwt' })
+],
 providers: [JwtStrategy, AuthService],
 exports: [PassportModule, AuthService],
 })

@@ -1,10 +1,14 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-
 import ConfigBuilder from "./config-builder";
+import { AuthProvider } from "./auth/auth-provider";
+import { ProtectedRoute } from "./route/protected-route";
 
 export function App() {
   return (
-    <ConfigBuilder companyId="1" />
+    <AuthProvider>
+      <ProtectedRoute>
+        <ConfigBuilder companyId="1" />
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }
 

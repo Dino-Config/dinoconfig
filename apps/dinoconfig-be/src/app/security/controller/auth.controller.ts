@@ -2,10 +2,11 @@ import { Controller, Post, Body, Get, Query, HttpCode, Req, UseGuards, HttpExcep
 import { Response } from 'express';
 import { AuthService } from '../service/auth.service';
 import { JwtAuthGuard } from '../guard/jwt.guard';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly configService: ConfigService) {}
 
   @Get('token')
   @HttpCode(200)
@@ -39,7 +40,7 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      domain: '.dinoconfig.com',
+      domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
       path: '/',
       maxAge: 15 * 60 * 1000
     });
@@ -48,7 +49,7 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      domain: '.dinoconfig.com',
+      domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
       path: '/',
       maxAge: 15 * 60 * 1000
     });
@@ -63,5 +64,11 @@ export class AuthController {
   @Post('send-verification')
   async sendVerification(@Body() body: { userId: string }) {
     return this.authService.sendEmailVerification(body.userId);
+  }
+
+  @Get('validate')
+  @UseGuards(JwtAuthGuard)
+  async validate(@Res() res: Response) {
+    return res.status(204).send();
   }
 }

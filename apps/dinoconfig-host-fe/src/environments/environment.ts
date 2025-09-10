@@ -1,5 +1,5 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://api.dinoconfig.com/api',
-    configBuilderEntryPoint: 'https://dinoconfig.com/apps/dinoconfig_builder/remoteEntry.js'
+    apiUrl: 'http://localhost:3000/api',
+    builderUrl: 'http://localhost:4201'
 };

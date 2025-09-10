@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../auth/services/auth.service';
 import { DialogService } from '../dialogs/dialog.service';
 import { RouterModule } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-header',
@@ -31,7 +32,7 @@ export class HeaderComponent {
 
   openBuilder() {
     if (this.authService.isAuthenticated()) {
-      window.open('https://builder.dinoconfig.com', '_blank');
+      window.open(environment.builderUrl, '_blank');
     } else {
       this.dialogService.openSignupDialog();
     }
