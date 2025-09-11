@@ -1,7 +1,10 @@
 <mat-toolbar color="primary" class="toolbar">
     <div class="logo">
-        <img src="https://i.ibb.co/mV44dRwH/logo-1.png" alt="DinoConfig Icon" class="logo-icon" />
-        <span class="logo-text">DinoConfig</span>
+        <img src="assets/logo.svg" alt="DinoConfig Icon" class="logo-icon" />
+        <div>
+            <span class="logo-text-dino">Dino</span>
+            <span class="logo-text">Config</span>
+        </div>
     </div>
     <span class="spacer"></span>
     <nav class="nav-links">
@@ -9,7 +12,7 @@
         <a (click)="openBuilder()">Builder</a>
         <a href="#how-it-works">How it works</a>
         <a href="#pricing">Pricing</a>
-        <a href="#docs">Docs</a>
+        <!-- <a href="#docs">Docs</a> -->
     </nav>
     <div class="auth-buttons" *ngIf="currentUser() as user; else loggedOut">
         <span class="welcome">Welcome, {{ user.nickname }}</span>

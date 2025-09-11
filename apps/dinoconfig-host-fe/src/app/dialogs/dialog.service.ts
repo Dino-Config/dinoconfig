@@ -61,4 +61,15 @@ export class DialogService {
       });
     });
   }
+
+  openCalendlyDialog(): void {
+    import('../auth/components/calendly/calendly-dialog.component').then(m => {
+      const dialogRef = this.dialog.open(m.CalendlyDialogComponent, {
+        width: '550px',
+        maxHeight: '90vh',
+        disableClose: false,
+        panelClass: 'auth-dialog'
+      });
+    });
+  }
 }

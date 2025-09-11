@@ -8,11 +8,11 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  padding: 0 24px;
+  padding: 0 64px;
   height: 70px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-around;
 
   .logo {
     display: flex;
@@ -22,12 +22,28 @@
     .logo-icon {
       width: 64px;
       height: 64px;
+      transition: transform 0.3s ease;
+      
+      &:hover {
+        transform: scale(1.1);
+      }
     }
     
     .logo-text {
       font-size: 1.5rem;
-      font-weight: 700;
+      font-weight: 400;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-text-dino {
+      font-size: 1.5rem;
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #3448a9 0%, #49187a 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -41,13 +57,16 @@
     
     a {
       text-decoration: none;
-      color: #666;
-      font-weight: 500;
+      color: #525252;
+      font-size: 1.05rem;
+      font-weight: 400;
       transition: color 0.2s ease;
+      transition: transform 0.3s ease;
       
       &:hover {
         color: #667eea;
         cursor: pointer;
+        transform: scale(1.1);
       }
     }
   }
@@ -60,25 +79,43 @@
     .login-btn {
       color: #666;
       font-weight: 500;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+
     }
     
     .signup-btn {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       font-weight: 500;
-      border-radius: 8px;
+      border-radius: 16px;
       padding: 8px 20px;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.1);
+      }
     }
 
     .welcome {
-      color: #666;
-      font-weight: 500;
+      color: #787878;
+      font-weight: 400;
+      padding: 8px 20px;
     }
 
     .logout-btn {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       font-weight: 500;
+      border-radius: 16px;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.1);
+      }
     }
   }
 }
