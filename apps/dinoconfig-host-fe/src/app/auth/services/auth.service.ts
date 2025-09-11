@@ -84,13 +84,24 @@ export class AuthService {
     );
   }
 
-  logout() {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('id_token');
-    this._currentUser.set(null);
-    this._isAuthenticated.set(false);
+  logout(): void {
+    console.log('Logging out');
+  
+    this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
+      .pipe(
+        tap(() => {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('id_token');
+          this._currentUser.set(null);
+          this._isAuthenticated.set(false);
+        }),
+        catchError(error => {
+          console.error('Logout failed', error);
+          return throwError(() => error);
+        })
+      )
+      .subscribe();
   }
-
   
   signup(userData: SignupRequest): Observable<AuthResponse> {
     this._isLoading.set(true);
@@ -215,7 +226,7 @@ export class AuthService {
     return JSON.parse(jsonPayload);
   }
 
-  private setSession(authResult: AuthResponse): void {
+private setSession(authResult: AuthResponse): void {
     localStorage.setItem('access_token', authResult.access_token);
     localStorage.setItem('id_token', authResult.id_token);
   }
