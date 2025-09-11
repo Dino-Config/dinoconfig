@@ -1,2 +1,5 @@
-/apps/dinoconfig-host-fe/src/assets/*  /apps/dinoconfig-host-fe/src/assets/:splat  200
-/* /apps/dinoconfig-host-fe/index.html 200
+# Serve static assets for dinoconfig-host-fe
+/apps/dinoconfig-host-fe/assets/*   /apps/dinoconfig-host-fe/assets/:splat   200
+
+# SPA fallback for dinoconfig-host-fe
+/apps/dinoconfig-host-fe/*          /apps/dinoconfig-host-fe/index.html     200
