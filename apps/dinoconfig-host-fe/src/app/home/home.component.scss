@@ -36,16 +36,34 @@
   }
 }
 
+.hero-overlay {
+  position: absolute;
+  top: 0%;
+  left: 25%;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; 
+  display: flex;
+  justify-content: center;  
+  align-items: center; 
+  z-index: 0;
+}
+
+.hero-overlay img {
+  transform: scaleX(-1);
+  opacity: 0.4;
+}
+
 // Hero Section
 .hero-section {
-  padding: 40px 32px 40px;
+  padding: 40px 160px 40px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   align-items: center;
-  min-height: 700px;
+  min-height: 500px;
   position: relative;
   overflow: hidden;
   
@@ -62,7 +80,7 @@
 
   .hero-content {
     .hero-title {
-      font-size: 4rem;
+      font-size: 3rem;
       font-weight: 900;
       line-height: 1.1;
       margin-bottom: 32px;
@@ -150,12 +168,13 @@
     align-items: center;
 
     .dashboard-preview {
-      background: white;
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 12px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
       overflow: hidden;
       width: 100%;
       max-width: 400px;
+      z-index: 2;
 
       .dashboard-header {
         background: #f8f9fa;
@@ -262,7 +281,7 @@
 
 // Features Section
 .features-section {
-  padding: 100px 0;
+  padding: 50px 0;
   background: white;
 
   .features-grid {
@@ -306,7 +325,7 @@
 
 // How It Works Section
 .how-it-works-section {
-  padding: 100px 0;
+  padding: 50px 0;
   background: #f8f9fa;
 
   .steps-grid {
@@ -412,7 +431,7 @@
 
 // Pricing Section
 .pricing-section {
-  padding: 100px 0;
+  padding: 50px 0;
   background: #f8f9fa;
 
   .pricing-toggle {
@@ -571,10 +590,10 @@
       .cta-button {
         background: white;
         color: #667eea;
-        font-weight: 600;
+        font-weight: 400;
         padding: 16px 32px;
-        border-radius: 8px;
-        font-size: 1.1rem;
+        border-radius: 16px;
+        font-size: 1rem;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s ease;
         
@@ -588,8 +607,8 @@
         border: 2px solid rgba(255, 255, 255, 0.4);
         padding: 16px 32px;
         border-radius: 12px;
-        font-weight: 600;
-        font-size: 1.1rem;
+        font-weight: 400;
+        font-size: 1rem;
         transition: all 0.3s ease;
         background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(10px);
@@ -621,7 +640,7 @@
 
 // Demo Section
 .demo-section {
-  padding: 100px 0;
+  padding: 50px 0;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   
   .demo-features-preview {
@@ -705,7 +724,7 @@
     max-width: 100%;
     
     .macbook-screen {
-      background: #1a1a1a;
+      background: linear-gradient(135deg, #2d3e88 0%, #492170 100%);
       border-radius: 20px 20px 0 0;
       padding: 20px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -776,6 +795,10 @@
                 &:hover { background: #22aa33; }
               }
             }
+          }
+
+          .browser-image {
+           width: 900px;
           }
           
           .browser-address-bar {
@@ -850,7 +873,7 @@
     }
     
     .macbook-base {
-      background: #1a1a1a;
+      background: #3c245b;
       width: 100%;
       max-width: 900px;
       height: 20px;
@@ -887,9 +910,9 @@
     .demo-cta-button {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      font-weight: 600;
-      padding: 18px 36px;
-      border-radius: 8px;
+      font-weight: 400;
+      padding: 24px 42px;
+      border-radius: 16px;
       font-size: 1.2rem;
       box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
       transition: all 0.2s ease;
