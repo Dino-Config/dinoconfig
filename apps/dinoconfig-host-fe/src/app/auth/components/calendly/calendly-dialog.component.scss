@@ -1,0 +1,155 @@
+// Backdrop overlay with blur effect
+.calendly-dialog-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); // Safari support
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: backdropFadeIn 0.3s ease-out;
+    cursor: pointer; // Indicates clickable backdrop
+    
+    // Prevent backdrop from interfering with dialog content
+    &:hover {
+      background: rgba(0, 0, 0, 0.45);
+    }
+  }
+  
+  @keyframes backdropFadeIn {
+    from {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+    }
+    to {
+      opacity: 1;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  }
+  
+  @keyframes dialogSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .calendly-dialog-container {
+    padding: clamp(16px, 4vw, 24px);
+    max-width: 420px;
+    width: 100%;
+    min-height: fit-content;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    margin: 0 auto; // Center the container
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative; // Add this for absolute positioning context
+    
+    // Ensure proper centering in parent container
+    align-self: center;
+    
+    // Prevent backdrop blur from affecting dialog content
+    z-index: 1000;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: dialogSlideIn 0.3s ease-out;
+    
+    // Prevent horizontal scrolling
+    * {
+      box-sizing: border-box;
+    }
+    
+    // Ensure form elements don't overflow
+    input, button, mat-form-field {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .close-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      color: #6b7280;
+      transition: all 0.2s ease;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &:hover {
+        background-color: #e5e7eb;
+        border-color: #d1d5db;
+        color: #374151;
+        transform: scale(1.05);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+      
+      .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+}
+
+  @media (max-width: 360px) {
+    .calendly-dialog-container {
+      padding: 12px;
+      
+      .close-button {
+        top: 6px;
+        right: 6px;
+        width: 26px;
+        height: 26px;
+        
+        .mat-icon {
+          font-size: 15px;
+          width: 15px;
+          height: 15px;
+        }
+      }
+  }
+}
+  
+  // Landscape mobile optimization
+  @media (max-height: 500px) and (orientation: landscape) {
+    .calendly-dialog-container {
+      padding: 12px;
+      
+      .close-button {
+        top: 6px;
+        right: 6px;
+        width: 26px;
+        height: 26px;
+        
+        .mat-icon {
+          font-size: 15px;
+          width: 15px;
+          height: 15px;
+        }
+      }
+  }
+}

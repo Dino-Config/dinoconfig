@@ -1,0 +1,13 @@
+<div class="calendly-dialog-backdrop" (click)="onBackdropClick($event)">
+    <div class="calendly-dialog-container" (click)="$event.stopPropagation()">
+        <button 
+        mat-icon-button 
+        class="close-button" 
+        (click)="closeDialog()"
+        aria-label="Close dialog"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+        <div id="calendly-embed" style="min-width:320px;height:650px;"></div>
+    </div>
+  </div>

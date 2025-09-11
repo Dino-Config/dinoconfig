@@ -17,6 +17,11 @@
         "tsConfig": "apps/dinoconfig-host-fe/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
+          "apps/dinoconfig-host-fe/src/assets",
+          {
+            "glob": "**/*",
+            "input": "apps/dinoconfig-host-fe/public"
+          },
           {
             "glob": "**/*",
             "input": "apps/dinoconfig-host-fe/public"

@@ -38,28 +38,47 @@
 
 // Hero Section
 .hero-section {
-  padding: 120px 24px 80px;
+  padding: 40px 32px 40px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   align-items: center;
-  min-height: 600px;
+  min-height: 700px;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+  }
 
   .hero-content {
     .hero-title {
-      font-size: 3.5rem;
-      font-weight: 800;
-      line-height: 1.2;
-      margin-bottom: 24px;
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 32px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 1;
     }
 
     .hero-subtitle {
-      font-size: 1.25rem;
-      margin-bottom: 32px;
-      opacity: 0.9;
-      line-height: 1.6;
+      font-size: 1.375rem;
+      margin-bottom: 40px;
+      opacity: 0.95;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+      font-weight: 400;
     }
 
     .hero-buttons {
@@ -68,31 +87,41 @@
       margin-bottom: 32px;
 
       .cta-button {
-        background: white;
-        color: #667eea;
-        font-weight: 600;
-        padding: 16px 32px;
-        border-radius: 8px;
-        font-size: 1.1rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease;
+        background: linear-gradient(135deg, #ff5f57 0%, #f64b42  100%);
+        color: white;
+        font-weight: 00;
+        padding: 18px 36px;
+        border-radius: 12px;
+        font-size: 1.2rem;
+        box-shadow: 0 8px 30px rgba(66, 8, 173, 0.55);
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        z-index: 1;
         
         &:hover {
-          transform: translateY(-2px);
+          transform: translateY(-3px);
+          box-shadow: 0 12px 40px rgba(66, 8, 173, 0.4);
         }
       }
 
       .demo-button {
         color: white;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        padding: 14px 30px;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.2s ease;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-weight: 400;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 1;
         
         &:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.5);
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.7);
+          transform: translateY(-2px);
         }
       }
     }
@@ -102,11 +131,15 @@
       gap: 12px;
       
       .badge {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 500;
+        background: rgba(255, 255, 255, 0.25);
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        z-index: 1;
       }
     }
   }
@@ -406,14 +439,17 @@
     gap: 32px;
     max-width: 1000px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
 
     .pricing-card {
       background: white;
-      border-radius: 12px;
-      padding: 32px;
+      border-radius: 16px;
+      padding: 40px 32px;
       border: 2px solid #e9ecef;
       position: relative;
       transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 
       &.featured {
         border-color: #667eea;
@@ -549,15 +585,21 @@
 
       .demo-button {
         color: white;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        padding: 14px 30px;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.2s ease;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 1;
         
         &:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.5);
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.7);
+          transform: translateY(-2px);
         }
       }
     }
