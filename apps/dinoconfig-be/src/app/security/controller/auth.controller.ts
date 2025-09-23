@@ -56,6 +56,13 @@ export class AuthController {
     return user;
   }
 
+  @Post('logout')
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('id_token', { path: '/' });
+    return { message: 'Logged out successfully' };
+  }
+
   @Post('forgot-password')
   async forgotPassword(@Body() body: { email: string }) {
     return this.authService.forgotPassword(body.email);

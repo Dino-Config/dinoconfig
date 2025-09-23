@@ -25,4 +25,8 @@ export class HomeComponent {
       this.dialogService.openSignupDialog();
     }
   }
+
+  openCalendlyDialog() {
+    this.dialogService.openCalendlyDialog();
+  }
 }
