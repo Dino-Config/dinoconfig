@@ -1,10 +1,10 @@
-import { Controller, Post, Patch, Get, Param, Body, Request, UseGuards } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { ConfigsService } from './config.service';
 
-@Controller('brands/:brandName/configs')
+@Controller('brands/:brandId/configs')
 @UseGuards(JwtAuthGuard)
 export class ConfigsController {
   constructor(private readonly configsService: ConfigsService) {}
@@ -12,45 +12,45 @@ export class ConfigsController {
   @Post()
   create(
     @Request() req,
-    @Param('brandName') brandName: string,
+    @Param('brandId') brandId: string,
     @Body() dto: CreateConfigDto,
   ) {
-    return this.configsService.create(req.user.id, brandName, dto);
+    return this.configsService.create(req.user.id, parseInt(brandId), dto);
   }
 
-  @Post(':configKey')
+  @Patch(':configId')
   update(
     @Request() req,
-    @Param('brandName') brandName: string,
-    @Param('configKey') configKey: string,
+    @Param('brandId') brandId: string,
+    @Param('configId') configId: string,
     @Body() dto: UpdateConfigDto,
   ) {
-    return this.configsService.update(req.user.id, brandName, configKey, dto);
+    return this.configsService.update(req.user.id, parseInt(brandId), parseInt(configId), dto);
   }
 
-  @Get(':configKey')
-  findLatest(
+  @Get(':configId')
+  findOne(
     @Request() req,
-    @Param('brandName') brandName: string,
-    @Param('configKey') configKey: string,
+    @Param('brandId') brandId: string,
+    @Param('configId') configId: string,
   ) {
-    return this.configsService.findLatest(req.user.id, brandName, configKey);
+    return this.configsService.findOne(req.user.id, parseInt(brandId), parseInt(configId));
   }
 
-  @Get(':configKey/versions')
-  findAllVersions(
+  @Delete(':configId')
+  remove(
     @Request() req,
-    @Param('brandName') brandName: string,
-    @Param('configKey') configKey: string,
+    @Param('brandId') brandId: string,
+    @Param('configId') configId: string,
   ) {
-    return this.configsService.findAllVersions(req.user.id, brandName, configKey);
+    return this.configsService.remove(req.user.id, parseInt(brandId), parseInt(configId));
   }
 
-  @Get('/keys')
-  findAllKeys(
+  @Get()
+  findAllConfigsForBrand(
     @Request() req,
-    @Param('brandName') brandName: string,
+    @Param('brandId') brandId: string,
   ) {
-    return this.configsService.findAllKeys(req.user.id, brandName);
+    return this.configsService.findAllConfigsForBrand(req.user.id, parseInt(brandId));
   }
 }

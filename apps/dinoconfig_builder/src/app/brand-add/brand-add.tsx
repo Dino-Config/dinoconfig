@@ -45,8 +45,8 @@ export default function BrandAdd() {
         withCredentials: true
       });
 
-      // Redirect to config builder after successful creation
-      navigate('/builder');
+      // Redirect to brand selection after successful creation
+      navigate('/');
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Failed to create brand');
@@ -126,7 +126,7 @@ export default function BrandAdd() {
             <button
               type="button"
               className="btn secondary"
-              onClick={() => navigate('/builder')}
+              onClick={() => navigate('/')}
               disabled={isLoading}
             >
               Skip for now

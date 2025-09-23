@@ -12,6 +12,13 @@ export class BrandsService {
     @InjectRepository(User) private userRepo: Repository<User>
   ) {}
 
+  async findAllByUser(userId: number): Promise<Brand[]> {
+    return this.brandRepo.find({
+      where: { user: { id: userId } },
+      order: { createdAt: 'DESC' }
+    });
+  }
+
   async create(userId: number, dto: CreateBrandDto): Promise<Brand> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');

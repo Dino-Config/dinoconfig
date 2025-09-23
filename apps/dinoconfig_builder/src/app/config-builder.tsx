@@ -1,16 +1,11 @@
 // MultiConfigBuilder.tsx
 import React, { useEffect, useState, ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
-import {
-  loadConfigs,
-  createConfig,
-  updateConfig,
-  deleteConfig,
-  SavedConfig,
-} from "./storageService";
+import axios from "axios";
+import { environment } from "../environments/environment";
 import { IChangeEvent } from "@rjsf/core";
 import "./config-builder.scss";
 
@@ -45,14 +40,31 @@ interface FieldConfig {
   pattern?: string;
 }
 
-interface Props {
-  companyId: string;
+interface Config {
+  id: number;
+  name: string;
+  description?: string;
+  data: Record<string, any>;
+  version: number;
+  createdAt: string;
 }
 
-export default function MultiConfigBuilder({ companyId }: Props) {
+interface Brand {
+  id: number;
+  name: string;
+  description?: string;
+  logo?: string;
+  website?: string;
+}
+
+export default function MultiConfigBuilder() {
   const navigate = useNavigate();
-  const [configs, setConfigs] = useState<SavedConfig[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { brandId } = useParams<{ brandId?: string }>();
+  const [configs, setConfigs] = useState<Config[]>([]);
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // builder local state (for adding fields)
   const [field, setField] = useState<FieldConfig>({
@@ -69,10 +81,46 @@ export default function MultiConfigBuilder({ companyId }: Props) {
   const [uiSchema, setUiSchema] = useState<Record<string, any>>({});
   const [formData, setFormData] = useState<Record<string, any>>({});
 
-  // load configs initially
+  // load configs and brand info initially
   useEffect(() => {
-    setConfigs(loadConfigs(companyId));
-  }, [companyId]);
+    if (brandId) {
+      loadBrandAndConfigs(parseInt(brandId));
+    } else {
+      // Fallback for backward compatibility
+      navigate('/');
+    }
+  }, [brandId]);
+
+  const loadBrandAndConfigs = async (brandId: number) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Load brand info
+      const brandsResponse = await axios.get(`${environment.apiUrl}/brands`, {
+        withCredentials: true
+      });
+      const brandData = brandsResponse.data.find((b: Brand) => b.id === brandId);
+      if (!brandData) {
+        throw new Error('Brand not found');
+      }
+      setBrand(brandData);
+
+      // Load configs for this brand
+      const configsResponse = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs`, {
+        withCredentials: true
+      });
+      setConfigs(configsResponse.data);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || 'Failed to load brand and configs');
+      } else {
+        setError('An error occurred');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // when selectedId changes, load its schema/ui/formData
   useEffect(() => {
@@ -85,9 +133,15 @@ export default function MultiConfigBuilder({ companyId }: Props) {
     }
     const cfg = configs.find(c => c.id === selectedId);
     if (cfg) {
-      setSchema(cfg.schema || { type: "object", properties: {} });
-      setUiSchema(cfg.uiSchema || {});
-      setFormData(cfg.formData || {});
+      // Convert the stored data to schema format
+      // For now, we'll create a simple schema from the data structure
+      const properties: Record<string, any> = {};
+      Object.keys(cfg.data).forEach(key => {
+        properties[key] = { type: "string", title: key };
+      });
+      setSchema({ type: "object", properties, title: cfg.name });
+      setUiSchema({});
+      setFormData(cfg.data || {});
     }
   }, [selectedId, configs]);
 
@@ -177,52 +231,111 @@ export default function MultiConfigBuilder({ companyId }: Props) {
   };
 
   // create a new config skeleton and open it for editing
-  const handleCreateConfig = (name: string) => {
-    if (!name.trim()) return;
-    const initialSchema = { title: name, type: "object", properties: {}, required: [] } as JSONSchema7;
-    const created = createConfig(companyId, {
-      name,
-      schema: initialSchema,
-      uiSchema: {},
-      formData: {},
-    });
-    setConfigs(prev => [...prev, created]);
-    setSelectedId(created.id);
+  const handleCreateConfig = async (name: string) => {
+    if (!name.trim() || !brandId) return;
+    
+    try {
+      const response = await axios.post(`${environment.apiUrl}/brands/${brandId}/configs`, {
+        name,
+        description: '',
+        data: {}
+      }, {
+        withCredentials: true
+      });
+      
+      setConfigs(prev => [...prev, response.data]);
+      setSelectedId(response.data.id);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        alert(err.response?.data?.message || 'Failed to create config');
+      } else {
+        alert('An error occurred');
+      }
+    }
   };
 
   // save current schema/ui/formData into the selected config
-  const handleSaveConfig = () => {
-    if (!selectedId) {
+  const handleSaveConfig = async () => {
+    if (!selectedId || !brandId) {
       alert("Select or create a config first.");
       return;
     }
-    updateConfig(companyId, selectedId, {
-      schema,
-      uiSchema,
-      formData
-    });
-    setConfigs(loadConfigs(companyId)); // reload
-    alert("Saved");
+    
+    try {
+      // For now, we'll save the form data directly
+      // In a more advanced implementation, we'd save the schema structure
+      await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${selectedId}`, {
+        data: formData
+      }, {
+        withCredentials: true
+      });
+      
+      // Reload configs
+      await loadBrandAndConfigs(parseInt(brandId));
+      alert("Saved");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        alert(err.response?.data?.message || 'Failed to save config');
+      } else {
+        alert('An error occurred');
+      }
+    }
   };
 
-  const handleDeleteConfig = (id: string) => {
+  const handleDeleteConfig = async (id: number) => {
     if (!confirm("Delete this configuration?")) return;
-    deleteConfig(companyId, id);
-    setConfigs(loadConfigs(companyId));
-    setSelectedId(null);
+    
+    try {
+      await axios.delete(`${environment.apiUrl}/brands/${brandId}/configs/${id}`, {
+        withCredentials: true
+      });
+      
+      // Remove from local state
+      setConfigs(prev => prev.filter(c => c.id !== id));
+      
+      // Clear selection if deleted config was selected
+      if (selectedId === id) {
+        setSelectedId(null);
+      }
+      
+      alert("Config deleted successfully");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        alert(err.response?.data?.message || 'Failed to delete config');
+      } else {
+        alert('Failed to delete config');
+      }
+    }
   };
 
-  const handleRenameConfig = (id: string) => {
+  const handleRenameConfig = async (id: number) => {
     const next = prompt("New config name:");
     if (!next) return;
-    updateConfig(companyId, id, { name: next });
-    setConfigs(loadConfigs(companyId));
+    
+    try {
+      await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${id}`, {
+        name: next
+      }, {
+        withCredentials: true
+      });
+      
+      // Update local state
+      setConfigs(prev => prev.map(c => c.id === id ? { ...c, name: next } : c));
+      
+      alert("Config renamed successfully");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        alert(err.response?.data?.message || 'Failed to rename config');
+      } else {
+        alert('Failed to rename config');
+      }
+    }
   };
 
   const exportSelected = () => {
     if (!selectedId) return;
     const cfg = configs.find(c => c.id === selectedId)!;
-    const data = { name: cfg.name, schema: cfg.schema, uiSchema: cfg.uiSchema, formData: cfg.formData };
+    const data = { name: cfg.name, data: cfg.data, schema, uiSchema, formData };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -232,20 +345,56 @@ export default function MultiConfigBuilder({ companyId }: Props) {
     URL.revokeObjectURL(url);
   };
 
+  if (isLoading) {
+    return (
+      <div className="multi-config">
+        <div className="loading">
+          <h2>Loading brand and configs...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="multi-config">
+        <div className="error-state">
+          <h2>Error</h2>
+          <p>{error}</p>
+          <button className="btn primary" onClick={() => navigate('/')}>
+            Back to Brand Selection
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="multi-config">
-      {/* Left: Config list */}
-      <div className="sidebar">
-        <h3 className="section-title">Configs</h3>
-        <ConfigList
-          configs={configs}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onDelete={handleDeleteConfig}
-          onRename={handleRenameConfig}
-        />
-        <NewConfigCreator onCreate={handleCreateConfig} />
+      {/* Header with brand info */}
+      <div className="brand-header">
+        <button className="btn secondary" onClick={() => navigate('/')}>
+          ← Back to Brands
+        </button>
+        <div className="brand-info">
+          <h1>{brand?.name}</h1>
+          {brand?.description && <p>{brand.description}</p>}
+        </div>
       </div>
+
+      <div className="main-content">
+        {/* Left: Config list */}
+        <div className="sidebar">
+          <h3 className="section-title">Configs</h3>
+          <ConfigList
+            configs={configs}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onDelete={handleDeleteConfig}
+            onRename={handleRenameConfig}
+          />
+          <NewConfigCreator onCreate={handleCreateConfig} />
+        </div>
 
       {/* Middle: Builder + Preview */}
       <div className="builder">
@@ -362,25 +511,26 @@ export default function MultiConfigBuilder({ companyId }: Props) {
         </div>
       </div>
 
-      {/* Right: Schema viewers
-      <div className="schema-view">
-        <div className="block">
-          <h4>JSON Schema</h4>
-          <pre>{JSON.stringify(schema, null, 2)}</pre>
-        </div>
-        <div className="block">
-          <h4>UI Schema</h4>
-          <pre>{JSON.stringify(uiSchema, null, 2)}</pre>
-        </div>
-      </div> */}
+        {/* Right: Schema viewers
+        <div className="schema-view">
+          <div className="block">
+            <h4>JSON Schema</h4>
+            <pre>{JSON.stringify(schema, null, 2)}</pre>
+          </div>
+          <div className="block">
+            <h4>UI Schema</h4>
+            <pre>{JSON.stringify(uiSchema, null, 2)}</pre>
+          </div>
+        </div> */}
+      </div>
     </div>
   );
 }
 
 /* small helper components / styles below */
 function ConfigList({ configs, selectedId, onSelect, onDelete, onRename }: {
-  configs: SavedConfig[], selectedId: string | null,
-  onSelect: (id: string | null) => void, onDelete: (id: string) => void, onRename: (id: string) => void
+  configs: Config[], selectedId: number | null,
+  onSelect: (id: number | null) => void, onDelete: (id: number) => void, onRename: (id: number) => void
 }) {
   if (!configs.length) return <div className="empty">No configs yet</div>;
   return (
