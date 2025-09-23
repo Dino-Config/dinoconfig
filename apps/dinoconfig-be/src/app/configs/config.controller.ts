@@ -45,4 +45,12 @@ export class ConfigsController {
   ) {
     return this.configsService.findAllVersions(req.user.id, brandName, configKey);
   }
+
+  @Get('/keys')
+  findAllKeys(
+    @Request() req,
+    @Param('brandName') brandName: string,
+  ) {
+    return this.configsService.findAllKeys(req.user.id, brandName);
+  }
 }

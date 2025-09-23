@@ -102,4 +102,9 @@ export class ConfigsService {
       order: { version: 'DESC' },
     });
   }
+
+  async findAllKeys(userId: number, brandName: string): Promise<string[]> {
+    const brand = await this.getBrandForUser(userId, brandName);
+    return this.configRepo.find({ where: { brand: { id: brand.id } } }).then(configs => configs.map(c => c.configKey));
+  }
 }

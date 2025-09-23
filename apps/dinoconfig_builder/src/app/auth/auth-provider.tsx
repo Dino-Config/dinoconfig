@@ -8,13 +8,13 @@ type AuthContextType = {
 };
 
 export const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
-  loading: true,
+  isAuthenticated: true,
+  loading: false,
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     axios

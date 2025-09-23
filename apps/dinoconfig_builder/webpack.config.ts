@@ -1,13 +1,35 @@
-import { composePlugins, withNx } from '@nx/webpack';
-import { withReact } from '@nx/react';
+const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
+const { NxReactWebpackPlugin } = require('@nx/react/webpack-plugin');
+const { join } = require('path');
 
-// Nx plugins for webpack to build config object from Nx options and context.
-/**
- * DTS Plugin is disabled in Nx Workspaces as Nx already provides Typing support Module Federation
- * The DTS Plugin can be enabled by setting dts: true
- * Learn more about the DTS Plugin here: https://module-federation.io/configure/dts.html
- */
-export default composePlugins(
-  withNx(),
-  withReact()
-);
+module.exports = {
+  output: {
+    path: join(__dirname, '../../dist/apps/dinoconfig_builder'),
+  },
+  devServer: {
+    port: 4201,
+    historyApiFallback: {
+      index: '/index.html',
+      disableDotRule: true,
+      htmlAcceptHeaders: ['text/html', 'application/xhtml+xml'],
+    },
+  },
+  plugins: [
+    new NxAppWebpackPlugin({
+      tsConfig: './tsconfig.app.json',
+      compiler: 'babel',
+      main: './src/main.tsx',
+      index: './src/index.html',
+      baseHref: '/',
+      assets: ['./src/favicon.ico', './src/assets'],
+      styles: ['./src/styles.scss'],
+      outputHashing: process.env['NODE_ENV'] === 'production' ? 'all' : 'none',
+      optimization: process.env['NODE_ENV'] === 'production',
+    }),
+    new NxReactWebpackPlugin({
+      // Uncomment this line if you don't want to use SVGR
+      // See: https://react-svgr.com/
+      // svgr: false
+    }),
+  ],
+};

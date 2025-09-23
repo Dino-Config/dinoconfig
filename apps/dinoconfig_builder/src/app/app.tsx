@@ -1,14 +1,17 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ConfigBuilder from "./config-builder";
+import BrandAdd from "./brand-add/brand-add";
 import { AuthProvider } from "./auth/auth-provider";
 import { ProtectedRoute } from "./route/protected-route";
 
 export function App() {
   return (
-    <AuthProvider>
-      <ProtectedRoute>
-        <ConfigBuilder companyId="1" />
-      </ProtectedRoute>
-    </AuthProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<BrandAdd />} />
+        <Route path="/builder" element={<ConfigBuilder companyId="1" />} />
+      </Routes>
+    </Router>
   );
 }
 

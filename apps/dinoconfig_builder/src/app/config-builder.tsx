@@ -1,5 +1,6 @@
 // MultiConfigBuilder.tsx
 import React, { useEffect, useState, ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
@@ -49,6 +50,7 @@ interface Props {
 }
 
 export default function MultiConfigBuilder({ companyId }: Props) {
+  const navigate = useNavigate();
   const [configs, setConfigs] = useState<SavedConfig[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
