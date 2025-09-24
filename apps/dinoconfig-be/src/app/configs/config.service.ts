@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Config } from './entities/config.entity';
@@ -81,7 +81,16 @@ export class ConfigsService {
     await this.configRepo.remove(config);
   }
 
-  async getBrandByIdForUser(userId: number, brandId: number): Promise<Brand> {
+  async findAllConfigsForBrand(userId: number, brandId: number): Promise<Config[]> {
+    const brand = await this.getBrandByIdForUser(userId, brandId);
+    
+    return this.configRepo.find({
+      where: { brand: { id: brand.id } },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  private async getBrandByIdForUser(userId: number, brandId: number): Promise<Brand> {
     const brand = await this.brandRepo.findOne({
       where: { user: { id: userId }, id: brandId },
     });
@@ -91,15 +100,6 @@ export class ConfigsService {
     }
 
     return brand;
-  }
-
-  async findAllConfigsForBrand(userId: number, brandId: number): Promise<Config[]> {
-    const brand = await this.getBrandByIdForUser(userId, brandId);
-    
-    return this.configRepo.find({
-      where: { brand: { id: brand.id } },
-      order: { createdAt: 'DESC' },
-    });
   }
 
 }

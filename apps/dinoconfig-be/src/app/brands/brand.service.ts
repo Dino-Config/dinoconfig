@@ -24,6 +24,7 @@ export class BrandsService {
     if (!user) throw new NotFoundException('User not found');
 
     const brand = this.brandRepo.create({ ...dto, user });
+    
     return this.brandRepo.save(brand);
   }
 }
