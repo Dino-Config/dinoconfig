@@ -7,7 +7,7 @@ const isProd = process.env.NODE_ENV === 'production';
 module.exports = {
   output: {
     path: join(__dirname, '../../dist/apps/dinoconfig_builder'),
-    publicPath: isProd ? '/apps/dinoconfig_builder/' : '/',
+    publicPath: isProd ? '/apps/dinoconfig_builder/' : '/'
   },
   devServer: {
     port: 4201,

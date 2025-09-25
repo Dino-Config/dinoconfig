@@ -5,7 +5,6 @@ import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
 import axios from "axios";
-import { environment } from "../environments/environment";
 import { IChangeEvent } from "@rjsf/core";
 import "./config-builder.scss";
 
@@ -97,7 +96,7 @@ export default function MultiConfigBuilder() {
       setError(null);
 
       // Load brand info
-      const brandsResponse = await axios.get(`${environment.apiUrl}/brands`, {
+      const brandsResponse = await axios.get(`${process.env.NX_PUBLIC_API_URL}/brands`, {
         withCredentials: true
       });
       const brandData = brandsResponse.data.find((b: Brand) => b.id === brandId);
@@ -107,7 +106,7 @@ export default function MultiConfigBuilder() {
       setBrand(brandData);
 
       // Load configs for this brand
-      const configsResponse = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs`, {
+      const configsResponse = await axios.get(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs`, {
         withCredentials: true
       });
       setConfigs(configsResponse.data);
@@ -235,7 +234,7 @@ export default function MultiConfigBuilder() {
     if (!name.trim() || !brandId) return;
     
     try {
-      const response = await axios.post(`${environment.apiUrl}/brands/${brandId}/configs`, {
+      const response = await axios.post(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs`, {
         name,
         description: '',
         data: {}
@@ -264,7 +263,7 @@ export default function MultiConfigBuilder() {
     try {
       // For now, we'll save the form data directly
       // In a more advanced implementation, we'd save the schema structure
-      await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${selectedId}`, {
+      await axios.patch(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs/${selectedId}`, {
         data: formData
       }, {
         withCredentials: true
@@ -286,7 +285,7 @@ export default function MultiConfigBuilder() {
     if (!confirm("Delete this configuration?")) return;
     
     try {
-      await axios.delete(`${environment.apiUrl}/brands/${brandId}/configs/${id}`, {
+      await axios.delete(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs/${id}`, {
         withCredentials: true
       });
       
@@ -313,7 +312,7 @@ export default function MultiConfigBuilder() {
     if (!next) return;
     
     try {
-      await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${id}`, {
+      await axios.patch(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs/${id}`, {
         name: next
       }, {
         withCredentials: true
