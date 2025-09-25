@@ -5,6 +5,7 @@ const { join } = require('path');
 module.exports = {
   output: {
     path: join(__dirname, '../../dist/apps/dinoconfig_builder'),
+    publicPath: '/apps/dinoconfig_builder/',
   },
   devServer: {
     port: 4201,
