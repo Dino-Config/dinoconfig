@@ -7,7 +7,7 @@ const isProd = process.env.NODE_ENV === 'production';
 module.exports = {
   output: {
     path: join(__dirname, '../../dist/apps/dinoconfig_builder'),
-    publicPath: isProd ? '/apps/dinoconfig_builder/' : '/',
+    publicPath: isProd ? '/apps/dinoconfig_builder/' : '/'
   },
   devServer: {
     port: 4201,
@@ -26,9 +26,9 @@ module.exports = {
       baseHref: isProd ? '/apps/dinoconfig_builder/' : '/',
       assets: ['./src/favicon.ico', './src/assets', './src/_redirects'],
       styles: ['./src/styles.scss'],
-      outputHashing: process.env['NODE_ENV'] === 'production' ? 'all' : 'none',
-      optimization: process.env['NODE_ENV'] === 'production',
+      outputHashing: isProd ? 'all' : 'none',
+      optimization: isProd,
     }),
-    new NxReactWebpackPlugin()
+    new NxReactWebpackPlugin(),
   ],
 };

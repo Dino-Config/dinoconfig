@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { environment } from "../../environments";
 import "./brand-add.scss";
 
 interface BrandFormData {
@@ -35,7 +36,7 @@ export default function BrandAdd() {
     setError(null);
 
     try {
-      const response = await axios.post(`${process.env.NX_PUBLIC_API_URL}/brands`, {
+      const response = await axios.post(`${environment.apiUrl}/brands`, {
         name: formData.name,
         description: formData.description || undefined,
         logo: formData.logo || undefined,

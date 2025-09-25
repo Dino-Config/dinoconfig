@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
+import { environment } from "../../environments";
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     axios
-      .get(`${process.env.NX_PUBLIC_API_URL}/auth/validate`, { withCredentials: true })
+      .get(`${environment.apiUrl}/auth/validate`, { withCredentials: true })
 
       .then(() => setIsAuthenticated(true))
       .catch(() => setIsAuthenticated(false))
