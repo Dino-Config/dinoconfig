@@ -1,6 +1,6 @@
 import { JSX, useContext, useEffect } from "react";
 import { AuthContext } from "../auth/auth-provider";
-import { environment } from "../../environments/environment";
+import { environment } from "../../environments";
 
 export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated, loading } = useContext(AuthContext);

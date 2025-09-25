@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
-import { environment } from "../../environments/environment";
+import { environment } from "../../environments";
 
 type AuthContextType = {
   isAuthenticated: boolean;
