@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { environment } from "../../environments/environment";
 import "./brand-selection.scss";
 
 interface Brand {
@@ -27,7 +26,7 @@ export default function BrandSelection() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get(`${environment.apiUrl}/brands`, {
+      const response = await axios.get(`${process.env.NX_PUBLIC_API_URL}/brands`, {
         withCredentials: true
       });
       setBrands(response.data);

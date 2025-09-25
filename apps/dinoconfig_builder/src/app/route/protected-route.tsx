@@ -1,13 +1,12 @@
 import { JSX, useContext, useEffect } from "react";
 import { AuthContext } from "../auth/auth-provider";
-import { environment } from "../../environments/environment";
 
 export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated, loading } = useContext(AuthContext);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      window.location.href = environment.homeUrl;
+      window.location.href = process.env.NX_PUBLIC_HOME_URL!;
     }
   }, [loading, isAuthenticated]);
 
