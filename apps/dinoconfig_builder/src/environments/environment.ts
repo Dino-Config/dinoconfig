@@ -1,5 +1,5 @@
 export const environment = {
     production: false,
-    apiUrl: 'http://localhost:3000/api',
-    homeUrl: 'http://localhost:4200'
+    apiUrl: 'https://api.dinoconfig.com/api',
+    homeUrl: 'https://dinoconfig.com'
 };
