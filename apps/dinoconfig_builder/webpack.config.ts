@@ -2,13 +2,10 @@ const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { NxReactWebpackPlugin } = require('@nx/react/webpack-plugin');
 const { join } = require('path');
 
-console.log(process.env.NX_PUBLIC_PATH);
-console.log(process.env.NX_PUBLIC_BASE_HREF);
-
 module.exports = {
   output: {
     path: join(__dirname, '../../dist/apps/dinoconfig_builder'),
-    publicPath: process.env.NX_PUBLIC_PATH ?? '/',
+    publicPath: '/apps/dinoconfig_builder/',
   },
   devServer: {
     port: 4201,
@@ -23,13 +20,17 @@ module.exports = {
       tsConfig: './tsconfig.app.json',
       compiler: 'babel',
       main: './src/main.tsx',
-      index: './src/index.html',  
-      baseHref: process.env.NX_PUBLIC_BASE_HREF ?? '/',
+      index: './src/index.html',
+      baseHref: '/apps/dinoconfig_builder/',
       assets: ['./src/favicon.ico', './src/assets', './src/_redirects'],
       styles: ['./src/styles.scss'],
       outputHashing: process.env['NODE_ENV'] === 'production' ? 'all' : 'none',
       optimization: process.env['NODE_ENV'] === 'production',
     }),
-    new NxReactWebpackPlugin()
+    new NxReactWebpackPlugin({
+      // Uncomment this line if you don't want to use SVGR
+      // See: https://react-svgr.com/
+      // svgr: false
+    }),
   ],
 };
