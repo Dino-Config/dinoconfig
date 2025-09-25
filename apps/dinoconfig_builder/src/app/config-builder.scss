@@ -1,15 +1,72 @@
 .multi-config {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: stretch;
-  gap: 20px;
-  padding: 20px;
+  flex-direction: column;
   background: #f7f8fa;
   font-family: "Inter", sans-serif;
   color: #111827;
   min-height: 100vh;
   box-sizing: border-box;
+
+  .brand-header {
+    background: white;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+    .brand-info {
+      flex: 1;
+
+      h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 8px 0;
+      }
+
+      p {
+        color: #6b7280;
+        margin: 0;
+      }
+    }
+  }
+
+  .main-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 20px;
+    padding: 20px;
+    flex: 1;
+  }
+
+  .loading,
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+
+    h2 {
+      color: #374151;
+      margin-bottom: 16px;
+    }
+
+    p {
+      color: #6b7280;
+      margin-bottom: 24px;
+    }
+  }
+
+  .error-state {
+    h2 {
+      color: #dc2626;
+    }
+  }
 
   .sidebar,
   .builder,
@@ -115,6 +172,7 @@
         margin-left: 10px;
       }
     }
+
   }
 
   /* Builder */

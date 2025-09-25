@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Config } from './entities/config.entity';
@@ -13,38 +13,13 @@ export class ConfigsService {
     @InjectRepository(Brand) private readonly brandRepo: Repository<Brand>,
   ) {}
 
-  async getBrandForUser(userId: number, brandName: string): Promise<Brand> {
-    const brand = await this.brandRepo.findOne({
-      where: { user: { id: userId }, name: brandName },
-    });
-
-    if (!brand) {
-      throw new NotFoundException(`Brand "${brandName}" not found for this user`);
-    }
-
-    return brand;
-  }
-
-  async create(userId: number, brandName: string, dto: CreateConfigDto): Promise<Config> {
-    const brand = await this.getBrandForUser(userId, brandName);
-  
-    const configKey = dto.name.toLowerCase().replace(/\s+/g, '_');
-  
-    const existing = await this.configRepo.findOne({
-      where: { brand: { id: brand.id }, configKey },
-    });
-  
-    if (existing) {
-      throw new ConflictException(
-        `Config with name "${dto.name}" already exists for brand "${brandName}"`,
-      );
-    }
+  async create(userId: number, brandId: number, dto: CreateConfigDto): Promise<Config> {
+    const brand = await this.getBrandByIdForUser(userId, brandId);
   
     const config = this.configRepo.create({
       ...dto,
       data: dto.data ?? {},
       brand,
-      configKey,
       version: 1,
     });
   
@@ -53,53 +28,78 @@ export class ConfigsService {
 
   async update(
     userId: number,
-    brandName: string,
-    configKey: string,
+    brandId: number,
+    configId: number,
     dto: UpdateConfigDto,
   ): Promise<Config> {
-    const brand = await this.getBrandForUser(userId, brandName);
+    const brand = await this.getBrandByIdForUser(userId, brandId);
 
-    const latest = await this.configRepo.findOne({
-      where: { brand: { id: brand.id }, configKey },
-      order: { version: 'DESC' },
+    const existing = await this.configRepo.findOne({
+      where: { id: configId, brand: { id: brand.id } },
     });
 
-    if (!latest) {
-      throw new NotFoundException(`Config "${configKey}" not found`);
+    if (!existing) {
+      throw new NotFoundException(`Config with ID "${configId}" not found`);
     }
 
-    const newVersion = this.configRepo.create({
-      ...latest,
+    const updated = this.configRepo.create({
+      ...existing,
       ...dto,
-      brand: latest.brand,
-      version: latest.version + 1,
+      brand: existing.brand,
+      version: existing.version + 1,
       createdAt: undefined, // let DB generate timestamp
     });
 
-    return this.configRepo.save(newVersion);
+    return this.configRepo.save(updated);
   }
 
-  async findLatest(userId: number, brandName: string, configKey: string): Promise<Config> {
-    const brand = await this.getBrandForUser(userId, brandName);
+  async findOne(userId: number, brandId: number, configId: number): Promise<Config> {
+    const brand = await this.getBrandByIdForUser(userId, brandId);
 
-    const latest = await this.configRepo.findOne({
-      where: { brand: { id: brand.id }, configKey },
-      order: { version: 'DESC' },
+    const config = await this.configRepo.findOne({
+      where: { id: configId, brand: { id: brand.id } },
     });
 
-    if (!latest) {
-      throw new NotFoundException(`Config "${configKey}" not found`);
+    if (!config) {
+      throw new NotFoundException(`Config with ID "${configId}" not found`);
     }
 
-    return latest;
+    return config;
   }
 
-  async findAllVersions(userId: number, brandName: string, configKey: string): Promise<Config[]> {
-    const brand = await this.getBrandForUser(userId, brandName);
+  async remove(userId: number, brandId: number, configId: number): Promise<void> {
+    const brand = await this.getBrandByIdForUser(userId, brandId);
 
+    const config = await this.configRepo.findOne({
+      where: { id: configId, brand: { id: brand.id } },
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Config with ID "${configId}" not found`);
+    }
+
+    await this.configRepo.remove(config);
+  }
+
+  async findAllConfigsForBrand(userId: number, brandId: number): Promise<Config[]> {
+    const brand = await this.getBrandByIdForUser(userId, brandId);
+    
     return this.configRepo.find({
-      where: { brand: { id: brand.id }, configKey },
-      order: { version: 'DESC' },
+      where: { brand: { id: brand.id } },
+      order: { createdAt: 'DESC' },
     });
   }
+
+  private async getBrandByIdForUser(userId: number, brandId: number): Promise<Brand> {
+    const brand = await this.brandRepo.findOne({
+      where: { user: { id: userId }, id: brandId },
+    });
+
+    if (!brand) {
+      throw new NotFoundException(`Brand with ID "${brandId}" not found for this user`);
+    }
+
+    return brand;
+  }
+
 }
