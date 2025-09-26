@@ -23,6 +23,9 @@ export class Brand {
   @Column({ type: 'text', nullable: true })
   website?: string;
 
+  @Column({ type: 'text', nullable: true })
+  company?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

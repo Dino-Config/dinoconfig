@@ -34,6 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       auth0Id: payload.sub,
       email: payload.email,
       name: payload.name,
+      company: payload['X-INTERNAL-COMPANY'] || null,
     };
   }
 }

@@ -16,4 +16,7 @@ export class CreateBrandDto {
   @IsOptional()
   @IsUrl()
   website?: string;
+
+  @IsString()
+  company: string;
 }

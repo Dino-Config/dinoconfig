@@ -19,12 +19,36 @@ export class BrandsService {
     });
   }
 
-  async create(userId: number, dto: CreateBrandDto): Promise<Brand> {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
+  async findAllByCompany(company: string): Promise<Brand[]> {
+    return this.brandRepo.find({
+      where: { company: company },
+      order: { createdAt: 'DESC' }
+    });
+  }
 
-    const brand = this.brandRepo.create({ ...dto, user });
+  async findAllByAuth0Id(auth0Id: string): Promise<Brand[]> {
+    return this.brandRepo.find({
+      where: { user: { auth0Id } },
+      order: { createdAt: 'DESC' }
+    });
+  }
+
+  async create(dto: CreateBrandDto, companyName: string): Promise<Brand> {
+    const brand = this.brandRepo.create({ 
+      ...dto, 
+      company: companyName 
+    });
     
     return this.brandRepo.save(brand);
+  }
+
+  async findByIdAndUser(brandId: number, auth0Id: string): Promise<Brand | null> {
+    return this.brandRepo.findOne({
+      where: { 
+        id: brandId,
+        user: { auth0Id }
+      },
+      relations: ['user']
+    });
   }
 }
