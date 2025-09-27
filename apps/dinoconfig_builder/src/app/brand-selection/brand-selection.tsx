@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { environment } from "../../environments";
 import "./brand-selection.scss";
+import { IoAdd } from "react-icons/io5";
 
 interface Brand {
   id: number;
@@ -131,7 +132,8 @@ export default function BrandSelection() {
 
             <div className="create-new-section">
               <button className="btn secondary" onClick={handleCreateNewBrand}>
-                + Create New Brand
+                <IoAdd />
+                Create New Brand
               </button>
             </div>
           </>

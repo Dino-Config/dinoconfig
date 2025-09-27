@@ -16,6 +16,9 @@ export class Config {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
+  @Column({ type: 'text', nullable: true })
+  company?: string;
+
   @Column({ type: 'jsonb' })
   data: Record<string, any>;
 

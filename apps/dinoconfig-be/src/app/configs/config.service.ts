@@ -13,7 +13,7 @@ export class ConfigsService {
     @InjectRepository(Brand) private readonly brandRepo: Repository<Brand>,
   ) {}
 
-  async create(userId: number, brandId: number, dto: CreateConfigDto): Promise<Config> {
+  async create(userId: number, brandId: number, dto: CreateConfigDto, company: string): Promise<Config> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
   
     const config = this.configRepo.create({
@@ -21,6 +21,7 @@ export class ConfigsService {
       data: dto.data ?? {},
       brand,
       version: 1,
+      company: company,
     });
   
     return this.configRepo.save(config);
@@ -53,16 +54,18 @@ export class ConfigsService {
     return this.configRepo.save(updated);
   }
 
-  async findOne(userId: number, brandId: number, configId: number): Promise<Config> {
+  async findOneByBrandAndCompanyId(userId: number, brandId: number, configId: number, company: string): Promise<Config> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
 
     const config = await this.configRepo.findOne({
-      where: { id: configId, brand: { id: brand.id } },
+      where: { id: configId, brand: { id: brand.id }, company: company },
     });
 
     if (!config) {
       throw new NotFoundException(`Config with ID "${configId}" not found`);
     }
+
+    console.log(config);
 
     return config;
   }
@@ -81,16 +84,17 @@ export class ConfigsService {
     await this.configRepo.remove(config);
   }
 
-  async findAllConfigsForBrand(userId: number, brandId: number): Promise<Config[]> {
+  async findAllConfigsForBrand(userId: number, brandId: number, company: string): Promise<Config[]> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
     
     return this.configRepo.find({
-      where: { brand: { id: brand.id } },
+      where: { brand: { id: brand.id }, company: company },
       order: { createdAt: 'DESC' },
     });
   }
 
   private async getBrandByIdForUser(userId: number, brandId: number): Promise<Brand> {
+    
     const brand = await this.brandRepo.findOne({
       where: { user: { id: userId }, id: brandId },
     });

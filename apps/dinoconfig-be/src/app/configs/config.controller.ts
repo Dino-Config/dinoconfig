@@ -1,8 +1,9 @@
-import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { ConfigsService } from './config.service';
+import { brandHeaderExtractor } from '../security/jwt-extractor';
 
 @Controller('brands/:brandId/configs')
 @UseGuards(JwtAuthGuard)
@@ -13,9 +14,13 @@ export class ConfigsController {
   create(
     @Request() req,
     @Param('brandId') brandId: string,
-    @Body() dto: CreateConfigDto,
-  ) {
-    return this.configsService.create(req.user.id, parseInt(brandId), dto);
+    @Body() dto: CreateConfigDto) {
+    const company = brandHeaderExtractor(req);
+    if (!company) {
+      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
+    }
+
+    return this.configsService.create(req.user.id, parseInt(brandId), dto, company);
   }
 
   @Patch(':configId')
@@ -34,7 +39,12 @@ export class ConfigsController {
     @Param('brandId') brandId: string,
     @Param('configId') configId: string,
   ) {
-    return this.configsService.findOne(req.user.id, parseInt(brandId), parseInt(configId));
+    const company = brandHeaderExtractor(req);
+    if (!company) {
+      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
+    }
+
+    return this.configsService.findOneByBrandAndCompanyId(req.user.id, parseInt(brandId), parseInt(configId), company);
   }
 
   @Delete(':configId')
@@ -51,6 +61,11 @@ export class ConfigsController {
     @Request() req,
     @Param('brandId') brandId: string,
   ) {
-    return this.configsService.findAllConfigsForBrand(req.user.id, parseInt(brandId));
+    const company = brandHeaderExtractor(req);
+    if (!company) {
+      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
+    }
+
+    return this.configsService.findAllConfigsForBrand(req.user.id, parseInt(brandId), company);
   }
 }

@@ -86,7 +86,7 @@
   .brands-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
+    gap: 64px 24px;
     margin-bottom: 80px;
   }
 
@@ -171,14 +171,28 @@
   }
 
   .create-new-section {
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding-top: 24px;
     border-top: 1px solid #e2e8f0;
 
     .btn.secondary {
+      background: linear-gradient(135deg, #ff5f57 0%, #f64b42 100%);
+      color: white;
       padding: 12px 24px;
       font-size: 1rem;
       font-weight: 600;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(255, 95, 87, 0.3);
+        background: linear-gradient(135deg, #f64b42 0%, #e53e3e 100%);
+      }
     }
   }
 
