@@ -19,13 +19,6 @@ export class BrandsService {
     });
   }
 
-  async findAllByCompany(company: string): Promise<Brand[]> {
-    return this.brandRepo.find({
-      where: { company: company },
-      order: { createdAt: 'DESC' }
-    });
-  }
-
   async findAllByAuth0Id(auth0Id: string): Promise<Brand[]> {
     return this.brandRepo.find({
       where: { user: { auth0Id } },
@@ -33,20 +26,28 @@ export class BrandsService {
     });
   }
 
-  async create(dto: CreateBrandDto, companyName: string): Promise<Brand> {
+  async findAllByCompany(company: string): Promise<Brand[]> {
+    return this.brandRepo.find({
+      where: { company: company },
+      order: { createdAt: 'DESC' }
+    });
+  }
+
+  async create(dto: CreateBrandDto, companyName: string, userId: number): Promise<Brand> {
     const brand = this.brandRepo.create({ 
       ...dto, 
-      company: companyName 
+      company: companyName,
+      user: { id: userId }
     });
     
     return this.brandRepo.save(brand);
   }
 
-  async findByIdAndUser(brandId: number, auth0Id: string): Promise<Brand | null> {
+  async findByIdAndUser(brandId: number, userId: number): Promise<Brand | null> {
     return this.brandRepo.findOne({
       where: { 
         id: brandId,
-        user: { auth0Id }
+        user: { id: userId }
       },
       relations: ['user']
     });

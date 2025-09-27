@@ -58,6 +58,24 @@ interface Brand {
   website?: string;
 }
 
+interface User {
+  id: number;
+  auth0Id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  isActive: boolean;
+  companyName?: string;
+  createdAt: Date;
+  brands: Brand[];
+}
+
 export default function MultiConfigBuilder() {
   const navigate = useNavigate();
   const { brandId } = useParams<{ brandId?: string }>();
@@ -67,6 +85,10 @@ export default function MultiConfigBuilder() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+  const [currentView, setCurrentView] = useState<'builder' | 'profile'>('builder');
+  const [user, setUser] = useState<User | null>(null);
+  const [userLoading, setUserLoading] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
 
   // builder local state (for adding fields)
   const [field, setField] = useState<FieldConfig>({
@@ -121,6 +143,26 @@ export default function MultiConfigBuilder() {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    try {
+      setUserLoading(true);
+      setUserError(null);
+
+      const response = await axios.get(`${environment.apiUrl}/users`, {
+        withCredentials: true
+      });
+      setUser(response.data);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setUserError(err.response?.data?.message || 'Failed to load user profile');
+      } else {
+        setUserError('An error occurred while loading profile');
+      }
+    } finally {
+      setUserLoading(false);
     }
   };
 
@@ -517,8 +559,11 @@ export default function MultiConfigBuilder() {
           <div className="nav-section">
             <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Main</h3>
             <ul className="nav-menu">
-              <li className="nav-item active">
-                <button className="nav-link">
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${currentView === 'builder' ? 'active' : ''}`}
+                  onClick={() => setCurrentView('builder')}
+                >
                   <IoHammerOutline className="nav-icon" />
                   <span className={isNavCollapsed ? 'hidden' : ''}>Builder</span>
                 </button>
@@ -530,7 +575,15 @@ export default function MultiConfigBuilder() {
             <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Account</h3>
             <ul className="nav-menu">
               <li className="nav-item">
-                <button className="nav-link">
+                <button 
+                  className={`nav-link ${currentView === 'profile' ? 'active' : ''}`}
+                  onClick={() => {
+                    setCurrentView('profile');
+                    if (!user && !userLoading) {
+                      loadUserProfile();
+                    }
+                  }}
+                >
                   <IoPersonOutline className="nav-icon" />
                   <span className={isNavCollapsed ? 'hidden' : ''}>Profile</span>
                 </button>
@@ -558,159 +611,320 @@ export default function MultiConfigBuilder() {
         {/* Header with brand info */}
         <div className="brand-header">
           <div className="brand-info">
-            <div className="brand-field">
-              <span className="field-label">Brand name:</span>
-              <h1 className="field-value">{brand?.name}</h1>
-            </div>
-            {brand?.description && (
+            {currentView === 'builder' ? (
+              <>
+                <div className="brand-field">
+                  <span className="field-label">Brand name:</span>
+                  <h1 className="field-value">{brand?.name}</h1>
+                </div>
+                {brand?.description && (
+                  <div className="brand-field">
+                    <span className="field-label">Description:</span>
+                    <p className="field-value">{brand.description}</p>
+                  </div>
+                )}
+              </>
+            ) : (
               <div className="brand-field">
-                <span className="field-label">Description:</span>
-                <p className="field-value">{brand.description}</p>
+                <span className="field-label">View:</span>
+                <h1 className="field-value">User Profile</h1>
               </div>
             )}
           </div>
         </div>
 
         <div className="main-content">
-        {/* Left: Config list */}
-        <div className="sidebar">
-          <h3 className="section-title">Configs</h3>
-          <ConfigList
-            configs={configs}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onDelete={handleDeleteConfig}
-            onRename={handleRenameConfig}
-          />
-          <NewConfigCreator onCreate={handleCreateConfig} />
-        </div>
+          {currentView === 'builder' ? (
+            <>
+              {/* Left: Config list */}
+              <div className="sidebar">
+                <h3 className="section-title">Configs</h3>
+                <ConfigList
+                  configs={configs}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  onDelete={handleDeleteConfig}
+                  onRename={handleRenameConfig}
+                />
+                <NewConfigCreator onCreate={handleCreateConfig} />
+              </div>
 
-      {/* Middle: Builder + Preview */}
-      <div className="builder">
-        <h3 className="section-title">
-          {selectedId
-            ? `Editing: ${configs.find(c => c.id === selectedId)?.name}`
-            : "Create or select a config"}
-        </h3>
+              {/* Middle: Builder + Preview */}
+              <div className="builder">
+                <h3 className="section-title">
+                  {selectedId
+                    ? `Editing: ${configs.find(c => c.id === selectedId)?.name}`
+                    : "Create or select a config"}
+                </h3>
 
-        {/* Builder */}
-        <div className="field-builder">
-          <input placeholder="Field name" value={field.name} onChange={handleFieldChange("name")} />
-          <input placeholder="Label (optional)" value={field.label} onChange={handleFieldChange("label")} />
+                {/* Builder */}
+                <div className="field-builder">
+                  <input placeholder="Field name" value={field.name} onChange={handleFieldChange("name")} />
+                  <input placeholder="Label (optional)" value={field.label} onChange={handleFieldChange("label")} />
 
-          <select value={field.type} onChange={handleFieldChange("type")}>
-            {fieldTypes.map(ft => (
-              <option key={ft} value={ft}>{ft}</option>
-            ))}
-          </select>
+                  <select value={field.type} onChange={handleFieldChange("type")}>
+                    {fieldTypes.map(ft => (
+                      <option key={ft} value={ft}>{ft}</option>
+                    ))}
+                  </select>
 
-          {(field.type === "select" || field.type === "radio") && (
-            <input placeholder="Options (comma separated)" value={field.options} onChange={handleFieldChange("options")} />
-          )}
+                  {(field.type === "select" || field.type === "radio") && (
+                    <input placeholder="Options (comma separated)" value={field.options} onChange={handleFieldChange("options")} />
+                  )}
 
+                  <label className="toggle">
+                    <input type="checkbox" checked={showValidations} onChange={() => setShowValidations(s => !s)} />
+                    Show validation settings
+                  </label>
 
-          <label className="toggle">
-            <input type="checkbox" checked={showValidations} onChange={() => setShowValidations(s => !s)} />
-            Show validation settings
-          </label>
+                  {showValidations && (
+                    <div className="validation">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={!!field.required}
+                          onChange={e => setField({ ...field, required: e.target.checked })}
+                        /> Required
+                      </label>
 
-          {showValidations && (
-            <div className="validation">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={!!field.required}
-                  onChange={e => setField({ ...field, required: e.target.checked })}
-                /> Required
-              </label>
+                      {["number", "range"].includes(field.type) && (
+                        <div className="number-range">
+                          <input
+                            type="number"
+                            placeholder="Min"
+                            value={field.min ?? ""}
+                            onChange={e => setField({ ...field, min: e.target.value ? Number(e.target.value) : undefined })}
+                          />
+                          <input
+                            type="number"
+                            placeholder="Max"
+                            value={field.max ?? ""}
+                            onChange={e => setField({ ...field, max: e.target.value ? Number(e.target.value) : undefined })}
+                          />
+                        </div>
+                      )}
 
-              {["number", "range"].includes(field.type) && (
-                <div className="number-range">
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={field.min ?? ""}
-                    onChange={e => setField({ ...field, min: e.target.value ? Number(e.target.value) : undefined })}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={field.max ?? ""}
-                    onChange={e => setField({ ...field, max: e.target.value ? Number(e.target.value) : undefined })}
+                      {["text", "textarea", "email", "search", "url", "tel"].includes(field.type) && (
+                        <>
+                          <input
+                            type="number"
+                            placeholder="Max Length"
+                            value={field.maxLength ?? ""}
+                            onChange={e => setField({ ...field, maxLength: e.target.value ? Number(e.target.value) : undefined })}
+                          />
+                          <input
+                            placeholder="Pattern (regex)"
+                            value={field.pattern ?? ""}
+                            onChange={e => setField({ ...field, pattern: e.target.value || undefined })}
+                          />
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="actions">
+                    <button className="btn action-btn" onClick={addFieldToSchema}>Add field</button>
+                    <button
+                      className="btn muted"
+                      onClick={() => setField({ name: "", type: "text", label: "", options: "", required: false })}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live preview */}
+                <div className="preview">
+                  <h4>Live Preview</h4>
+                  <Form
+                    schema={schema}
+                    uiSchema={uiSchema}
+                    formData={formData}
+                    validator={validator}
+                    onChange={(e: IChangeEvent) => setFormData(e.formData)}
+                    onSubmit={({ formData }) => { alert("Preview submit — data in console"); console.log("submitted:", formData); }}
                   />
                 </div>
-              )}
-
-              {["text", "textarea", "email", "search", "url", "tel"].includes(field.type) && (
-                <>
-                  <input
-                    type="number"
-                    placeholder="Max Length"
-                    value={field.maxLength ?? ""}
-                    onChange={e => setField({ ...field, maxLength: e.target.value ? Number(e.target.value) : undefined })}
-                  />
-                  <input
-                    placeholder="Pattern (regex)"
-                    value={field.pattern ?? ""}
-                    onChange={e => setField({ ...field, pattern: e.target.value || undefined })}
-                  />
-                </>
-              )}
-            </div>
+                <div className="save-config-actions">
+                  <button
+                    className={`btn action-btn ${!selectedId ? "disabled" : ""}`}
+                    onClick={handleSaveConfig}
+                    disabled={!selectedId}
+                  >
+                    Save config
+                  </button>
+                  <button
+                    className={`btn action-btn ${!selectedId ? "disabled" : ""}`}
+                    onClick={exportSelected}
+                    disabled={!selectedId}
+                  >
+                    Export
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <ProfileView 
+              user={user} 
+              loading={userLoading} 
+              error={userError} 
+              onRetry={loadUserProfile}
+            />
           )}
-
-          <div className="actions">
-            <button className="btn action-btn" onClick={addFieldToSchema}>Add field</button>
-            <button
-              className="btn muted"
-              onClick={() => setField({ name: "", type: "text", label: "", options: "", required: false })}
-            >
-              Clear
-            </button>
-          </div>
         </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Live preview */}
-        <div className="preview">
-          <h4>Live Preview</h4>
-          <Form
-            schema={schema}
-            uiSchema={uiSchema}
-            formData={formData}
-            validator={validator}
-            onChange={(e: IChangeEvent) => setFormData(e.formData)}
-            onSubmit={({ formData }) => { alert("Preview submit — data in console"); console.log("submitted:", formData); }}
-          />
+/* Profile View Component */
+function ProfileView({ user, loading, error, onRetry }: {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  if (loading) {
+    return (
+      <div className="profile-container">
+        <div className="loading">
+          <h2>Loading profile...</h2>
         </div>
-        <div className="save-config-actions">
-          <button
-            className={`btn action-btn ${!selectedId ? "disabled" : ""}`}
-            onClick={handleSaveConfig}
-            disabled={!selectedId}
-          >
-            Save config
-          </button>
-          <button
-            className={`btn action-btn ${!selectedId ? "disabled" : ""}`}
-            onClick={exportSelected}
-            disabled={!selectedId}
-          >
-            Export
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="profile-container">
+        <div className="error-state">
+          <h2>Error loading profile</h2>
+          <p>{error}</p>
+          <button className="btn primary" onClick={onRetry}>
+            Retry
           </button>
         </div>
       </div>
+    );
+  }
 
-        {/* Right: Schema viewers
-        <div className="schema-view">
-          <div className="block">
-            <h4>JSON Schema</h4>
-            <pre>{JSON.stringify(schema, null, 2)}</pre>
+  if (!user) {
+    return (
+      <div className="profile-container">
+        <div className="empty-state">
+          <h2>No profile data</h2>
+          <button className="btn primary" onClick={onRetry}>
+            Load Profile
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="profile-container">
+      <div className="profile-content">
+        <h2 className="profile-title">User Profile</h2>
+        
+        <div className="profile-section">
+          <h3 className="section-title">Personal Information</h3>
+          <div className="profile-grid">
+            <div className="profile-field">
+              <span className="field-label">First Name:</span>
+              <span className="field-value">{user.firstName}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">Last Name:</span>
+              <span className="field-value">{user.lastName}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">Email:</span>
+              <span className="field-value">{user.email}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">Phone Number:</span>
+              <span className="field-value">{user.phoneNumber || 'Not provided'}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">Company Name:</span>
+              <span className="field-value">{user.companyName || 'Not provided'}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">Account Status:</span>
+              <span className={`field-value status ${user.isActive ? 'active' : 'inactive'}`}>
+                {user.isActive ? 'Active' : 'Inactive'}
+              </span>
+            </div>
           </div>
-          <div className="block">
-            <h4>UI Schema</h4>
-            <pre>{JSON.stringify(uiSchema, null, 2)}</pre>
+        </div>
+
+        <div className="profile-section">
+          <h3 className="section-title">Address Information</h3>
+          <div className="profile-grid">
+            <div className="profile-field full-width">
+              <span className="field-label">Address:</span>
+              <span className="field-value">{user.address || 'Not provided'}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">City:</span>
+              <span className="field-value">{user.city || 'Not provided'}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">State:</span>
+              <span className="field-value">{user.state || 'Not provided'}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">ZIP Code:</span>
+              <span className="field-value">{user.zip || 'Not provided'}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">Country:</span>
+              <span className="field-value">{user.country || 'Not provided'}</span>
+            </div>
           </div>
-        </div> */}
+        </div>
+
+        <div className="profile-section">
+          <h3 className="section-title">Account Details</h3>
+          <div className="profile-grid">
+            <div className="profile-field">
+              <span className="field-label">User ID:</span>
+              <span className="field-value">{user.id}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">Auth0 ID:</span>
+              <span className="field-value">{user.auth0Id}</span>
+            </div>
+            <div className="profile-field">
+              <span className="field-label">Member Since:</span>
+              <span className="field-value">{new Date(user.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-section">
+          <h3 className="section-title">Associated Brands</h3>
+          {user.brands && user.brands.length > 0 ? (
+            <div className="brands-list">
+              {user.brands.map((brand) => (
+                <div key={brand.id} className="brand-item">
+                  <div className="brand-info">
+                    <h4 className="brand-name">{brand.name}</h4>
+                    {brand.description && (
+                      <p className="brand-description">{brand.description}</p>
+                    )}
+                    {brand.website && (
+                      <a href={brand.website} target="_blank" rel="noopener noreferrer" className="brand-website">
+                        {brand.website}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-message">No brands associated with this account.</p>
+          )}
         </div>
       </div>
     </div>

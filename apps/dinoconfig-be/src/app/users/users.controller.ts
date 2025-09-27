@@ -10,19 +10,19 @@ export class UsersController {
 
   @Get()
   async getUser(@Req() req) {
-    const { sub } = req.user;
-    return this.usersService.findByAuth0Id(sub);
+    const { auth0Id } = req.user;
+    return this.usersService.findByAuth0Id(auth0Id);
   }
 
   @Patch()
   async updateUser(@Req() req, @Body() dto: UpdateUserDto) {
-    const { sub } = req.user;
-    return this.usersService.updateByAuth0Id(sub, dto);
+    const { auth0Id } = req.user;
+    return this.usersService.updateByAuth0Id(auth0Id, dto);
   }
 
   @Delete()
   async deleteUser(@Req() req) {
-    const { sub } = req.user;
-    return this.usersService.removeByAuth0Id(sub);
+    const { auth0Id } = req.user;
+    return this.usersService.removeByAuth0Id(auth0Id);
   }
 }
