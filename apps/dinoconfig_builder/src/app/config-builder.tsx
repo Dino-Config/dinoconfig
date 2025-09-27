@@ -7,6 +7,8 @@ import { JSONSchema7 } from "json-schema";
 import axios from "axios";
 import { IChangeEvent } from "@rjsf/core";
 import "./config-builder.scss";
+import { environment } from "../environments";
+import { IoChevronBack, IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoMenu } from "react-icons/io5";
 
 type FieldType =
   | "text"
@@ -64,6 +66,7 @@ export default function MultiConfigBuilder() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
 
   // builder local state (for adding fields)
   const [field, setField] = useState<FieldConfig>({
@@ -96,7 +99,7 @@ export default function MultiConfigBuilder() {
       setError(null);
 
       // Load brand info
-      const brandsResponse = await axios.get(`${process.env.NX_PUBLIC_API_URL}/brands`, {
+      const brandsResponse = await axios.get(`${environment.apiUrl}/brands`, {
         withCredentials: true
       });
       const brandData = brandsResponse.data.find((b: Brand) => b.id === brandId);
@@ -106,7 +109,7 @@ export default function MultiConfigBuilder() {
       setBrand(brandData);
 
       // Load configs for this brand
-      const configsResponse = await axios.get(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs`, {
+      const configsResponse = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs`, {
         withCredentials: true
       });
       setConfigs(configsResponse.data);
@@ -234,7 +237,7 @@ export default function MultiConfigBuilder() {
     if (!name.trim() || !brandId) return;
     
     try {
-      const response = await axios.post(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs`, {
+      const response = await axios.post(`${environment.apiUrl}/brands/${brandId}/configs`, {
         name,
         description: '',
         data: {}
@@ -263,7 +266,7 @@ export default function MultiConfigBuilder() {
     try {
       // For now, we'll save the form data directly
       // In a more advanced implementation, we'd save the schema structure
-      await axios.patch(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs/${selectedId}`, {
+      await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${selectedId}`, {
         data: formData
       }, {
         withCredentials: true
@@ -285,7 +288,7 @@ export default function MultiConfigBuilder() {
     if (!confirm("Delete this configuration?")) return;
     
     try {
-      await axios.delete(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs/${id}`, {
+      await axios.delete(`${environment.apiUrl}/brands/${brandId}/configs/${id}`, {
         withCredentials: true
       });
       
@@ -312,7 +315,7 @@ export default function MultiConfigBuilder() {
     if (!next) return;
     
     try {
-      await axios.patch(`${process.env.NX_PUBLIC_API_URL}/brands/${brandId}/configs/${id}`, {
+      await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${id}`, {
         name: next
       }, {
         withCredentials: true
@@ -347,8 +350,67 @@ export default function MultiConfigBuilder() {
   if (isLoading) {
     return (
       <div className="multi-config">
-        <div className="loading">
-          <h2>Loading brand and configs...</h2>
+        <nav className={`left-navigation ${isNavCollapsed ? 'collapsed' : ''}`}>
+          <div className={`nav-header ${isNavCollapsed ? 'collapsed' : ''}`}>
+            {isNavCollapsed ? (
+              <img 
+                src="assets/dinoconfig-logo.svg" 
+                alt="DinoConfig" 
+                className="nav-logo clickable-logo"
+                onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+              />
+            ) : (
+              <>
+                <h2 
+                  className="nav-title-clickable"
+                  onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+                >
+                  DinoConfig Builder
+                </h2>
+              </>
+            )}
+          </div>
+          <div className="nav-sections">
+            <div className="nav-section">
+              <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Main</h3>
+              <ul className="nav-menu">
+                <li className="nav-item active">
+                  <button className="nav-link">
+                    <IoHammerOutline className="nav-icon" />
+                    <span className={isNavCollapsed ? 'hidden' : ''}>Builder</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <div className="nav-section">
+              <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Account</h3>
+              <ul className="nav-menu">
+                <li className="nav-item">
+                  <button className="nav-link">
+                    <IoPersonOutline className="nav-icon" />
+                    <span className={isNavCollapsed ? 'hidden' : ''}>Profile</span>
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button className="nav-link">
+                    <IoSettingsOutline className="nav-icon" />
+                    <span className={isNavCollapsed ? 'hidden' : ''}>Settings</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="nav-footer">
+            <button className="btn back-button" onClick={() => navigate('/')}>
+              <IoChevronBack />
+              <span className={isNavCollapsed ? 'hidden' : ''}>Back to Brands</span>
+            </button>
+          </div>
+        </nav>
+        <div className="main-layout">
+          <div className="loading">
+            <h2>Loading brand and configs...</h2>
+          </div>
         </div>
       </div>
     );
@@ -357,12 +419,71 @@ export default function MultiConfigBuilder() {
   if (error) {
     return (
       <div className="multi-config">
-        <div className="error-state">
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button className="btn primary" onClick={() => navigate('/')}>
-            Back to Brand Selection
-          </button>
+        <nav className={`left-navigation ${isNavCollapsed ? 'collapsed' : ''}`}>
+          <div className={`nav-header ${isNavCollapsed ? 'collapsed' : ''}`}>
+            {isNavCollapsed ? (
+              <img 
+                src="assets/dinoconfig-logo.svg" 
+                alt="DinoConfig" 
+                className="nav-logo clickable-logo"
+                onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+              />
+            ) : (
+              <>
+                <h2 
+                  className="nav-title-clickable"
+                  onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+                >
+                  DinoConfig Builder
+                </h2>
+              </>
+            )}
+          </div>
+          <div className="nav-sections">
+            <div className="nav-section">
+              <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Main</h3>
+              <ul className="nav-menu">
+                <li className="nav-item active">
+                  <button className="nav-link">
+                    <IoHammerOutline className="nav-icon" />
+                    <span className={isNavCollapsed ? 'hidden' : ''}>Builder</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <div className="nav-section">
+              <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Account</h3>
+              <ul className="nav-menu">
+                <li className="nav-item">
+                  <button className="nav-link">
+                    <IoPersonOutline className="nav-icon" />
+                    <span className={isNavCollapsed ? 'hidden' : ''}>Profile</span>
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button className="nav-link">
+                    <IoSettingsOutline className="nav-icon" />
+                    <span className={isNavCollapsed ? 'hidden' : ''}>Settings</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="nav-footer">
+            <button className="btn back-button" onClick={() => navigate('/')}>
+              <IoChevronBack />
+              <span className={isNavCollapsed ? 'hidden' : ''}>Back to Brands</span>
+            </button>
+          </div>
+        </nav>
+        <div className="main-layout">
+          <div className="error-state">
+            <h2>Error</h2>
+            <p>{error}</p>
+            <button className="btn primary" onClick={() => navigate('/')}>
+              Back to Brand Selection
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -370,18 +491,87 @@ export default function MultiConfigBuilder() {
 
   return (
     <div className="multi-config">
-      {/* Header with brand info */}
-      <div className="brand-header">
-        <button className="btn secondary" onClick={() => navigate('/')}>
-          ← Back to Brands
-        </button>
-        <div className="brand-info">
-          <h1>{brand?.name}</h1>
-          {brand?.description && <p>{brand.description}</p>}
+      {/* Left Navigation Menu */}
+      <nav className={`left-navigation ${isNavCollapsed ? 'collapsed' : ''}`}>
+        <div className={`nav-header ${isNavCollapsed ? 'collapsed' : ''}`}>
+          {isNavCollapsed ? (
+            <img 
+              src="/assets/dinoconfig-logo.svg" 
+              alt="DinoConfig" 
+              className="nav-logo clickable-logo"
+              onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+            />
+          ) : (
+            <>
+              <h2 
+                className="nav-title-clickable"
+                onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+              >
+                DinoConfig Builder
+              </h2>
+            </>
+          )}
         </div>
-      </div>
+        
+        <div className="nav-sections">
+          <div className="nav-section">
+            <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Main</h3>
+            <ul className="nav-menu">
+              <li className="nav-item active">
+                <button className="nav-link">
+                  <IoHammerOutline className="nav-icon" />
+                  <span className={isNavCollapsed ? 'hidden' : ''}>Builder</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+          
+          <div className="nav-section">
+            <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Account</h3>
+            <ul className="nav-menu">
+              <li className="nav-item">
+                <button className="nav-link">
+                  <IoPersonOutline className="nav-icon" />
+                  <span className={isNavCollapsed ? 'hidden' : ''}>Profile</span>
+                </button>
+              </li>
+              <li className="nav-item">
+                <button className="nav-link">
+                  <IoSettingsOutline className="nav-icon" />
+                  <span className={isNavCollapsed ? 'hidden' : ''}>Settings</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="nav-footer">
+          <button className="btn back-button" onClick={() => navigate('/')}>
+            <IoChevronBack />
+            <span className={isNavCollapsed ? 'hidden' : ''}>Back to Brands</span>
+          </button>
+        </div>
+      </nav>
 
-      <div className="main-content">
+      {/* Main Content Area */}
+      <div className="main-layout">
+        {/* Header with brand info */}
+        <div className="brand-header">
+          <div className="brand-info">
+            <div className="brand-field">
+              <span className="field-label">Brand name:</span>
+              <h1 className="field-value">{brand?.name}</h1>
+            </div>
+            {brand?.description && (
+              <div className="brand-field">
+                <span className="field-label">Description:</span>
+                <p className="field-value">{brand.description}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="main-content">
         {/* Left: Config list */}
         <div className="sidebar">
           <h3 className="section-title">Configs</h3>
@@ -470,7 +660,7 @@ export default function MultiConfigBuilder() {
           )}
 
           <div className="actions">
-            <button className="btn primary" onClick={addFieldToSchema}>Add field</button>
+            <button className="btn action-btn" onClick={addFieldToSchema}>Add field</button>
             <button
               className="btn muted"
               onClick={() => setField({ name: "", type: "text", label: "", options: "", required: false })}
@@ -494,14 +684,14 @@ export default function MultiConfigBuilder() {
         </div>
         <div className="save-config-actions">
           <button
-            className={`btn primary ${!selectedId ? "disabled" : ""}`}
+            className={`btn action-btn ${!selectedId ? "disabled" : ""}`}
             onClick={handleSaveConfig}
             disabled={!selectedId}
           >
             Save config
           </button>
           <button
-            className={`btn primary ${!selectedId ? "disabled" : ""}`}
+            className={`btn action-btn ${!selectedId ? "disabled" : ""}`}
             onClick={exportSelected}
             disabled={!selectedId}
           >
@@ -521,6 +711,7 @@ export default function MultiConfigBuilder() {
             <pre>{JSON.stringify(uiSchema, null, 2)}</pre>
           </div>
         </div> */}
+        </div>
       </div>
     </div>
   );
@@ -562,7 +753,7 @@ function NewConfigCreator({ onCreate }: { onCreate: (name: string) => void }) {
         value={name}
         onChange={e => setName(e.target.value)}
       />
-      <button className="btn primary create-btn" onClick={() => { onCreate(name); setName(""); }}>
+      <button className="btn action-btn create-btn" onClick={() => { onCreate(name); setName(""); }}>
         Create
       </button>
     </div>

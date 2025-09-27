@@ -7,7 +7,7 @@
   padding: 20px;
 
   .brand-selection-container {
-    background: white;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 25%, rgba(255, 255, 255, 0.5) 100%);
     border-radius: 16px;
     padding: 40px;
     max-width: 1000px;
@@ -87,7 +87,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
-    margin-bottom: 40px;
+    margin-bottom: 80px;
   }
 
   .brand-card {
