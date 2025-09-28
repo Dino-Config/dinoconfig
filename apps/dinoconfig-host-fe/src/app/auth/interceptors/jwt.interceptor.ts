@@ -1,14 +1,11 @@
-import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandlerFn, HttpEvent, HttpClient } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap } from 'rxjs/operators';
 import { Observable, throwError } from 'rxjs';
-import { AuthService } from '../services/auth.service';
 
 let isRefreshing = false;
 
 export const JwtInterceptor: HttpInterceptorFn = (request, next) => {
-  const authService = inject(AuthService);
-
   // Skip auth endpoints to avoid infinite loops
   if (request.url.includes('/auth/')) {
     return next(request);
@@ -27,18 +24,21 @@ export const JwtInterceptor: HttpInterceptorFn = (request, next) => {
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && !request.url.includes('/auth/refresh')) {
-        return handle401Error(request, next, authService);
+        return handle401Error(request, next);
       }
       return throwError(() => error);
     })
   );
 };
 
-function handle401Error(request: HttpRequest<unknown>, next: HttpHandlerFn, authService: AuthService): Observable<HttpEvent<unknown>> {
+function handle401Error(request: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   if (!isRefreshing) {
     isRefreshing = true;
 
-    return authService.refreshToken().pipe(
+    // Get HttpClient directly without injecting AuthService
+    const http = inject(HttpClient);
+    
+    return http.post('/api/auth/refresh', {}, { withCredentials: true }).pipe(
       switchMap(() => {
         isRefreshing = false;
         // Retry the original request with credentials
@@ -46,7 +46,8 @@ function handle401Error(request: HttpRequest<unknown>, next: HttpHandlerFn, auth
       }),
       catchError((error) => {
         isRefreshing = false;
-        authService.logout();
+        // If refresh fails, redirect to login
+        window.location.href = '/';
         return throwError(() => error);
       })
     );

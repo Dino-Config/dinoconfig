@@ -87,14 +87,14 @@ export class AuthService {
                   this._isAuthenticated.set(true);
                   this._isLoading.set(false);
                 },
-                error: () => {
+                error: (refreshError) => {
                   this._currentUser.set(null);
                   this._isAuthenticated.set(false);
                   this._isLoading.set(false);
                 }
               });
             },
-            error: () => {
+            error: (refreshError) => {
               // If refresh also fails, user is not authenticated
               this._currentUser.set(null);
               this._isAuthenticated.set(false);
