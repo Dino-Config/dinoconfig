@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../auth/axios-interceptor";
 import { environment } from "../../environments";
 import "./brand-selection.scss";
 import { IoAdd } from "react-icons/io5";

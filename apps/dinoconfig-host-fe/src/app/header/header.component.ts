@@ -22,6 +22,10 @@ export class HeaderComponent {
     return this.authService.currentUser();
   }
 
+  isAuthenticated() {
+    return this.authService.isAuthenticated();
+  }
+
   openLoginDialog() {
     this.dialogService.openLoginDialog();
   }

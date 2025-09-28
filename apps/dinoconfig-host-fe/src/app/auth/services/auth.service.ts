@@ -5,10 +5,21 @@ import { tap, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface User {
-  id: string;
+  id: number;
+  auth0Id: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  name?: string;
-  nickname?: string;
+  phoneNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  isActive: boolean;
+  companyName?: string;
+  createdAt: string;
+  brands?: any[];
 }
 
 interface AuthResponse {
@@ -55,13 +66,49 @@ export class AuthService {
   }
 
   private checkAuthStatus(): void {
-    const token = this.getToken();
-    const user = this.getUser();
+    this._isLoading.set(true);
     
-    if (token && user) {
-      this._currentUser.set(user);
-      this._isAuthenticated.set(true);
-    }
+    // Check if user is authenticated by making an API call
+    this.getCurrentUserFromAPI().subscribe({
+      next: (user) => {
+        this._currentUser.set(user);
+        this._isAuthenticated.set(true);
+        this._isLoading.set(false);
+      },
+      error: (error) => {
+        // If getting user fails, try to refresh token first
+        if (error.status === 401) {
+          this.refreshToken().subscribe({
+            next: () => {
+              // After successful refresh, try to get user again
+              this.getCurrentUserFromAPI().subscribe({
+                next: (user) => {
+                  this._currentUser.set(user);
+                  this._isAuthenticated.set(true);
+                  this._isLoading.set(false);
+                },
+                error: () => {
+                  this._currentUser.set(null);
+                  this._isAuthenticated.set(false);
+                  this._isLoading.set(false);
+                }
+              });
+            },
+            error: () => {
+              // If refresh also fails, user is not authenticated
+              this._currentUser.set(null);
+              this._isAuthenticated.set(false);
+              this._isLoading.set(false);
+            }
+          });
+        } else {
+          // For other errors, just set as not authenticated
+          this._currentUser.set(null);
+          this._isAuthenticated.set(false);
+          this._isLoading.set(false);
+        }
+      }
+    });
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
@@ -70,15 +117,28 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`,
        { email, password },
        { withCredentials: true }).pipe(
-      tap(response => {
-        this.setSession(response);
-        this._isAuthenticated.set(true);
-        this._isLoading.set(false);
-        this.checkAuthStatus();
+      switchMap((loginResponse) => {
+        // After successful login, get user data from API
+        return this.getCurrentUserFromAPI().pipe(
+          tap((user) => {
+            this._currentUser.set(user);
+            this._isAuthenticated.set(true);
+            this._isLoading.set(false);
+          }),
+          switchMap(() => {
+            // Return the original login response
+            return [loginResponse];
+          })
+        );
       }),
-
       catchError(error => {
         this._isLoading.set(false);
+        // Handle specific case where user doesn't exist in database
+        if (error.status === 404 && error.error?.message?.includes('User not found in database')) {
+          const customError = new Error('Your account exists but is not properly set up in our system. Please contact support or try signing up again.');
+          customError.name = 'UserNotFoundInDatabase';
+          return throwError(() => customError);
+        }
         return throwError(() => error);
       })
     );
@@ -90,8 +150,6 @@ export class AuthService {
     this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
       .pipe(
         tap(() => {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('id_token');
           this._currentUser.set(null);
           this._isAuthenticated.set(false);
         }),
@@ -111,13 +169,21 @@ export class AuthService {
         return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, {
           email: userData.email,
           password: userData.password,
-        });
+        }, { withCredentials: true });
       }),
-      tap(loginResponse => {
-        this.setSession(loginResponse);
-        this._isAuthenticated.set(true);
-        this._isLoading.set(false);
-        this.checkAuthStatus();
+      switchMap((loginResponse) => {
+        // After successful signup and login, get user data from API
+        return this.getCurrentUserFromAPI().pipe(
+          tap((user) => {
+            this._currentUser.set(user);
+            this._isAuthenticated.set(true);
+            this._isLoading.set(false);
+          }),
+          switchMap(() => {
+            // Return the original login response
+            return [loginResponse];
+          })
+        );
       }),
       catchError(error => {
         this._isLoading.set(false);
@@ -148,15 +214,20 @@ export class AuthService {
   }
 
   refreshToken(): Observable<AuthResponse> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      return throwError(() => new Error('No refresh token available'));
-    }
-
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/refresh`, { refreshToken })
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/refresh`, {}, { withCredentials: true })
       .pipe(
-        tap(response => {
-          this.setSession(response);
+        switchMap((refreshResponse) => {
+          // After successful refresh, get updated user data
+          return this.getCurrentUserFromAPI().pipe(
+            tap((user) => {
+              this._currentUser.set(user);
+              this._isAuthenticated.set(true);
+            }),
+            switchMap(() => {
+              // Return the original refresh response
+              return [refreshResponse];
+            })
+          );
         }),
         catchError(error => {
           this.logout();
@@ -165,75 +236,21 @@ export class AuthService {
       );
   }
 
-
   getCurrentUser(): User | null {
     return this._currentUser();
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem('refresh_token');
-  }
-
   getUserNickname(): string | null {
-    const token = localStorage.getItem('id_token');
-    if (!token || token === 'undefined') return null;
-  
-    const userPayload = this.decodeJwt(token);
-    return userPayload.nickname || null;
+    const user = this._currentUser();
+    return user ? `${user.firstName} ${user.lastName}`.trim() : null;
   }
 
   getUser(): User | null {
-    const token = localStorage.getItem('id_token');
-    if (!token || token === 'undefined') return null;
-  
-    const payload = this.decodeJwt(token);
-  
-    const user: User = {
-      id: payload.sub || '',       
-      email: payload.email || '',
-      name: payload.given_name || undefined,
-      nickname: payload.nickname || undefined,
-    };
-  
-    return user;
+    return this._currentUser();
   }
 
-  isTokenExpired(): boolean {
-    const token = this.getToken();
-    if (!token) return true;
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.exp * 1000 < Date.now();
-    } catch {
-      return true;
-    }
-  }
-
-  private decodeJwt(token: string): any {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(c => `%${('00' + c.charCodeAt(0).toString(16)).slice(-2)}`)
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  }
-
-private setSession(authResult: AuthResponse): void {
-    localStorage.setItem('access_token', authResult.access_token);
-    localStorage.setItem('id_token', authResult.id_token);
-  }
-
-  private clearSession(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+  // New method to get user data from API
+  private getCurrentUserFromAPI(): Observable<User> {
+    return this.http.get<User>(`${environment.apiUrl}/users`, { withCredentials: true });
   }
 }

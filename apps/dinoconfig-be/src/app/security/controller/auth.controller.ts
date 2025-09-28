@@ -1,5 +1,5 @@
 import { Controller, Post, Body, Get, Query, HttpCode, Req, UseGuards, HttpException, HttpStatus, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { AuthService } from '../service/auth.service';
 import { JwtAuthGuard } from '../guard/jwt.guard';
 import { ConfigService } from '@nestjs/config';
@@ -34,7 +34,7 @@ export class AuthController {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-     const { access_token, id_token } = user;
+     const { access_token, id_token, refresh_token } = user;
 
     res.cookie('access_token', access_token, {
       httpOnly: true,
@@ -53,6 +53,19 @@ export class AuthController {
       path: '/',
       maxAge: 15 * 60 * 1000
     });
+
+    // Set refresh token with longer expiration (7 days)
+    if (refresh_token) {
+      res.cookie('refresh_token', refresh_token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+    }
+
     return user;
   }
 
@@ -60,6 +73,7 @@ export class AuthController {
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token', { path: '/' });
     res.clearCookie('id_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
     return { message: 'Logged out successfully' };
   }
 
@@ -77,5 +91,48 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async validate(@Res() res: Response) {
     return res.status(204).send();
+  }
+
+  @Post('refresh')
+  @HttpCode(200)
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = req.cookies['refresh_token'];
+    if (!refreshToken) {
+      throw new HttpException('No refresh token provided', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const newTokens = await this.authService.refreshToken(refreshToken);
+      
+      // Set new access token cookie
+      res.cookie('access_token', newTokens.access_token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
+        path: '/',
+        maxAge: 15 * 60 * 1000 // 15 minutes
+      });
+
+      // Set new id token cookie if provided
+      if (newTokens.id_token) {
+        res.cookie('id_token', newTokens.id_token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none',
+          domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
+          path: '/',
+          maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+      }
+
+      return {
+        access_token: newTokens.access_token,
+        id_token: newTokens.id_token,
+        expires_in: 900 // 15 minutes in seconds
+      };
+    } catch (error) {
+      throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
+    }
   }
 }

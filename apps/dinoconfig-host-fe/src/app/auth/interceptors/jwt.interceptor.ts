@@ -14,10 +14,14 @@ export const JwtInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  const token = authService.getToken();
-  
-  if (token) {
-    request = addToken(request, token);
+  // Ensure all requests include credentials (cookies)
+  if (!request.url.includes('/auth/')) {
+    request = request.clone({
+      setHeaders: {
+        'Content-Type': 'application/json'
+      },
+      withCredentials: true
+    });
   }
 
   return next(request).pipe(
@@ -30,22 +34,15 @@ export const JwtInterceptor: HttpInterceptorFn = (request, next) => {
   );
 };
 
-function addToken(request: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
-  return request.clone({
-    setHeaders: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-}
-
 function handle401Error(request: HttpRequest<unknown>, next: HttpHandlerFn, authService: AuthService): Observable<HttpEvent<unknown>> {
   if (!isRefreshing) {
     isRefreshing = true;
 
     return authService.refreshToken().pipe(
-      switchMap((response: any) => {
+      switchMap(() => {
         isRefreshing = false;
-        return next(addToken(request, response.accessToken));
+        // Retry the original request with credentials
+        return next(request.clone({ withCredentials: true }));
       }),
       catchError((error) => {
         isRefreshing = false;

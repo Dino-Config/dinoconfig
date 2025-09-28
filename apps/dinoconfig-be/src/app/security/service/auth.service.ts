@@ -15,6 +15,7 @@ interface Auth0LoginResponse {
   token_type: string;
   scope?: string;
   id_token?: string;
+  refresh_token?: string;
 }
 
 @Injectable()
@@ -129,7 +130,7 @@ export class AuthService {
         audience: this.configService.get('AUTH0_AUDIENCE'),
         client_id: this.configService.get('AUTH0_CLIENT_ID'),
         client_secret: this.configService.get('AUTH0_CLIENT_SECRET'),
-        scope: 'openid profile email',
+        scope: 'openid profile email offline_access',
       }),
     });
   
@@ -184,5 +185,25 @@ export class AuthService {
   
     const data = await response.json();
     return { jobId: data.id };
+  }
+
+  async refreshToken(refreshToken: string): Promise<Auth0LoginResponse> {
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: this.configService.get('AUTH0_CLIENT_ID'),
+        client_secret: this.configService.get('AUTH0_CLIENT_SECRET'),
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new HttpException(error || 'Invalid refresh token', HttpStatus.UNAUTHORIZED);
+    }
+
+    return response.json();
   }
 }

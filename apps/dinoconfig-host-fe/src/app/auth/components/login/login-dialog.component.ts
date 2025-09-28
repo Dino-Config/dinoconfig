@@ -83,7 +83,9 @@ export class LoginDialogComponent implements OnInit {
           this.isLoading = false;
           let errorMessage = 'Login failed. Please try again.';
           
-          if (error.error?.message) {
+          if (error.name === 'UserNotFoundInDatabase') {
+            errorMessage = error.message;
+          } else if (error.error?.message) {
             errorMessage = error.error.message;
           } else if (error.status === 401) {
             errorMessage = 'Invalid email or password.';
@@ -92,7 +94,7 @@ export class LoginDialogComponent implements OnInit {
           }
           
           this.snackBar.open(errorMessage, 'Close', {
-            duration: 5000,
+            duration: 7000,
             horizontalPosition: 'center',
             verticalPosition: 'top'
           });

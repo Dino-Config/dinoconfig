@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
-import axios from "axios";
+import axios from "./auth/axios-interceptor";
 import { IChangeEvent } from "@rjsf/core";
 import "./config-builder.scss";
 import { environment } from "../environments";

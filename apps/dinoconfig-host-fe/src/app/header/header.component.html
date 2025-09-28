@@ -14,8 +14,8 @@
         <a href="#pricing">Pricing</a>
         <!-- <a href="#docs">Docs</a> -->
     </nav>
-    <div class="auth-buttons" *ngIf="currentUser() as user; else loggedOut">
-        <span class="welcome">Welcome, {{ user.nickname }}</span>
+    <div class="auth-buttons" *ngIf="isAuthenticated() && currentUser() as user; else loggedOut">
+        <span class="welcome">Welcome, {{ user.firstName }} {{ user.lastName }}</span>
         <button mat-raised-button color="accent" class="logout-btn" (click)="logout()">Logout</button>
     </div>
     <ng-template #loggedOut>
