@@ -8,7 +8,7 @@ import axios from "axios";
 import { IChangeEvent } from "@rjsf/core";
 import "./config-builder.scss";
 import { environment } from "../environments";
-import { IoChevronBack, IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoMenu } from "react-icons/io5";
+import { IoChevronBack, IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoMenu, IoCheckmark, IoClose, IoWarning } from "react-icons/io5";
 
 type FieldType =
   | "text"
@@ -76,6 +76,30 @@ interface User {
   brands: Brand[];
 }
 
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  duration?: number;
+}
+
+interface ConfirmDialog {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+interface PromptDialog {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  defaultValue: string;
+  onConfirm: (value: string) => void;
+  onCancel: () => void;
+}
+
 export default function MultiConfigBuilder() {
   const navigate = useNavigate();
   const { brandId } = useParams<{ brandId?: string }>();
@@ -89,6 +113,24 @@ export default function MultiConfigBuilder() {
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(false);
   const [userError, setUserError] = useState<string | null>(null);
+
+  // Notification system
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {}
+  });
+  const [promptDialog, setPromptDialog] = useState<PromptDialog>({
+    isOpen: false,
+    title: '',
+    message: '',
+    defaultValue: '',
+    onConfirm: () => {},
+    onCancel: () => {}
+  });
 
   // builder local state (for adding fields)
   const [field, setField] = useState<FieldConfig>({
@@ -104,6 +146,60 @@ export default function MultiConfigBuilder() {
   const [schema, setSchema] = useState<JSONSchema7>({ type: "object", properties: {}, required: [] });
   const [uiSchema, setUiSchema] = useState<Record<string, any>>({});
   const [formData, setFormData] = useState<Record<string, any>>({});
+
+  // Notification helpers
+  const showNotification = (type: Notification['type'], message: string, duration = 5000) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const notification: Notification = { id, type, message, duration };
+    setNotifications(prev => [...prev, notification]);
+
+    if (duration > 0) {
+      setTimeout(() => {
+        removeNotification(id);
+      }, duration);
+    }
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const showConfirm = (title: string, message: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setConfirmDialog({
+        isOpen: true,
+        title,
+        message,
+        onConfirm: () => {
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          resolve(true);
+        },
+        onCancel: () => {
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          resolve(false);
+        }
+      });
+    });
+  };
+
+  const showPrompt = (title: string, message: string, defaultValue = ''): Promise<string | null> => {
+    return new Promise((resolve) => {
+      setPromptDialog({
+        isOpen: true,
+        title,
+        message,
+        defaultValue,
+        onConfirm: (value: string) => {
+          setPromptDialog(prev => ({ ...prev, isOpen: false }));
+          resolve(value);
+        },
+        onCancel: () => {
+          setPromptDialog(prev => ({ ...prev, isOpen: false }));
+          resolve(null);
+        }
+      });
+    });
+  };
 
   // load configs and brand info initially
   useEffect(() => {
@@ -235,7 +331,7 @@ export default function MultiConfigBuilder() {
 
   const addFieldToSchema = () => {
     if (!field.name?.trim()) {
-      alert("Field name is required.");
+      showNotification('warning', 'Field name is required.');
       return;
     }
     // create JSON schema field
@@ -291,9 +387,9 @@ export default function MultiConfigBuilder() {
       setSelectedId(response.data.id);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        alert(err.response?.data?.message || 'Failed to create config');
+        showNotification('error', err.response?.data?.message || 'Failed to create config');
       } else {
-        alert('An error occurred');
+        showNotification('error', 'An error occurred');
       }
     }
   };
@@ -301,7 +397,7 @@ export default function MultiConfigBuilder() {
   // save current schema/ui/formData into the selected config
   const handleSaveConfig = async () => {
     if (!selectedId || !brandId) {
-      alert("Select or create a config first.");
+      showNotification('warning', "Select or create a config first.");
       return;
     }
     
@@ -316,18 +412,19 @@ export default function MultiConfigBuilder() {
       
       // Reload configs
       await loadBrandAndConfigs(parseInt(brandId));
-      alert("Saved");
+      showNotification('success', "Config saved successfully");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        alert(err.response?.data?.message || 'Failed to save config');
+        showNotification('error', err.response?.data?.message || 'Failed to save config');
       } else {
-        alert('An error occurred');
+        showNotification('error', 'An error occurred');
       }
     }
   };
 
   const handleDeleteConfig = async (id: number) => {
-    if (!confirm("Delete this configuration?")) return;
+    const confirmed = await showConfirm("Delete Configuration", "Are you sure you want to delete this configuration? This action cannot be undone.");
+    if (!confirmed) return;
     
     try {
       await axios.delete(`${environment.apiUrl}/brands/${brandId}/configs/${id}`, {
@@ -342,36 +439,37 @@ export default function MultiConfigBuilder() {
         setSelectedId(null);
       }
       
-      alert("Config deleted successfully");
+      showNotification('success', "Config deleted successfully");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        alert(err.response?.data?.message || 'Failed to delete config');
+        showNotification('error', err.response?.data?.message || 'Failed to delete config');
       } else {
-        alert('Failed to delete config');
+        showNotification('error', 'Failed to delete config');
       }
     }
   };
 
   const handleRenameConfig = async (id: number) => {
-    const next = prompt("New config name:");
-    if (!next) return;
+    const currentConfig = configs.find(c => c.id === id);
+    const newName = await showPrompt("Rename Configuration", "Enter new config name:", currentConfig?.name || '');
+    if (!newName || newName.trim() === '') return;
     
     try {
       await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${id}`, {
-        name: next
+        name: newName.trim()
       }, {
         withCredentials: true
       });
       
       // Update local state
-      setConfigs(prev => prev.map(c => c.id === id ? { ...c, name: next } : c));
+      setConfigs(prev => prev.map(c => c.id === id ? { ...c, name: newName.trim() } : c));
       
-      alert("Config renamed successfully");
+      showNotification('success', "Config renamed successfully");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        alert(err.response?.data?.message || 'Failed to rename config');
+        showNotification('error', err.response?.data?.message || 'Failed to rename config');
       } else {
-        alert('Failed to rename config');
+        showNotification('error', 'Failed to rename config');
       }
     }
   };
@@ -538,7 +636,7 @@ export default function MultiConfigBuilder() {
         <div className={`nav-header ${isNavCollapsed ? 'collapsed' : ''}`}>
           {isNavCollapsed ? (
             <img 
-              src="/assets/dinoconfig-logo.svg" 
+              src="assets/dinoconfig-logo.svg" 
               alt="DinoConfig" 
               className="nav-logo clickable-logo"
               onClick={() => setIsNavCollapsed(!isNavCollapsed)}
@@ -733,17 +831,31 @@ export default function MultiConfigBuilder() {
                   </div>
                 </div>
 
-                {/* Live preview */}
-                <div className="preview">
-                  <h4>Live Preview</h4>
-                  <Form
-                    schema={schema}
-                    uiSchema={uiSchema}
-                    formData={formData}
-                    validator={validator}
-                    onChange={(e: IChangeEvent) => setFormData(e.formData)}
-                    onSubmit={({ formData }) => { alert("Preview submit — data in console"); console.log("submitted:", formData); }}
-                  />
+                {/* Live preview sections */}
+                <div className="preview-sections">
+                  {/* Form Preview */}
+                  <div className="preview-form">
+                    <h4>Live Preview</h4>
+                    <Form
+                      schema={schema}
+                      uiSchema={uiSchema}
+                      formData={formData}
+                      validator={validator}
+                      onChange={(e: IChangeEvent) => setFormData(e.formData)}
+                      onSubmit={({ formData }) => { showNotification('info', "Form submitted successfully!"); console.log("submitted:", formData); }}
+                    />
+                  </div>
+
+                  {/* JSON Data Display */}
+                  <div className="preview-json">
+                    <h4>JSON Data</h4>
+                    <div className="json-display">
+                      <pre>{JSON.stringify(formData, null, 2)}</pre>
+                    </div>
+                    <div className="json-info">
+                      <small>This is the actual data structure of the configuration</small>
+                    </div>
+                  </div>
                 </div>
                 <div className="save-config-actions">
                   <button
@@ -773,6 +885,38 @@ export default function MultiConfigBuilder() {
           )}
         </div>
       </div>
+
+      {/* Notification Container */}
+      <div className="notification-container">
+        {notifications.map((notification) => (
+          <NotificationToast
+            key={notification.id}
+            notification={notification}
+            onClose={() => removeNotification(notification.id)}
+          />
+        ))}
+      </div>
+
+      {/* Confirm Dialog */}
+      {confirmDialog.isOpen && (
+        <ConfirmDialogModal
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={confirmDialog.onCancel}
+        />
+      )}
+
+      {/* Prompt Dialog */}
+      {promptDialog.isOpen && (
+        <PromptDialogModal
+          title={promptDialog.title}
+          message={promptDialog.message}
+          defaultValue={promptDialog.defaultValue}
+          onConfirm={promptDialog.onConfirm}
+          onCancel={promptDialog.onCancel}
+        />
+      )}
     </div>
   );
 }
@@ -978,7 +1122,244 @@ const fieldTypes: FieldType[] = [
   "text", "password", "select", "checkbox", "radio", "number",
   "textarea", "email", "range", "search", "tel", "url", "time",
   "datetime", "datetime-local", "week", "month"
-]; const inputStyle: React.CSSProperties = { padding: 8, borderRadius: 6, border: "1px solid #d0d7e6", width: "100%" };
+];
+
+/* Notification Components */
+function NotificationToast({ notification, onClose }: {
+  notification: Notification;
+  onClose: () => void;
+}) {
+  const getIcon = () => {
+    switch (notification.type) {
+      case 'success':
+        return <IoCheckmark />;
+      case 'error':
+        return <IoClose />;
+      case 'warning':
+        return <IoWarning />;
+      default:
+        return null;
+    }
+  };
+
+  const getBackgroundColor = () => {
+    switch (notification.type) {
+      case 'success':
+        return '#10b981';
+      case 'error':
+        return '#ef4444';
+      case 'warning':
+        return '#f59e0b';
+      default:
+        return '#3b82f6';
+    }
+  };
+
+  return (
+    <div
+      className="notification-toast"
+      style={{
+        backgroundColor: getBackgroundColor(),
+        color: 'white',
+        padding: '12px 16px',
+        borderRadius: '8px',
+        marginBottom: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        animation: 'slideInRight 0.3s ease-out',
+        minWidth: '300px',
+        maxWidth: '500px'
+      }}
+    >
+      {getIcon() && <span style={{ fontSize: '18px' }}>{getIcon()}</span>}
+      <span style={{ flex: 1 }}>{notification.message}</span>
+      <button
+        onClick={onClose}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'white',
+          cursor: 'pointer',
+          padding: '4px',
+          borderRadius: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <IoClose />
+      </button>
+    </div>
+  );
+}
+
+function ConfirmDialogModal({ title, message, onConfirm, onCancel }: {
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '24px',
+          maxWidth: '400px',
+          width: '90%',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+        }}
+      >
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>{title}</h3>
+        <p style={{ margin: '0 0 24px 0', color: '#6b7280', lineHeight: '1.5' }}>{message}</p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              backgroundColor: 'white',
+              color: '#374151',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PromptDialogModal({ title, message, defaultValue, onConfirm, onCancel }: {
+  title: string;
+  message: string;
+  defaultValue: string;
+  onConfirm: (value: string) => void;
+  onCancel: () => void;
+}) {
+  const [value, setValue] = useState(defaultValue);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (value.trim()) {
+      onConfirm(value.trim());
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '24px',
+          maxWidth: '400px',
+          width: '90%',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+        }}
+      >
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>{title}</h3>
+        <p style={{ margin: '0 0 16px 0', color: '#6b7280', lineHeight: '1.5' }}>{message}</p>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              fontSize: '14px',
+              marginBottom: '24px',
+              boxSizing: 'border-box'
+            }}
+            autoFocus
+          />
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={onCancel}
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                backgroundColor: 'white',
+                color: '#374151',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              style={{
+                padding: '8px 16px',
+                border: 'none',
+                borderRadius: '6px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Confirm
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = { padding: 8, borderRadius: 6, border: "1px solid #d0d7e6", width: "100%" };
 const primaryBtn: React.CSSProperties = { background: "#2f6fed", color: "#fff", border: "none", padding: "8px 12px", borderRadius: 6, cursor: "pointer" };
 const mutedBtn: React.CSSProperties = { background: "#f3f6fb", color: "#333", border: "1px solid #e6edf8", padding: "6px 10px", borderRadius: 6, cursor: "pointer" };
 const disabledBtn: React.CSSProperties = { background: "#e6eefc", color: "#aac", border: "none", padding: "6px 10px", borderRadius: 6 };
