@@ -114,6 +114,7 @@ export default function MultiConfigBuilder() {
   const [userLoading, setUserLoading] = useState(false);
   const [userError, setUserError] = useState<string | null>(null);
 
+
   // Notification system
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>({
@@ -394,7 +395,7 @@ export default function MultiConfigBuilder() {
     }
   };
 
-  // save current schema/ui/formData into the selected config
+  // save current schema/ui/formData into the selected config and submit
   const handleSaveConfig = async () => {
     if (!selectedId || !brandId) {
       showNotification('warning', "Select or create a config first.");
@@ -412,7 +413,8 @@ export default function MultiConfigBuilder() {
       
       // Reload configs
       await loadBrandAndConfigs(parseInt(brandId));
-      showNotification('success', "Config saved successfully");
+      showNotification('success', "Config saved and submitted successfully!");
+      console.log("submitted:", formData);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         showNotification('error', err.response?.data?.message || 'Failed to save config');
@@ -755,124 +757,156 @@ export default function MultiConfigBuilder() {
                     : "Create or select a config"}
                 </h3>
 
-                {/* Builder */}
-                <div className="field-builder">
-                  <input placeholder="Field name" value={field.name} onChange={handleFieldChange("name")} />
-                  <input placeholder="Label (optional)" value={field.label} onChange={handleFieldChange("label")} />
+                {!selectedId ? (
+                  <div className="builder-disabled">
+                    <p>Please create or select a configuration first to add fields.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Builder */}
+                    <div className="field-builder">
+                      <input 
+                        placeholder="Field name" 
+                        value={field.name} 
+                        onChange={handleFieldChange("name")} 
+                      />
+                      <input 
+                        placeholder="Label (optional)" 
+                        value={field.label} 
+                        onChange={handleFieldChange("label")} 
+                      />
 
-                  <select value={field.type} onChange={handleFieldChange("type")}>
-                    {fieldTypes.map(ft => (
-                      <option key={ft} value={ft}>{ft}</option>
-                    ))}
-                  </select>
+                      <select 
+                        value={field.type} 
+                        onChange={handleFieldChange("type")}
+                      >
+                        {fieldTypes.map(ft => (
+                          <option key={ft} value={ft}>{ft}</option>
+                        ))}
+                      </select>
 
-                  {(field.type === "select" || field.type === "radio") && (
-                    <input placeholder="Options (comma separated)" value={field.options} onChange={handleFieldChange("options")} />
-                  )}
+                      {(field.type === "select" || field.type === "radio") && (
+                        <input 
+                          placeholder="Options (comma separated)" 
+                          value={field.options} 
+                          onChange={handleFieldChange("options")} 
+                        />
+                      )}
 
-                  <label className="toggle">
-                    <input type="checkbox" checked={showValidations} onChange={() => setShowValidations(s => !s)} />
-                    Show validation settings
-                  </label>
-
-                  {showValidations && (
-                    <div className="validation">
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={!!field.required}
-                          onChange={e => setField({ ...field, required: e.target.checked })}
-                        /> Required
+                      <label className="toggle">
+                        <input 
+                          type="checkbox" 
+                          checked={showValidations} 
+                          onChange={() => setShowValidations(s => !s)} 
+                        />
+                        Show validation settings
                       </label>
 
-                      {["number", "range"].includes(field.type) && (
-                        <div className="number-range">
-                          <input
-                            type="number"
-                            placeholder="Min"
-                            value={field.min ?? ""}
-                            onChange={e => setField({ ...field, min: e.target.value ? Number(e.target.value) : undefined })}
-                          />
-                          <input
-                            type="number"
-                            placeholder="Max"
-                            value={field.max ?? ""}
-                            onChange={e => setField({ ...field, max: e.target.value ? Number(e.target.value) : undefined })}
-                          />
+                      {showValidations && (
+                        <div className="validation">
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={!!field.required}
+                              onChange={e => setField({ ...field, required: e.target.checked })}
+                            /> Required
+                          </label>
+
+                          {["number", "range"].includes(field.type) && (
+                            <div className="number-range">
+                              <input
+                                type="number"
+                                placeholder="Min"
+                                value={field.min ?? ""}
+                                onChange={e => setField({ ...field, min: e.target.value ? Number(e.target.value) : undefined })}
+                              />
+                              <input
+                                type="number"
+                                placeholder="Max"
+                                value={field.max ?? ""}
+                                onChange={e => setField({ ...field, max: e.target.value ? Number(e.target.value) : undefined })}
+                              />
+                            </div>
+                          )}
+
+                          {["text", "textarea", "email", "search", "url", "tel"].includes(field.type) && (
+                            <>
+                              <input
+                                type="number"
+                                placeholder="Max Length"
+                                value={field.maxLength ?? ""}
+                                onChange={e => setField({ ...field, maxLength: e.target.value ? Number(e.target.value) : undefined })}
+                              />
+                              <input
+                                placeholder="Pattern (regex)"
+                                value={field.pattern ?? ""}
+                                onChange={e => setField({ ...field, pattern: e.target.value || undefined })}
+                              />
+                            </>
+                          )}
                         </div>
                       )}
 
-                      {["text", "textarea", "email", "search", "url", "tel"].includes(field.type) && (
-                        <>
-                          <input
-                            type="number"
-                            placeholder="Max Length"
-                            value={field.maxLength ?? ""}
-                            onChange={e => setField({ ...field, maxLength: e.target.value ? Number(e.target.value) : undefined })}
-                          />
-                          <input
-                            placeholder="Pattern (regex)"
-                            value={field.pattern ?? ""}
-                            onChange={e => setField({ ...field, pattern: e.target.value || undefined })}
-                          />
-                        </>
-                      )}
+                      <div className="actions">
+                        <button 
+                          className="btn action-btn"
+                          onClick={addFieldToSchema}
+                        >
+                          Add field
+                        </button>
+                        <button
+                          className="btn muted"
+                          onClick={() => setField({ name: "", type: "text", label: "", options: "", required: false })}
+                        >
+                          Clear
+                        </button>
+                      </div>
                     </div>
-                  )}
 
-                  <div className="actions">
-                    <button className="btn action-btn" onClick={addFieldToSchema}>Add field</button>
-                    <button
-                      className="btn muted"
-                      onClick={() => setField({ name: "", type: "text", label: "", options: "", required: false })}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
+                    {/* Live preview sections */}
+                    <div className="preview-sections">
+                      {/* Form Preview */}
+                      <div className="preview-form">
+                        <h4>Live Preview</h4>
+                        <Form
+                          schema={schema}
+                          uiSchema={uiSchema}
+                          formData={formData}
+                          validator={validator}
+                          onChange={(e: IChangeEvent) => setFormData(e.formData)}
+                          showErrorList={false}
+                          omitExtraData={true}
+                          liveValidate={false}
+                        />
+                      </div>
 
-                {/* Live preview sections */}
-                <div className="preview-sections">
-                  {/* Form Preview */}
-                  <div className="preview-form">
-                    <h4>Live Preview</h4>
-                    <Form
-                      schema={schema}
-                      uiSchema={uiSchema}
-                      formData={formData}
-                      validator={validator}
-                      onChange={(e: IChangeEvent) => setFormData(e.formData)}
-                      onSubmit={({ formData }) => { showNotification('info', "Form submitted successfully!"); console.log("submitted:", formData); }}
-                    />
-                  </div>
-
-                  {/* JSON Data Display */}
-                  <div className="preview-json">
-                    <h4>JSON Data</h4>
-                    <div className="json-display">
-                      <pre>{JSON.stringify(formData, null, 2)}</pre>
+                      {/* JSON Data Display */}
+                      <div className="preview-json">
+                        <h4>JSON Data</h4>
+                        <div className="json-display">
+                          <pre>{JSON.stringify(formData, null, 2)}</pre>
+                        </div>
+                        <div className="json-info">
+                          <small>This is the actual data structure of the configuration</small>
+                        </div>
+                      </div>
                     </div>
-                    <div className="json-info">
-                      <small>This is the actual data structure of the configuration</small>
+                    <div className="save-config-actions">
+                      <button
+                        className="btn submit-btn"
+                        onClick={handleSaveConfig}
+                      >
+                        Save & Submit
+                      </button>
+                      <button
+                        className="btn action-btn"
+                        onClick={exportSelected}
+                      >
+                        Export
+                      </button>
                     </div>
-                  </div>
-                </div>
-                <div className="save-config-actions">
-                  <button
-                    className={`btn action-btn ${!selectedId ? "disabled" : ""}`}
-                    onClick={handleSaveConfig}
-                    disabled={!selectedId}
-                  >
-                    Save config
-                  </button>
-                  <button
-                    className={`btn action-btn ${!selectedId ? "disabled" : ""}`}
-                    onClick={exportSelected}
-                    disabled={!selectedId}
-                  >
-                    Export
-                  </button>
-                </div>
+                  </>
+                )}
               </div>
             </>
           ) : (
@@ -917,6 +951,7 @@ export default function MultiConfigBuilder() {
           onCancel={promptDialog.onCancel}
         />
       )}
+
     </div>
   );
 }

@@ -650,6 +650,30 @@ body {
       }
     }
 
+    .builder-disabled {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 40px;
+
+      p {
+        color: #6b7280;
+        font-size: 16px;
+        font-weight: 500;
+        text-align: center;
+        margin: 0;
+        padding: 30px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        max-width: 400px;
+      }
+    }
+
     .preview-sections {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -718,68 +742,13 @@ body {
     }
 
     .preview-form {
-      // Style the RJSF form submit button
+      // Hide RJSF submit button since we handle submission externally
       .rjsf {
-        .btn-primary {
-          background: linear-gradient(135deg, #ff5f57 0%, #f64b42 100%) !important;
-          border: none !important;
-          border-radius: 8px !important;
-          padding: 12px 20px !important;
-          font-weight: 500 !important;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-
-          &:hover:not(:disabled) {
-            background: linear-gradient(135deg, #ff4a40 0%, #e63930 100%) !important;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-            transform: translateY(-1px) !important;
-          }
-
-          &:active {
-            transform: translateY(0) !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-          }
-
-          &:disabled {
-            background: #e5e7eb !important;
-            color: #9ca3af !important;
-            cursor: not-allowed !important;
-            transform: none !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-          }
-        }
-
-        // Alternative selectors for RJSF submit button
         button[type="submit"],
         .btn[type="submit"],
-        input[type="submit"] {
-          background: linear-gradient(135deg, #ff5f57 0%, #f64b42 100%) !important;
-          border: none !important;
-          border-radius: 8px !important;
-          padding: 12px 20px !important;
-          font-weight: 500 !important;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-          color: white !important;
-
-          &:hover:not(:disabled) {
-            background: linear-gradient(135deg, #ff4a40 0%, #e63930 100%) !important;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-            transform: translateY(-1px) !important;
-          }
-
-          &:active {
-            transform: translateY(0) !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-          }
-
-          &:disabled {
-            background: #e5e7eb !important;
-            color: #9ca3af !important;
-            cursor: not-allowed !important;
-            transform: none !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-          }
+        input[type="submit"],
+        .btn-primary {
+          display: none !important;
         }
       }
     }
@@ -878,7 +847,7 @@ body {
     }
   }
 
-  &.submit {
+  &.submit-btn {
     background: linear-gradient(135deg, #ff5f57 0%, #f64b42 100%);
     color: white;
     border: none;
