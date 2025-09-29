@@ -7,6 +7,12 @@
   background-color: #ffffff;
 }
 
+// Typing animation keyframes
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 // Utility classes
 .container {
   max-width: 1200px;
@@ -215,6 +221,17 @@
           .config-name {
             color: #1a1a1a;
             font-weight: 500;
+            
+            &.typing-text {
+              font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+              min-height: 1.2em; // Prevent layout shift
+              
+              .cursor {
+                animation: blink 1s infinite;
+                color: #667eea;
+                font-weight: bold;
+              }
+            }
           }
 
           .config-toggle {

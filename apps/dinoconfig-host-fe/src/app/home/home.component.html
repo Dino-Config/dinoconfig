@@ -29,16 +29,16 @@
             </div>
             <div class="dashboard-content">
                 <div class="config-item">
-                    <div class="config-name">Feature Flags</div>
-                    <div class="config-toggle active"></div>
+                    <div class="config-name typing-text">{{ featureFlagsText }}<span class="cursor">|</span></div>
+                    <div class="config-toggle" [class.active]="featureFlagsToggleActive"></div>
                 </div>
                 <div class="config-item">
-                    <div class="config-name">API Settings</div>
-                    <div class="config-toggle"></div>
+                    <div class="config-name typing-text">{{ apiSettingsText }}<span class="cursor">|</span></div>
+                    <div class="config-toggle" [class.active]="apiSettingsToggleActive"></div>
                 </div>
                 <div class="config-item">
-                    <div class="config-name">User Preferences</div>
-                    <div class="config-toggle active"></div>
+                    <div class="config-name typing-text">{{ userPreferencesText }}<span class="cursor">|</span></div>
+                    <div class="config-toggle" [class.active]="userPreferencesToggleActive"></div>
                 </div>
             </div>
         </div>
@@ -113,21 +113,6 @@
     </div>
 </section>
 
-<!-- Trusted By Section -->
-<!-- <section class="trusted-section">
-    <div class="container">
-        <h3>Trusted by teams of all shapes and sizes</h3>
-        <div class="company-logos">
-            <div class="logo-placeholder">TechCorp</div>
-            <div class="logo-placeholder">StartupXYZ</div>
-            <div class="logo-placeholder">Enterprise Inc</div>
-            <div class="logo-placeholder">DevStudio</div>
-            <div class="logo-placeholder">CloudScale</div>
-            <div class="logo-placeholder">DataFlow</div>
-        </div>
-    </div>
-</section> -->
-
 <!-- Features Section -->
 <section class="features-section" id="features">
     <div class="container">
@@ -150,24 +135,6 @@
                 <div class="feature-icon">🔧</div>
                 <h3>Multi-Platform SDKs</h3>
                 <p>Ready-to-use SDKs for JavaScript, TypeScript, Python, Java, Go, and more.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <h3>Smart Targeting</h3>
-                <p>Target specific user segments with advanced targeting rules and percentage rollouts.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Real-time Analytics</h3>
-                <p>Monitor configuration usage and performance with detailed analytics and insights.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <h3>Enterprise Security</h3>
-                <p>SSO, SAML, 2FA, and audit logs ensure your configurations are always secure.</p>
             </div>
 
             <div class="feature-card">
@@ -292,21 +259,21 @@
     <div class="container">
         <div class="section-header">
             <h2>Simple, transparent pricing</h2>
-            <p>Start free, scale as you grow</p>
+            <!-- <p>Start free, scale as you grow</p> -->
         </div>
 
-        <div class="pricing-toggle">
+        <!-- <div class="pricing-toggle">
             <span>Monthly</span>
             <mat-slide-toggle></mat-slide-toggle>
             <span>Annual <span class="discount">Save 20%</span></span>
-        </div>
+        </div> -->
 
         <div class="pricing-grid">
             <div class="pricing-card">
                 <div class="pricing-header">
                     <h3>Starter</h3>
                     <div class="price">
-                        <span class="amount">$9</span>
+                        <span class="amount">$9.99</span>
                         <span class="period">/month</span>
                     </div>
                     <p>Perfect for getting started</p>
@@ -320,14 +287,6 @@
                         <mat-icon>check</mat-icon>
                         <span>Basic SDKs</span>
                     </div>
-                    <div class="feature-item">
-                        <mat-icon>check</mat-icon>
-                        <span>Community support</span>
-                    </div>
-                    <div class="feature-item">
-                        <mat-icon>check</mat-icon>
-                        <span>SSO & 2FA</span>
-                    </div>
                 </div>
                 <button mat-outlined-button class="pricing-button" (click)="openSignupDialog()">Get started
                     now</button>
@@ -338,7 +297,7 @@
                 <div class="pricing-header">
                     <h3>Pro</h3>
                     <div class="price">
-                        <span class="amount">$29</span>
+                        <span class="amount">$29.99</span>
                         <span class="period">/month</span>
                     </div>
                     <p>For growing teams</p>
