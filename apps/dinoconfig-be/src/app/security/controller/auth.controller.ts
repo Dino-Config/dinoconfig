@@ -1,12 +1,17 @@
 import { Controller, Post, Body, Get, Query, HttpCode, Req, UseGuards, HttpException, HttpStatus, Res } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from '../service/auth.service';
+import { TokenBlacklistService } from '../service/token-blacklist.service';
 import { JwtAuthGuard } from '../guard/jwt.guard';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService, private readonly configService: ConfigService) {}
+  constructor(
+    private readonly authService: AuthService, 
+    private readonly tokenBlacklistService: TokenBlacklistService,
+    private readonly configService: ConfigService
+  ) {}
 
   @Get('token')
   @HttpCode(200)
@@ -71,9 +76,39 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token', { path: '/' });
-    res.clearCookie('id_token', { path: '/' });
-    res.clearCookie('refresh_token', { path: '/' });
+    // Extract tokens from cookies
+    const accessToken = req.cookies['access_token'];
+    const refreshToken = req.cookies['refresh_token'];
+
+    // Blacklist the tokens if they exist
+    if (accessToken) {
+      await this.tokenBlacklistService.blacklistToken(accessToken, 'access', 'logout');
+    }
+    
+    if (refreshToken) {
+      await this.tokenBlacklistService.blacklistToken(refreshToken, 'refresh', 'logout');
+    }
+
+    // Clear cookies
+    res.clearCookie('access_token', { 
+      path: '/',
+      domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
+      secure: true,
+      sameSite: 'none'
+    });
+    res.clearCookie('id_token', { 
+      path: '/',
+      domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
+      secure: true,
+      sameSite: 'none'
+    });
+    res.clearCookie('refresh_token', { 
+      path: '/',
+      domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
+      secure: true,
+      sameSite: 'none'
+    });
+    
     return { message: 'Logged out successfully' };
   }
 

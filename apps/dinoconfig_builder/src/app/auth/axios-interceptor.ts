@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { tokenRenewalService } from './token-renewal.service';
+import { environment } from '../../environments';
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -26,8 +27,13 @@ axios.interceptors.response.use(
     const originalRequest = error.config as any;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url?.includes('/auth/refresh')) {
+        console.log('Refresh token failed, redirecting to home...');
+        window.location.href = environment.homeUrl;
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
-        // If already refreshing, queue the request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(() => {
@@ -47,14 +53,20 @@ axios.interceptors.response.use(
           return axios(originalRequest);
         } else {
           processQueue(new Error('Token renewal failed'), null);
+          window.location.href = environment.homeUrl;
           return Promise.reject(error);
         }
       } catch (refreshError) {
         processQueue(refreshError, null);
+        window.location.href = environment.homeUrl;
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
+    }
+
+    if (error.response?.status === 401 && originalRequest._retry) {
+      window.location.href = environment.homeUrl;
     }
 
     return Promise.reject(error);

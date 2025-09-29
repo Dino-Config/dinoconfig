@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         timeout: 10000 // 10 second timeout
       });
       setIsAuthenticated(true);
-    } catch (error) {
+    } catch (error: any) {
       // If validation fails, try to renew the token
       console.log('Auth validation failed, attempting token renewal...');
       const renewed = await tokenRenewalService.forceRenewal();
@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setIsAuthenticated(false);
       }
+      // Note: Redirect is handled by axios interceptor
     } finally {
       setLoading(false);
     }
