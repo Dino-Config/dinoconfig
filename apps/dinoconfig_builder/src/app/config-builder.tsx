@@ -1,5 +1,5 @@
 // MultiConfigBuilder.tsx
-import React, { useEffect, useState, ChangeEvent } from "react";
+import React, { useEffect, useState, ChangeEvent, createRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
@@ -45,7 +45,9 @@ interface Config {
   id: number;
   name: string;
   description?: string;
-  data: Record<string, any>;
+  formData: Record<string, any>;
+  schema?: Record<string, any>;
+  uiSchema?: Record<string, any>;
   version: number;
   createdAt: string;
 }
@@ -274,15 +276,25 @@ export default function MultiConfigBuilder() {
     }
     const cfg = configs.find(c => c.id === selectedId);
     if (cfg) {
-      // Convert the stored data to schema format
-      // For now, we'll create a simple schema from the data structure
-      const properties: Record<string, any> = {};
-      Object.keys(cfg.data).forEach(key => {
-        properties[key] = { type: "string", title: key };
-      });
-      setSchema({ type: "object", properties, title: cfg.name });
-      setUiSchema({});
-      setFormData(cfg.data || {});
+      // Prefer stored schema/uiSchema/formData if present
+      const effectiveSchema = (cfg.schema as any) ?? { type: "object", properties: {}, required: [] };
+      const effectiveUiSchema = (cfg.uiSchema as any) ?? {};
+      const effectiveFormData = cfg.formData ?? {};
+
+      // If no schema provided but formData exists, infer simple string-based schema
+      if (!cfg.schema && effectiveFormData && Object.keys(effectiveFormData).length > 0) {
+        const properties: Record<string, any> = {};
+        Object.keys(effectiveFormData).forEach(key => {
+          const val = effectiveFormData[key];
+          const inferredType = typeof val === 'number' ? 'number' : typeof val === 'boolean' ? 'boolean' : 'string';
+          properties[key] = { type: inferredType, title: key };
+        });
+        setSchema({ type: "object", properties, title: cfg.name });
+      } else {
+        setSchema(effectiveSchema as any);
+      }
+      setUiSchema(effectiveUiSchema);
+      setFormData(effectiveFormData);
     }
   }, [selectedId, configs]);
 
@@ -306,7 +318,7 @@ export default function MultiConfigBuilder() {
       range: "range",
       search: "search",
       email: "email",
-      url: "url",
+      url: "uri",
       tel: "tel",
       time: "time",
       datetime: "datetime",
@@ -379,7 +391,9 @@ export default function MultiConfigBuilder() {
       const response = await axios.post(`${environment.apiUrl}/brands/${brandId}/configs`, {
         name,
         description: '',
-        data: {}
+        formData: {},
+        schema: { type: "object", properties: {}, required: [] },
+        uiSchema: {}
       }, {
         withCredentials: true
       });
@@ -403,10 +417,10 @@ export default function MultiConfigBuilder() {
     }
     
     try {
-      // For now, we'll save the form data directly
-      // In a more advanced implementation, we'd save the schema structure
       await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${selectedId}`, {
-        data: formData
+        formData,
+        schema,
+        uiSchema
       }, {
         withCredentials: true
       });
@@ -479,7 +493,7 @@ export default function MultiConfigBuilder() {
   const exportSelected = () => {
     if (!selectedId) return;
     const cfg = configs.find(c => c.id === selectedId)!;
-    const data = { name: cfg.name, data: cfg.data, schema, uiSchema, formData };
+    const data = { name: cfg.name, schema: schema, uiSchema: uiSchema, formData: formData };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -873,11 +887,26 @@ export default function MultiConfigBuilder() {
                           uiSchema={uiSchema}
                           formData={formData}
                           validator={validator}
+                          onSubmit={handleSaveConfig}
+                          showErrorList='top'
                           onChange={(e: IChangeEvent) => setFormData(e.formData)}
-                          showErrorList={false}
-                          omitExtraData={true}
-                          liveValidate={false}
-                        />
+
+                        >
+                        <div className="save-config-actions">
+                          <button
+                            className="btn submit-btn"
+                            type="submit"
+                          >
+                            Save & Submit
+                          </button>
+                          <button
+                            className="btn action-btn"
+                            onClick={exportSelected}
+                          >
+                            Export
+                          </button>
+                        </div>
+                        </Form>
                       </div>
 
                       {/* JSON Data Display */}
@@ -890,20 +919,6 @@ export default function MultiConfigBuilder() {
                           <small>This is the actual data structure of the configuration</small>
                         </div>
                       </div>
-                    </div>
-                    <div className="save-config-actions">
-                      <button
-                        className="btn submit-btn"
-                        onClick={handleSaveConfig}
-                      >
-                        Save & Submit
-                      </button>
-                      <button
-                        className="btn action-btn"
-                        onClick={exportSelected}
-                      >
-                        Export
-                      </button>
                     </div>
                   </>
                 )}

@@ -20,7 +20,13 @@ export class Config {
   company?: string;
 
   @Column({ type: 'jsonb' })
-  data: Record<string, any>;
+  formData: Record<string, any>;
+
+  @Column({ type: 'jsonb', nullable: true })
+  schema?: Record<string, any>;
+
+  @Column({ type: 'jsonb', nullable: true })
+  uiSchema?: Record<string, any>;
 
   @Column({ type: 'int' })
   version: number;

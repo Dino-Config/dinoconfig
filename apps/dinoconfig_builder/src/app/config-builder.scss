@@ -740,18 +740,6 @@ body {
         border: 1px solid #f3f4f6;
       }
     }
-
-    .preview-form {
-      // Hide RJSF submit button since we handle submission externally
-      .rjsf {
-        button[type="submit"],
-        .btn[type="submit"],
-        input[type="submit"],
-        .btn-primary {
-          display: none !important;
-        }
-      }
-    }
   }
 
   /* Schema view */
