@@ -44,6 +44,11 @@ export default function BrandSelection() {
   };
 
   const handleBrandSelect = (brandId: number) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lastBrandId', String(brandId));
+      }
+    } catch (_) {}
     navigate(`/builder/${brandId}`);
   };
 

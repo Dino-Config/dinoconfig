@@ -1,14 +1,15 @@
 // MultiConfigBuilder.tsx
-import React, { useEffect, useState, ChangeEvent, createRef } from "react";
+import React, { useEffect, useState, ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import LeftNavigation from "./navigation/left-navigation";
 import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
-import axios from "./auth/axios-interceptor";
+import axios from "../auth/axios-interceptor";
 import { IChangeEvent } from "@rjsf/core";
 import "./config-builder.scss";
-import { environment } from "../environments";
-import { IoChevronBack, IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoMenu, IoCheckmark, IoClose, IoWarning } from "react-icons/io5";
+import { environment } from "../../environments";
+import { IoCheckmark, IoClose, IoWarning } from "react-icons/io5";
 
 type FieldType =
   | "text"
@@ -111,10 +112,7 @@ export default function MultiConfigBuilder() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
-  const [currentView, setCurrentView] = useState<'builder' | 'profile'>('builder');
-  const [user, setUser] = useState<User | null>(null);
-  const [userLoading, setUserLoading] = useState(false);
-  const [userError, setUserError] = useState<string | null>(null);
+  
 
 
   // Notification system
@@ -207,10 +205,25 @@ export default function MultiConfigBuilder() {
   // load configs and brand info initially
   useEffect(() => {
     if (brandId) {
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lastBrandId', String(brandId));
+        }
+      } catch (_) {}
       loadBrandAndConfigs(parseInt(brandId));
     } else {
-      // Fallback for backward compatibility
-      navigate('/');
+      // Try restore from last used brand
+      let lastBrandId: string | null = null;
+      try {
+        if (typeof window !== 'undefined') {
+          lastBrandId = localStorage.getItem('lastBrandId');
+        }
+      } catch (_) {}
+      if (lastBrandId) {
+        navigate(`/builder/${lastBrandId}`);
+      } else {
+        navigate('/');
+      }
     }
   }, [brandId]);
 
@@ -245,25 +258,7 @@ export default function MultiConfigBuilder() {
     }
   };
 
-  const loadUserProfile = async () => {
-    try {
-      setUserLoading(true);
-      setUserError(null);
-
-      const response = await axios.get(`${environment.apiUrl}/users`, {
-        withCredentials: true
-      });
-      setUser(response.data);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setUserError(err.response?.data?.message || 'Failed to load user profile');
-      } else {
-        setUserError('An error occurred while loading profile');
-      }
-    } finally {
-      setUserLoading(false);
-    }
-  };
+  
 
   // when selectedId changes, load its schema/ui/formData
   useEffect(() => {
@@ -506,63 +501,11 @@ export default function MultiConfigBuilder() {
   if (isLoading) {
     return (
       <div className="multi-config">
-        <nav className={`left-navigation ${isNavCollapsed ? 'collapsed' : ''}`}>
-          <div className={`nav-header ${isNavCollapsed ? 'collapsed' : ''}`}>
-            {isNavCollapsed ? (
-              <img 
-                src="assets/dinoconfig-logo.svg" 
-                alt="DinoConfig" 
-                className="nav-logo clickable-logo"
-                onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-              />
-            ) : (
-              <>
-                <h2 
-                  className="nav-title-clickable"
-                  onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-                >
-                  DinoConfig Builder
-                </h2>
-              </>
-            )}
-          </div>
-          <div className="nav-sections">
-            <div className="nav-section">
-              <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Main</h3>
-              <ul className="nav-menu">
-                <li className="nav-item active">
-                  <button className="nav-link">
-                    <IoHammerOutline className="nav-icon" />
-                    <span className={isNavCollapsed ? 'hidden' : ''}>Builder</span>
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <div className="nav-section">
-              <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Account</h3>
-              <ul className="nav-menu">
-                <li className="nav-item">
-                  <button className="nav-link">
-                    <IoPersonOutline className="nav-icon" />
-                    <span className={isNavCollapsed ? 'hidden' : ''}>Profile</span>
-                  </button>
-                </li>
-                <li className="nav-item">
-                  <button className="nav-link">
-                    <IoSettingsOutline className="nav-icon" />
-                    <span className={isNavCollapsed ? 'hidden' : ''}>Settings</span>
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="nav-footer">
-            <button className="btn back-button" onClick={() => navigate('/')}>
-              <IoChevronBack />
-              <span className={isNavCollapsed ? 'hidden' : ''}>Back to Brands</span>
-            </button>
-          </div>
-        </nav>
+        <LeftNavigation 
+          isCollapsed={isNavCollapsed}
+          onToggle={() => setIsNavCollapsed(!isNavCollapsed)}
+          activeItem="builder"
+        />
         <div className="main-layout">
           <div className="loading">
             <h2>Loading brand and configs...</h2>
@@ -575,63 +518,11 @@ export default function MultiConfigBuilder() {
   if (error) {
     return (
       <div className="multi-config">
-        <nav className={`left-navigation ${isNavCollapsed ? 'collapsed' : ''}`}>
-          <div className={`nav-header ${isNavCollapsed ? 'collapsed' : ''}`}>
-            {isNavCollapsed ? (
-              <img 
-                src="assets/dinoconfig-logo.svg" 
-                alt="DinoConfig" 
-                className="nav-logo clickable-logo"
-                onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-              />
-            ) : (
-              <>
-                <h2 
-                  className="nav-title-clickable"
-                  onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-                >
-                  DinoConfig Builder
-                </h2>
-              </>
-            )}
-          </div>
-          <div className="nav-sections">
-            <div className="nav-section">
-              <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Main</h3>
-              <ul className="nav-menu">
-                <li className="nav-item active">
-                  <button className="nav-link">
-                    <IoHammerOutline className="nav-icon" />
-                    <span className={isNavCollapsed ? 'hidden' : ''}>Builder</span>
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <div className="nav-section">
-              <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Account</h3>
-              <ul className="nav-menu">
-                <li className="nav-item">
-                  <button className="nav-link">
-                    <IoPersonOutline className="nav-icon" />
-                    <span className={isNavCollapsed ? 'hidden' : ''}>Profile</span>
-                  </button>
-                </li>
-                <li className="nav-item">
-                  <button className="nav-link">
-                    <IoSettingsOutline className="nav-icon" />
-                    <span className={isNavCollapsed ? 'hidden' : ''}>Settings</span>
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="nav-footer">
-            <button className="btn back-button" onClick={() => navigate('/')}>
-              <IoChevronBack />
-              <span className={isNavCollapsed ? 'hidden' : ''}>Back to Brands</span>
-            </button>
-          </div>
-        </nav>
+        <LeftNavigation 
+          isCollapsed={isNavCollapsed}
+          onToggle={() => setIsNavCollapsed(!isNavCollapsed)}
+          activeItem="builder"
+        />
         <div className="main-layout">
           <div className="error-state">
             <h2>Error</h2>
@@ -647,108 +538,32 @@ export default function MultiConfigBuilder() {
 
   return (
     <div className="multi-config">
-      {/* Left Navigation Menu */}
-      <nav className={`left-navigation ${isNavCollapsed ? 'collapsed' : ''}`}>
-        <div className={`nav-header ${isNavCollapsed ? 'collapsed' : ''}`}>
-          {isNavCollapsed ? (
-            <img 
-              src="assets/dinoconfig-logo.svg" 
-              alt="DinoConfig" 
-              className="nav-logo clickable-logo"
-              onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-            />
-          ) : (
-            <>
-              <h2 
-                className="nav-title-clickable"
-                onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-              >
-                DinoConfig Builder
-              </h2>
-            </>
-          )}
-        </div>
-        
-        <div className="nav-sections">
-          <div className="nav-section">
-            <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Main</h3>
-            <ul className="nav-menu">
-              <li className="nav-item">
-                <button 
-                  className={`nav-link ${currentView === 'builder' ? 'active' : ''}`}
-                  onClick={() => setCurrentView('builder')}
-                >
-                  <IoHammerOutline className="nav-icon" />
-                  <span className={isNavCollapsed ? 'hidden' : ''}>Builder</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-          
-          <div className="nav-section">
-            <h3 className={`nav-section-title ${isNavCollapsed ? 'hidden' : ''}`}>Account</h3>
-            <ul className="nav-menu">
-              <li className="nav-item">
-                <button 
-                  className={`nav-link ${currentView === 'profile' ? 'active' : ''}`}
-                  onClick={() => {
-                    setCurrentView('profile');
-                    if (!user && !userLoading) {
-                      loadUserProfile();
-                    }
-                  }}
-                >
-                  <IoPersonOutline className="nav-icon" />
-                  <span className={isNavCollapsed ? 'hidden' : ''}>Profile</span>
-                </button>
-              </li>
-              <li className="nav-item">
-                <button className="nav-link">
-                  <IoSettingsOutline className="nav-icon" />
-                  <span className={isNavCollapsed ? 'hidden' : ''}>Settings</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-        
-        <div className="nav-footer">
-          <button className="btn back-button" onClick={() => navigate('/')}>
-            <IoChevronBack />
-            <span className={isNavCollapsed ? 'hidden' : ''}>Back to Brands</span>
-          </button>
-        </div>
-      </nav>
+      <LeftNavigation 
+        isCollapsed={isNavCollapsed}
+        onToggle={() => setIsNavCollapsed(!isNavCollapsed)}
+        activeItem={'builder'}
+      />
 
       {/* Main Content Area */}
       <div className="main-layout">
         {/* Header with brand info */}
         <div className="brand-header">
           <div className="brand-info">
-            {currentView === 'builder' ? (
-              <>
-                <div className="brand-field">
-                  <span className="field-label">Brand name:</span>
-                  <h1 className="field-value">{brand?.name}</h1>
-                </div>
-                {brand?.description && (
-                  <div className="brand-field">
-                    <span className="field-label">Description:</span>
-                    <p className="field-value">{brand.description}</p>
-                  </div>
-                )}
-              </>
-            ) : (
+            <div className="brand-field">
+              <span className="field-label">Brand name:</span>
+              <h1 className="field-value">{brand?.name}</h1>
+            </div>
+            {brand?.description && (
               <div className="brand-field">
-                <span className="field-label">View:</span>
-                <h1 className="field-value">User Profile</h1>
+                <span className="field-label">Description:</span>
+                <p className="field-value">{brand.description}</p>
               </div>
             )}
           </div>
         </div>
 
         <div className="main-content">
-          {currentView === 'builder' ? (
+          {
             <>
               {/* Left: Config list */}
               <div className="sidebar">
@@ -924,14 +739,7 @@ export default function MultiConfigBuilder() {
                 )}
               </div>
             </>
-          ) : (
-            <ProfileView 
-              user={user} 
-              loading={userLoading} 
-              error={userError} 
-              onRetry={loadUserProfile}
-            />
-          )}
+          }
         </div>
       </div>
 
