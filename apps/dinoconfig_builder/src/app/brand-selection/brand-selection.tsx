@@ -50,11 +50,11 @@ export default function BrandSelection() {
         localStorage.setItem('lastBrandId', String(brandId));
       }
     } catch (_) {}
-    navigate(`/builder/${brandId}`);
+    navigate(`/brands/${brandId}/builder`);
   };
 
   const handleCreateNewBrand = () => {
-    navigate('/brand-add');
+    navigate('/brands/add');
   };
 
   if (isLoading) {

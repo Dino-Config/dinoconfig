@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { IoChevronBack, IoHammerOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
+import { IoHammerOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import "./left-navigation.scss";
 
-type LeftNavigationProps = {
+type LeftNavigationProps = {  
   isCollapsed: boolean;
   onToggle: () => void;
   activeItem: 'builder' | 'profile' | 'settings';
@@ -13,7 +13,13 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
 
   const goBuilder = () => {
     const lastBrandId = localStorage.getItem('lastBrandId');
-    navigate(`/builder/${lastBrandId}`);
+
+    if (!lastBrandId) {
+      navigate(`/brands`);
+      return;
+    }
+
+    navigate(`/brands/${lastBrandId}/builder`);
   };
 
   const goProfile = () => navigate(`/profile`);
@@ -80,13 +86,6 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
             </li>
           </ul>
         </div>
-      </div>
-
-      <div className="nav-footer">
-        <button className="btn back-button" onClick={() => navigate('/') }>
-          <IoChevronBack />
-          <span className={isCollapsed ? 'hidden' : ''}>Back to Brands</span>
-        </button>
       </div>
     </nav>
   );

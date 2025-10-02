@@ -28,7 +28,6 @@ axios.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (originalRequest.url?.includes('/auth/refresh')) {
-        console.log('Refresh token failed, redirecting to home...');
         window.location.href = environment.homeUrl;
         return Promise.reject(error);
       }

@@ -70,8 +70,6 @@ export class ConfigsService {
       throw new NotFoundException(`Config with ID "${configId}" not found`);
     }
 
-    console.log(config);
-
     return config;
   }
 

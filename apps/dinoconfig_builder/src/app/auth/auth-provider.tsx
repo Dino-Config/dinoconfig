@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(true);
     } catch (error: any) {
       // If validation fails, try to renew the token
-      console.log('Auth validation failed, attempting token renewal...');
       const renewed = await tokenRenewalService.forceRenewal();
       if (renewed) {
         // Try validation again after renewal

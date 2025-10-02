@@ -53,7 +53,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit() {
-    console.log('HomeComponent ngOnInit - Resetting animation');
     this.resetAnimation();
     
     // Small delay to ensure everything is properly reset
@@ -63,12 +62,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    console.log('HomeComponent ngOnDestroy - Cleaning up animation');
     this.cleanupAnimation();
   }
 
   private resetAnimation() {
-    console.log('Resetting animation - clearing all timers and intervals');
     // Clear any existing timers
     this.clearAllTimers();
     
@@ -89,7 +86,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private clearAllTimers() {
-    console.log(`Clearing ${this.timers.length} timers and ${this.intervals.length} intervals`);
     this.timers.forEach(timer => clearTimeout(timer));
     this.timers = [];
     this.intervals.forEach(interval => clearInterval(interval));
@@ -113,7 +109,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private startTypingAnimation() {
-    console.log('Starting typing animation');
     this.isAnimationActive = true;
     
     // Start with initial texts
