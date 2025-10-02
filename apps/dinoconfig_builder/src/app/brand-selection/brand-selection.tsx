@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../auth/axios-interceptor";
 import { environment } from "../../environments";
+import { Spinner } from "../components";
 import "./brand-selection.scss";
 import { IoAdd } from "react-icons/io5";
 
@@ -60,9 +61,7 @@ export default function BrandSelection() {
     return (
       <div className="brand-selection">
         <div className="brand-selection-container">
-          <div className="loading">
-            <h2>Loading your brands...</h2>
-          </div>
+          <Spinner text="Loading your brands..." size="large" fullHeight />
         </div>
       </div>
     );

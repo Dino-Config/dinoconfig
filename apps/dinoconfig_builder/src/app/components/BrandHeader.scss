@@ -1,0 +1,48 @@
+.brand-header {
+  background: white;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  .brand-info {
+    flex: 1;
+
+    .brand-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .field-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #6b7280;
+        min-width: 100px;
+        flex-shrink: 0;
+        opacity: 0.5;
+      }
+
+      .field-value {
+        margin: 0;
+        flex: 1;
+
+        h1 {
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: #111827;
+        }
+
+        p {
+          color: #6b7280;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}

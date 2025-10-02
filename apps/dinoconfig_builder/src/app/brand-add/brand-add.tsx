@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../auth/axios-interceptor";
 import { environment } from "../../environments";
+import { Spinner } from "../components";
 import "./brand-add.scss";
 
 interface BrandFormData {
@@ -136,7 +137,11 @@ export default function BrandAdd() {
               className="btn primary"
               disabled={isLoading || !formData.name.trim()}
             >
-              {isLoading ? 'Creating...' : 'Create Brand'}
+              {isLoading ? (
+                <Spinner size="small" text="Creating..." className="inline" />
+              ) : (
+                'Create Brand'
+              )}
             </button>
           </div>
         </form>

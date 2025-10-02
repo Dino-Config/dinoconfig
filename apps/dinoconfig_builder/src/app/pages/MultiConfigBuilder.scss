@@ -1,0 +1,63 @@
+.multi-config-builder {
+  display: flex;
+  flex-direction: row;
+  background: #f7f8fa;
+  color: #111827;
+  min-height: 100vh;
+  box-sizing: border-box;
+
+  .main-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 24px;
+    padding: 24px 32px;
+    flex: 1;
+    overflow: hidden; /* Prevent main content from causing page scroll */
+    min-height: 0; /* Allow flex children to shrink */
+  }
+
+  .loading,
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 200px);
+    text-align: center;
+    padding: 40px;
+    overflow: hidden; /* Prevent scrolling in loading/error states */
+
+    h2 {
+      color: #374151;
+      margin-bottom: 16px;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    p {
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 16px;
+      max-width: 500px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      margin-top: 16px;
+    }
+  }
+
+  .error-state {
+    h2 {
+      color: #dc2626;
+    }
+  }
+}

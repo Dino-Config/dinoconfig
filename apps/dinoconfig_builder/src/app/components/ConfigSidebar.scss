@@ -1,0 +1,103 @@
+.config-sidebar {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 260px; /* fixed width */
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #374151;
+  }
+
+  .config-list {
+    flex: 1;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+
+      button {
+        flex: 1;
+        text-align: left;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          border-color: #d1d5db;
+          background: #f9fafb;
+        }
+
+        &.selected {
+          background: #2563eb;
+          color: #fff;
+          border-color: #2563eb;
+        }
+      }
+
+      .row-actions {
+        display: flex;
+        gap: 6px;
+        margin-left: 8px;
+
+        .btn-ghost, .btn-delete {
+          border: none;
+          background: transparent;
+          font-size: 13px;
+          cursor: pointer;
+          color: #6b7280;
+
+          &:hover {
+            color: #111827;
+          }
+        }
+      }
+    }
+  }
+
+  .empty {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    padding: 2rem 0;
+  }
+
+  .new-config {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+
+    input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      outline: none;
+
+      &:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+      }
+    }
+
+    .create-btn {
+      margin-left: 10px;
+      min-width: 80px;
+    }
+  }
+}
