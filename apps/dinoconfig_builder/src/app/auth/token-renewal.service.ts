@@ -72,7 +72,6 @@ export class TokenRenewalService {
         });
       } catch (error) {
         // If validation fails, try to renew the token
-        console.log('Token validation failed, attempting renewal...');
         const renewed = await this.renewToken();
         if (!renewed) {
           console.error('Token renewal failed, user may need to re-authenticate');

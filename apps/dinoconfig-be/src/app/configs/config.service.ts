@@ -18,7 +18,9 @@ export class ConfigsService {
   
     const config = this.configRepo.create({
       ...dto,
-      data: dto.data ?? {},
+      formData: dto.formData ?? {},
+      schema: dto.schema ?? { type: 'object', properties: {} },
+      uiSchema: dto.uiSchema ?? {},
       brand,
       version: 1,
       company: company,
@@ -46,6 +48,9 @@ export class ConfigsService {
     const updated = this.configRepo.create({
       ...existing,
       ...dto,
+      formData: dto.formData ?? existing.formData,
+      schema: dto.schema ?? existing.schema,
+      uiSchema: dto.uiSchema ?? existing.uiSchema,
       brand: existing.brand,
       version: existing.version + 1,
       createdAt: undefined, // let DB generate timestamp
@@ -64,8 +69,6 @@ export class ConfigsService {
     if (!config) {
       throw new NotFoundException(`Config with ID "${configId}" not found`);
     }
-
-    console.log(config);
 
     return config;
   }

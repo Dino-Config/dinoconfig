@@ -9,5 +9,13 @@ export class CreateConfigDto {
   description?: string;
 
   @IsObject()
-  data: Record<string, any>;
+  formData: Record<string, any>;
+
+  @IsOptional()
+  @IsObject()
+  schema?: Record<string, any>;
+
+  @IsOptional()
+  @IsObject()
+  uiSchema?: Record<string, any>;
 }

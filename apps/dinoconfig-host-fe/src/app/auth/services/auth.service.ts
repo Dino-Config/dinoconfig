@@ -145,8 +145,6 @@ export class AuthService {
   }
 
   logout(): void {
-    console.log('Logging out');
-  
     this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
       .pipe(
         tap(() => {

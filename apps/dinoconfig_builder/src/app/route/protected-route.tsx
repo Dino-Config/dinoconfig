@@ -1,6 +1,7 @@
 import { JSX, useContext, useEffect } from "react";
 import { AuthContext } from "../auth/auth-provider";
 import { environment } from "../../environments";
+import { Spinner } from "../components";
 
 export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated, loading, refreshAuth } = useContext(AuthContext);
@@ -18,7 +19,7 @@ export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   }, [loading, isAuthenticated, refreshAuth]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Spinner text="Loading..." size="medium" />;
   }
 
   if (!isAuthenticated) {
