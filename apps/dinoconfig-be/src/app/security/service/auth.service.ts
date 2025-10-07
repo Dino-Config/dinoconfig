@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/user.service';
 
@@ -59,13 +59,34 @@ export class AuthService {
     return data.access_token;
   }
 
+  private async deleteAuth0User(userId: string, token: string): Promise<void> {
+    try {
+      const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to delete Auth0 user ${userId}:`, await response.text());
+      }
+    } catch (error) {
+      console.error(`Error deleting Auth0 user ${userId}:`, error);
+    }
+  }
+
   async createUser(
     email: string,
     password: string,
-    name?: string,
-    company?: string
+    firstName: string,
+    lastName: string,
+    company: string
   ): Promise<Auth0User> {
     const token = await this.getManagementToken();
+
+    // Combine firstName and lastName for Auth0's name field
+    const name = `${firstName} ${lastName}`.trim();
 
     const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users`, {
       method: 'POST',
@@ -89,12 +110,20 @@ export class AuthService {
 
     const auth0User: Auth0User = await response.json();
 
-    await this.usersService.createFromAuth0({
-      user_id: auth0User.user_id,
-      email: auth0User.email,
-      name: auth0User.name,
-      company: company,
-    });
+    try {
+      await this.usersService.createFromAuth0({
+        user_id: auth0User.user_id,
+        email: auth0User.email,
+        name: name, // Use the combined name we created
+        company: company,
+      });
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        await this.deleteAuth0User(auth0User.user_id, token);
+        throw error;
+      }
+      throw error;
+    }
 
     return auth0User;
   }

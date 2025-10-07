@@ -1,30 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { User } from '../types';
+import React, { useState } from 'react';
 import { Spinner } from '../components';
+import { useUser } from '../auth/user-context';
 import './Profile.scss';
-import axios from '../auth/axios-interceptor';
-import { environment } from '../../environments';
-
 
 export default function Profile() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(false);
+    const { user, loading, refreshUser } = useUser();
     const [error, setError] = useState<string | null>(null);
-  
-    const loadUser = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await axios.get(`${environment.apiUrl}/users`, { withCredentials: true });
-        setUser(res.data);
-      } catch (e: any) {
-        setError(e?.response?.data?.message || 'Failed to load user profile');
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    useEffect(() => { loadUser(); }, []);
   
   if (loading) {
     return (
@@ -60,7 +41,16 @@ export default function Profile() {
         <div className="main-content">
           <div className="profile-container">
             <div className="profile-content">
-              <h2 className="profile-title">User Profile</h2>
+              <div className="profile-header">
+                <h2 className="profile-title">User Profile</h2>
+                <button 
+                  className="btn primary refresh-btn" 
+                  onClick={refreshUser}
+                  disabled={loading}
+                >
+                  {loading ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
               
               <div className="profile-section">
                 <h3 className="section-title">Personal Information</h3>
