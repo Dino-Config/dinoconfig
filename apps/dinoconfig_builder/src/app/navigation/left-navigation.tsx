@@ -1,5 +1,8 @@
+import axios from "../auth/axios-interceptor";
 import { useNavigate } from "react-router-dom";
-import { IoHammerOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
+import { IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
+import { useUser } from "../auth/user-context";
+import { environment } from "../../environments";
 import "./left-navigation.scss";
 
 type LeftNavigationProps = {  
@@ -10,6 +13,7 @@ type LeftNavigationProps = {
 
 export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: LeftNavigationProps) {
   const navigate = useNavigate();
+  const { user, loading } = useUser();
 
   const goBuilder = () => {
     const lastBrandId = localStorage.getItem('lastBrandId');
@@ -24,6 +28,32 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
 
   const goProfile = () => navigate(`/profile`);
   const goSettings = () => navigate(`/settings`);
+
+  const handleLogout = async () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+
+      await axios.post(`${environment.apiUrl}/auth/logout`, {}, {
+        withCredentials: true
+      });
+
+      window.location.href = environment.homeUrl;
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = environment.homeUrl;
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (!user) return 'User';
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user.firstName) return user.firstName;
+    if (user.email) return user.email.split('@')[0];
+    return 'User';
+  };
 
   return (
     <nav className={`left-navigation ${isCollapsed ? 'collapsed' : ''}`}>
@@ -86,6 +116,30 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
             </li>
           </ul>
         </div>
+      </div>
+
+      {/* User info and logout section */}
+      <div className="nav-footer">
+        {!loading && user && (
+          <div className="user-info">
+            <div className="user-avatar">
+              {user.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div className={`user-details ${isCollapsed ? 'hidden' : ''}`}>
+              <div className="user-name">{getUserDisplayName()}</div>
+              <div className="user-email">{user.email}</div>
+            </div>
+          </div>
+        )}
+        
+        <button 
+          className="logout-button"
+          onClick={handleLogout}
+          title={isCollapsed ? 'Logout' : ''}
+        >
+          <IoLogOutOutline className="logout-icon" />
+          <span className={isCollapsed ? 'hidden' : ''}>Logout</span>
+        </button>
       </div>
     </nav>
   );

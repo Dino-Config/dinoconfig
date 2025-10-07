@@ -37,8 +37,9 @@ export interface LoginRequest {
 export interface SignupRequest {
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
+  company: string;
 }
 
 export interface ForgotPasswordRequest {
