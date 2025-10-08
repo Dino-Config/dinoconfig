@@ -141,7 +141,7 @@ export default function ConfigBuilderPanel({
         </div>
         <div className="builder-disabled">
           <div className="empty-state">
-            <img src="/assets/dino-sad.svg" alt="No configuration selected" className="empty-icon-svg" />
+            <img src="assets/dino-sad.svg" alt="No configuration selected" className="empty-icon-svg" />
             <h4>No Configuration Selected</h4>
             <p>Please create or select a configuration from the sidebar to start building your form fields.</p>
           </div>

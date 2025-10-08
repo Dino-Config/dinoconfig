@@ -67,7 +67,7 @@ function ConfigList({ configs, selectedId, onSelect, onDelete, onRename }: {
   if (!configs.length) {
     return (
       <div className="empty-configs">
-        <img src="/assets/write.svg" alt="" className="write-icon-svg" />
+        <img src="assets/write.svg" alt="" className="write-icon-svg" />
         <p>No configurations yet</p>
         <small>Click the button below to create your first configuration</small>
       </div>
