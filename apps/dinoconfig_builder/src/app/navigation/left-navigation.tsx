@@ -125,7 +125,7 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
             <div className="user-avatar">
               {user.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
             </div>
-            <div className={`user-details ${isCollapsed ? 'hidden' : ''}`}>
+            <div className={`user-details ${isCollapsed ? 'hidden' : ''}`} onClick={goProfile}>
               <div className="user-name">{getUserDisplayName()}</div>
               <div className="user-email">{user.email}</div>
             </div>

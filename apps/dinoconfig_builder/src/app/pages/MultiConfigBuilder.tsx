@@ -267,6 +267,7 @@ export default function MultiConfigBuilder() {
     return (
       <div className="multi-config-builder">
         <div className="error-state">
+          <img src="/assets/dino-think.svg" alt="Dino Thinking" className="dino-thinking" />
           <h2>Error</h2>
           <p>{error}</p>
           <button className="btn primary" onClick={() => navigate('/')}>
@@ -304,6 +305,7 @@ export default function MultiConfigBuilder() {
             onFormDataChange={setFormData}
             onSave={handleSaveConfig}
             onExport={exportSelected}
+            onNotification={showNotification}
           />
         </div>
       </div>
