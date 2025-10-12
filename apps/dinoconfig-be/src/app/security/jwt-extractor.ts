@@ -9,13 +9,16 @@ export const cookieExtractor = (req: Request): string | null => {
 };
 
 export const brandHeaderExtractor = (req: Request): string | null => {
-  const idToken = req.cookies?.['id_token'];
-  if (!idToken) return null;
+  let idToken = req.cookies?.['id_token'];
+
+  if (!idToken && req.headers?.authorization?.startsWith('Bearer ')) {
+    idToken = req.headers.authorization.split(' ')[1];
+  }
 
   const decoded = decodeToken(idToken);
   if (!decoded || typeof decoded !== 'object') return null;
 
-  return decoded['X-INTERNAL-COMPANY'] || null;
+  return decoded['X-INTERNAL-COMPANY'] || decoded['https://dinoconfig.com/company'] || null;
 };
 
 const decodeToken = (token: string): any => {

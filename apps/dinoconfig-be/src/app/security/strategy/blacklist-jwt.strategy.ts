@@ -1,10 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-jwt';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as jwksRsa from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
 import { cookieExtractor } from '../jwt-extractor';
 import { TokenBlacklistService } from '../service/token-blacklist.service';
+import { Request } from 'express';
 
 @Injectable()
 export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -23,16 +24,23 @@ export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         jwksRequestsPerMinute: 5,
         jwksUri,
       }),
-      jwtFromRequest: cookieExtractor,
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        cookieExtractor, // user sessions (admins)
+        ExtractJwt.fromAuthHeaderAsBearerToken(), // SDK tokens
+      ]),
       audience,
       issuer: issuerUrl,
       algorithms: ['RS256'],
     });
   }
 
-  async validate(payload: any, req: any) {
-    // Extract token from request to check blacklist
-    const token = req.cookies?.access_token;
+  async validate(payload: any, req: Request) {
+    // Extract token from cookie OR Authorization header
+    let token = req.cookies?.access_token;
+    if (!token && req.headers?.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+    
     if (token) {
       const tokenIdentifier = this.tokenBlacklistService.extractJtiFromToken(token);
       if (tokenIdentifier) {
@@ -41,10 +49,24 @@ export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
           throw new UnauthorizedException('Token has been invalidated');
         }
       }
+    } else {
+      if (payload.gty === 'client-credentials') {
+        return { 
+          clientId: payload.sub,
+          scopes: payload.scope?.split(' ') || [],
+          company: payload['https://dinoconfig.com/company'] || null, // custom claim
+        };
+      } else {
+        throw new UnauthorizedException('No token provided');
+      }
     }
 
     if (payload.gty === 'client-credentials') {
-      return { clientId: payload.sub };
+      return { 
+        clientId: payload.sub,
+        scopes: payload.scope?.split(' ') || [],
+        company: payload['https://dinoconfig.com/company'] || null, // custom claim
+      };
     }
     
     return {
@@ -52,6 +74,7 @@ export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       email: payload.email,
       name: payload.name,
       company: payload['X-INTERNAL-COMPANY'] || null,
+      scopes: payload.scope?.split(' ') || [],
     };
   }
 }

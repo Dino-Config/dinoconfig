@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-jwt';
+import { Strategy, ExtractJwt } from 'passport-jwt';
 import * as jwksRsa from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
 import { cookieExtractor } from './jwt-extractor';
@@ -19,7 +19,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         jwksRequestsPerMinute: 5,
         jwksUri,
       }),
-      jwtFromRequest: cookieExtractor,
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        cookieExtractor, // admin login
+        ExtractJwt.fromAuthHeaderAsBearerToken(), // SDK tokens
+      ]),
       audience,
       issuer: issuerUrl,
       algorithms: ['RS256'],
@@ -28,13 +31,18 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   async validate(payload: any) {
     if (payload.gty === 'client-credentials') {
-      return { clientId: payload.sub };
+      return { 
+        clientId: payload.sub,
+        scopes: payload.scope?.split(' ') || [],
+        company: payload['X-INTERNAL-COMPANY'] || null,
+      };
     }
     return {
       auth0Id: payload.sub,
       email: payload.email,
       name: payload.name,
       company: payload['X-INTERNAL-COMPANY'] || null,
+      scopes: payload.scope?.split(' ') || [],
     };
   }
 }

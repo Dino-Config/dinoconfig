@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/user.service';
+import { brandHeaderExtractor } from '../jwt-extractor';
 
 interface Auth0User {
   user_id: string;
@@ -58,6 +59,31 @@ export class AuthService {
     const data = await res.json();
     return data.access_token;
   }
+
+    // Get Auth0 Management API token
+    async getSDKToken(req): Promise<string> {
+      const company = brandHeaderExtractor(req);
+      const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: this.configService.get('SDK_CLIENT_ID'),
+          client_secret: this.configService.get('SDK_CLIENT_SECRET'),
+          audience: this.configService.get('AUTH0_AUDIENCE'),
+          grant_type: 'client_credentials',
+          company
+        }),
+      });
+  
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new HttpException(err || 'Failed to get management token', res.status);
+      }
+  
+      const data = await res.json();
+      return data;
+    }
+  
 
   async createUser(
     email: string,

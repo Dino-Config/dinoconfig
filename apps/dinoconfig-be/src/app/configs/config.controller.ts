@@ -4,6 +4,7 @@ import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { ConfigsService } from './config.service';
 import { brandHeaderExtractor } from '../security/jwt-extractor';
+import { Scopes } from '../security/decorators/scope.decorator';
 
 @Controller('brands/:brandId/configs')
 @UseGuards(JwtAuthGuard)
@@ -57,6 +58,7 @@ export class ConfigsController {
   }
 
   @Get()
+  @Scopes('read:configs')
   findAllConfigsForBrand(
     @Request() req,
     @Param('brandId') brandId: string,

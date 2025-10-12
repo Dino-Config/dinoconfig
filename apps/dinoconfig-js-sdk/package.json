@@ -4,5 +4,26 @@
   "type": "module",
   "main": "./index.js",
   "types": "./index.d.ts",
-  "dependencies": {}
+  "description": "Official JavaScript SDK for DinoConfig API",
+  "keywords": ["dinoconfig", "sdk", "javascript", "typescript", "api"],
+  "author": "DinoConfig Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dinoconfig/dinoconfig-js-sdk"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "lib/**/*.js",
+    "lib/**/*.d.ts"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }

@@ -170,4 +170,10 @@ export class AuthController {
       throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
     }
   }
+
+  @Post('sdk-token')
+  @UseGuards(JwtAuthGuard)
+  async sdkToken(@Req() req: Request) {
+    return this.authService.getSDKToken(req);
+  }
 }
