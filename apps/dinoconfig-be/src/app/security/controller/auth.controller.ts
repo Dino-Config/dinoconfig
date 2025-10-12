@@ -23,9 +23,9 @@ export class AuthController {
   @Post('signup')
   async signup(
     @Req() req,
-    @Body() body: { email: string; password: string; name?: string; company?: string },
+    @Body() body: { email: string; password: string; firstName: string; lastName: string; company: string },
   ) {
-    return this.authService.createUser(body.email, body.password, body.name, body.company);
+    return this.authService.createUser(body.email, body.password, body.firstName, body.lastName, body.company);
   }
 
   @Post('login')

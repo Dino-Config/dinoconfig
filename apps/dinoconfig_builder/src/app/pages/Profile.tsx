@@ -1,30 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { User } from '../types';
+import React, { useState } from 'react';
 import { Spinner } from '../components';
+import { useUser } from '../auth/user-context';
 import './Profile.scss';
-import axios from '../auth/axios-interceptor';
-import { environment } from '../../environments';
-
 
 export default function Profile() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(false);
+    const { user, loading, refreshUser } = useUser();
     const [error, setError] = useState<string | null>(null);
-  
-    const loadUser = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await axios.get(`${environment.apiUrl}/users`, { withCredentials: true });
-        setUser(res.data);
-      } catch (e: any) {
-        setError(e?.response?.data?.message || 'Failed to load user profile');
-      } finally {
-        setLoading(false);
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['personal', 'address', 'account', 'brands']));
+
+    const toggleSection = (section: string) => {
+      const newExpanded = new Set(expandedSections);
+      if (newExpanded.has(section)) {
+        newExpanded.delete(section);
+      } else {
+        newExpanded.add(section);
       }
+      setExpandedSections(newExpanded);
     };
-  
-    useEffect(() => { loadUser(); }, []);
   
   if (loading) {
     return (
@@ -48,22 +40,47 @@ export default function Profile() {
   return (
     <div className="profile-page">
       <div className="main-layout">
-        <div className="brand-header">
-          <div className="brand-info">
-            <div className="brand-field">
-              <span className="field-label">View:</span>
-              <h1 className="field-value">User Profile</h1>
-            </div>
+        <div className="profile-header">
+          <div className="header-content">
+            <h1 className="page-title">User Profile</h1>
+            <p className="page-subtitle">View and manage your account information</p>
           </div>
+          <button 
+            className="btn btn-outline refresh-btn" 
+            onClick={refreshUser}
+            disabled={loading}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M14 8A6 6 0 1 1 2 8a6 6 0 0 1 12 0Z" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M8 4v4l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            {loading ? 'Refreshing...' : 'Refresh Profile'}
+          </button>
         </div>
 
         <div className="main-content">
           <div className="profile-container">
             <div className="profile-content">
-              <h2 className="profile-title">User Profile</h2>
               
               <div className="profile-section">
-                <h3 className="section-title">Personal Information</h3>
+                <button 
+                  className="section-toggle"
+                  onClick={() => toggleSection('personal')}
+                >
+                  <svg 
+                    className={`chevron ${expandedSections.has('personal') ? 'open' : ''}`}
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 16 16" 
+                    fill="none"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {/* <span className="section-icon">👤</span> */}
+                  <span className="section-title">Personal Information</span>
+                </button>
+                
+                {expandedSections.has('personal') && (
                 <div className="profile-grid">
                   <div className="profile-field">
                     <span className="field-label">First Name:</span>
@@ -92,10 +109,28 @@ export default function Profile() {
                     </span>
                   </div>
                 </div>
+                )}
               </div>
 
               <div className="profile-section">
-                <h3 className="section-title">Address Information</h3>
+                <button 
+                  className="section-toggle"
+                  onClick={() => toggleSection('address')}
+                >
+                  <svg 
+                    className={`chevron ${expandedSections.has('address') ? 'open' : ''}`}
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 16 16" 
+                    fill="none"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {/* <span className="section-icon">📍</span> */}
+                  <span className="section-title">Address Information</span>
+                </button>
+                
+                {expandedSections.has('address') && (
                 <div className="profile-grid">
                   <div className="profile-field full-width">
                     <span className="field-label">Address:</span>
@@ -118,10 +153,28 @@ export default function Profile() {
                     <span className="field-value">{user?.country || 'Not provided'}</span>
                   </div>
                 </div>
+                )}
               </div>
 
               <div className="profile-section">
-                <h3 className="section-title">Account Details</h3>
+                <button 
+                  className="section-toggle"
+                  onClick={() => toggleSection('account')}
+                >
+                  <svg 
+                    className={`chevron ${expandedSections.has('account') ? 'open' : ''}`}
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 16 16" 
+                    fill="none"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {/* <span className="section-icon">🔑</span> */}
+                  <span className="section-title">Account Details</span>
+                </button>
+                
+                {expandedSections.has('account') && (
                 <div className="profile-grid">
                   <div className="profile-field">
                     <span className="field-label">User ID:</span>
@@ -136,11 +189,33 @@ export default function Profile() {
                     <span className="field-value">{new Date(user?.createdAt || '').toLocaleDateString()}</span>
                   </div>
                 </div>
+                )}
               </div>
 
               <div className="profile-section">
-                <h3 className="section-title">Associated Brands</h3>
-                {user?.brands && user?.brands.length > 0 ? (
+                <button 
+                  className="section-toggle"
+                  onClick={() => toggleSection('brands')}
+                >
+                  <svg 
+                    className={`chevron ${expandedSections.has('brands') ? 'open' : ''}`}
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 16 16" 
+                    fill="none"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {/* <span className="section-icon">🏢</span> */}
+                  <span className="section-title">Associated Brands</span>
+                  {user?.brands && user?.brands.length > 0 && (
+                    <span className="badge">{user.brands.length}</span>
+                  )}
+                </button>
+                
+                {expandedSections.has('brands') && (
+                  <>
+                  {user?.brands && user?.brands.length > 0 ? (
                   <div className="brands-list">
                     {user?.brands.map((brand) => (
                       <div key={brand.id} className="brand-item">
@@ -158,8 +233,10 @@ export default function Profile() {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="empty-message">No brands associated with this account.</p>
+                  ) : (
+                    <p className="empty-message">No brands associated with this account.</p>
+                  )}
+                  </>
                 )}
               </div>
             </div>

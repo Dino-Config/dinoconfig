@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -11,14 +11,37 @@ export class UsersService {
   ) {}
 
   async createFromAuth0(auth0User: { user_id: string; email: string; name?: string; company?: string }): Promise<User> {
-    const [firstName, ...rest] = (auth0User.name || '').split(' ');
-    const lastName = rest.join(' ') || '';
+    let firstName = '';
+    let lastName = '';
+    if (auth0User.name && auth0User.name.trim()) {
+      const nameParts = auth0User.name.trim().split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
+    } else {
+      const emailParts = auth0User.email.split('@')[0];
+      const emailNameParts = emailParts.split(/[._-]/);
+      firstName = emailNameParts[0] || 'User';
+      lastName = emailNameParts.slice(1).join(' ') || '';
+    }
+
+    if (!firstName.trim()) {
+      firstName = 'User';
+    }
+
+    if (auth0User.company) {
+      const existingUser = await this.userRepo.findOne({ 
+        where: { companyName: auth0User.company } 
+      });
+      if (existingUser) {
+        throw new ConflictException(`Company name "${auth0User.company}" is already taken. Please choose a different company name.`);
+      }
+    }
 
     const user = this.userRepo.create({
       auth0Id: auth0User.user_id,
       email: auth0User.email,
-      firstName,
-      lastName,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       companyName: auth0User.company || undefined,
     });
 

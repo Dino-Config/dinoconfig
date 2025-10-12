@@ -3,7 +3,9 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 // Angular Material imports
 import { MatCardModule } from '@angular/material/card';
@@ -40,6 +42,7 @@ export class SignupDialogComponent implements OnInit {
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private dialogRef = inject(MatDialogRef<SignupDialogComponent>);
+  private router = inject(Router);
 
   signupForm: FormGroup;
   isLoading = false;
@@ -97,6 +100,7 @@ export class SignupDialogComponent implements OnInit {
             verticalPosition: 'top'
           });
           this.dialogRef.close();
+          window.location.href = environment.builderUrl;
         },
         error: (error) => {
           this.isLoading = false;

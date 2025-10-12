@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/user.service';
 import { brandHeaderExtractor } from '../jwt-extractor';
@@ -60,38 +60,58 @@ export class AuthService {
     return data.access_token;
   }
 
-    // Get Auth0 Management API token
-    async getSDKToken(req): Promise<string> {
-      const company = brandHeaderExtractor(req);
-      const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: this.configService.get('SDK_CLIENT_ID'),
-          client_secret: this.configService.get('SDK_CLIENT_SECRET'),
-          audience: this.configService.get('AUTH0_AUDIENCE'),
-          grant_type: 'client_credentials',
-          company
-        }),
-      });
-  
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new HttpException(err || 'Failed to get management token', res.status);
-      }
-  
-      const data = await res.json();
-      return data;
+  // Get Auth0 Management API token
+  async getSDKToken(req): Promise<string> {
+    const company = brandHeaderExtractor(req);
+    const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: this.configService.get('SDK_CLIENT_ID'),
+        client_secret: this.configService.get('SDK_CLIENT_SECRET'),
+        audience: this.configService.get('AUTH0_AUDIENCE'),
+        grant_type: 'client_credentials',
+        company
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new HttpException(err || 'Failed to get management token', res.status);
     }
+
+    const data = await res.json();
+    return data;
+  }
   
+  private async deleteAuth0User(userId: string, token: string): Promise<void> {
+    try {
+      const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to delete Auth0 user ${userId}:`, await response.text());
+      }
+    } catch (error) {
+      console.error(`Error deleting Auth0 user ${userId}:`, error);
+    }
+  }
 
   async createUser(
     email: string,
     password: string,
-    name?: string,
-    company?: string
+    firstName: string,
+    lastName: string,
+    company: string
   ): Promise<Auth0User> {
     const token = await this.getManagementToken();
+
+    // Combine firstName and lastName for Auth0's name field
+    const name = `${firstName} ${lastName}`.trim();
 
     const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users`, {
       method: 'POST',
@@ -115,12 +135,20 @@ export class AuthService {
 
     const auth0User: Auth0User = await response.json();
 
-    await this.usersService.createFromAuth0({
-      user_id: auth0User.user_id,
-      email: auth0User.email,
-      name: auth0User.name,
-      company: company,
-    });
+    try {
+      await this.usersService.createFromAuth0({
+        user_id: auth0User.user_id,
+        email: auth0User.email,
+        name: name, // Use the combined name we created
+        company: company,
+      });
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        await this.deleteAuth0User(auth0User.user_id, token);
+        throw error;
+      }
+      throw error;
+    }
 
     return auth0User;
   }
