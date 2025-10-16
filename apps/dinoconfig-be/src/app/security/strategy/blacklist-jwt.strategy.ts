@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-jwt';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as jwksRsa from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
 import { cookieExtractor } from '../jwt-extractor';
@@ -23,35 +23,47 @@ export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         jwksRequestsPerMinute: 5,
         jwksUri,
       }),
-      jwtFromRequest: cookieExtractor,
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        cookieExtractor, // user sessions (admins)
+        ExtractJwt.fromAuthHeaderAsBearerToken(), // SDK tokens
+      ]),
       audience,
       issuer: issuerUrl,
       algorithms: ['RS256'],
+      passReqToCallback: true
     });
   }
 
-  async validate(payload: any, req: any) {
-    // Extract token from request to check blacklist
+  async validate(req: any, payload: any) {
     const token = req.cookies?.access_token;
+  
+    // If a token is present, validate against blacklist
     if (token) {
-      const tokenIdentifier = this.tokenBlacklistService.extractJtiFromToken(token);
-      if (tokenIdentifier) {
-        const isBlacklisted = await this.tokenBlacklistService.isTokenBlacklisted(tokenIdentifier);
-        if (isBlacklisted) {
-          throw new UnauthorizedException('Token has been invalidated');
-        }
+      const tokenId = this.tokenBlacklistService.extractJtiFromToken(token);
+      if (tokenId && await this.tokenBlacklistService.isTokenBlacklisted(tokenId)) {
+        throw new UnauthorizedException('Token has been invalidated');
       }
+    } else if (payload.gty !== 'client-credentials') {
+      // If no token and not client-credentials flow → unauthorized
+      throw new UnauthorizedException('No token provided');
     }
-
+  
+    // Handle client credentials flow
     if (payload.gty === 'client-credentials') {
-      return { clientId: payload.sub };
+      return { 
+        clientId: payload.sub,
+        scopes: payload.scope?.split(' ') ?? [],
+        company: payload['https://dinoconfig.com/company'] ?? null,
+      };
     }
-    
+  
+    // Handle standard user flow
     return {
       auth0Id: payload.sub,
       email: payload.email,
       name: payload.name,
-      company: payload['X-INTERNAL-COMPANY'] || null,
+      company: payload['X-INTERNAL-COMPANY'] ?? null,
+      scopes: payload.scope?.split(' ') ?? [],
     };
-  }
+  }  
 }

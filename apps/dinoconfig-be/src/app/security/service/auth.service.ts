@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/user.service';
+import { brandHeaderExtractor } from '../jwt-extractor';
 
 interface Auth0User {
   user_id: string;
@@ -59,6 +60,30 @@ export class AuthService {
     return data.access_token;
   }
 
+  // Get Auth0 SDK token
+  async getSDKToken(req): Promise<{ access_token: string; expires_in: number; token_type: string }> {
+    const company = brandHeaderExtractor(req);
+    const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: this.configService.get('SDK_CLIENT_ID'),
+        client_secret: this.configService.get('SDK_CLIENT_SECRET'),
+        audience: this.configService.get('AUTH0_AUDIENCE'),
+        grant_type: 'client_credentials',
+        company
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new HttpException(err || 'Failed to get SDK token', res.status);
+    }
+
+    const data = await res.json();
+    return data;
+  }
+  
   private async deleteAuth0User(userId: string, token: string): Promise<void> {
     try {
       const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users/${userId}`, {

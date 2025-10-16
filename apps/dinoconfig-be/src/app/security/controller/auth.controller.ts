@@ -1,7 +1,8 @@
-import { Controller, Post, Body, Get, Query, HttpCode, Req, UseGuards, HttpException, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, HttpCode, Req, UseGuards, HttpException, HttpStatus, Res, Headers } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from '../service/auth.service';
 import { TokenBlacklistService } from '../service/token-blacklist.service';
+import { SdkAuthService } from '../service/sdk-auth.service';
 import { JwtAuthGuard } from '../guard/jwt.guard';
 import { ConfigService } from '@nestjs/config';
 
@@ -10,7 +11,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService, 
     private readonly tokenBlacklistService: TokenBlacklistService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly sdkAuthService: SdkAuthService,
   ) {}
 
   @Get('token')
@@ -169,5 +171,28 @@ export class AuthController {
     } catch (error) {
       throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
     }
+  }
+
+  /**
+   * Get SDK token (deprecated - kept for backward compatibility)
+   */
+  @Post('sdk-token')
+  @UseGuards(JwtAuthGuard)
+  async sdkToken(@Req() req: Request) {
+    return this.sdkAuthService.getSDKTokenFromRequest(req);
+  }
+
+  /**
+   * Exchange API key for SDK token
+   */
+  @Post('sdk-token/exchange')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(200)
+  async exchangeApiKeyForToken(@Headers('x-api-key') apiKey: string) {
+    if (!apiKey) {
+      throw new HttpException('API key is required', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.sdkAuthService.exchangeApiKeyForToken(apiKey);
   }
 }
