@@ -5,7 +5,6 @@ import * as jwksRsa from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
 import { cookieExtractor } from '../jwt-extractor';
 import { TokenBlacklistService } from '../service/token-blacklist.service';
-import { Request } from 'express';
 
 @Injectable()
 export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -31,50 +30,40 @@ export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       audience,
       issuer: issuerUrl,
       algorithms: ['RS256'],
+      passReqToCallback: true
     });
   }
 
-  async validate(payload: any, req: Request) {
-    // Extract token from cookie OR Authorization header
-    let token = req.cookies?.access_token;
-    if (!token && req.headers?.authorization?.startsWith('Bearer ')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-    
+  async validate(req: any, payload: any) {
+    const token = req.cookies?.access_token;
+  
+    // If a token is present, validate against blacklist
     if (token) {
-      const tokenIdentifier = this.tokenBlacklistService.extractJtiFromToken(token);
-      if (tokenIdentifier) {
-        const isBlacklisted = await this.tokenBlacklistService.isTokenBlacklisted(tokenIdentifier);
-        if (isBlacklisted) {
-          throw new UnauthorizedException('Token has been invalidated');
-        }
+      const tokenId = this.tokenBlacklistService.extractJtiFromToken(token);
+      if (tokenId && await this.tokenBlacklistService.isTokenBlacklisted(tokenId)) {
+        throw new UnauthorizedException('Token has been invalidated');
       }
-    } else {
-      if (payload.gty === 'client-credentials') {
-        return { 
-          clientId: payload.sub,
-          scopes: payload.scope?.split(' ') || [],
-          company: payload['https://dinoconfig.com/company'] || null, // custom claim
-        };
-      } else {
-        throw new UnauthorizedException('No token provided');
-      }
+    } else if (payload.gty !== 'client-credentials') {
+      // If no token and not client-credentials flow → unauthorized
+      throw new UnauthorizedException('No token provided');
     }
-
+  
+    // Handle client credentials flow
     if (payload.gty === 'client-credentials') {
       return { 
         clientId: payload.sub,
-        scopes: payload.scope?.split(' ') || [],
-        company: payload['https://dinoconfig.com/company'] || null, // custom claim
+        scopes: payload.scope?.split(' ') ?? [],
+        company: payload['https://dinoconfig.com/company'] ?? null,
       };
     }
-    
+  
+    // Handle standard user flow
     return {
       auth0Id: payload.sub,
       email: payload.email,
       name: payload.name,
-      company: payload['X-INTERNAL-COMPANY'] || null,
-      scopes: payload.scope?.split(' ') || [],
+      company: payload['X-INTERNAL-COMPANY'] ?? null,
+      scopes: payload.scope?.split(' ') ?? [],
     };
-  }
+  }  
 }

@@ -1,14 +1,17 @@
 export interface DinoConfigSDKConfig {
-  /** The API token for authentication */
-  token: string;
+  /** The API key for authentication */
+  apiKey: string;
   /** The base URL of the DinoConfig API */
   baseUrl?: string;
-  /** The company identifier for multi-tenant support */
-  company?: string;
-  /** API version */
-  apiVersion?: string;
   /** Request timeout in milliseconds */
   timeout?: number;
+}
+
+export interface TokenExchangeResponse {
+  access_token: string;
+  expires_in: number;
+  token_type: string;
+  company?: string;
 }
 
 export interface Config {

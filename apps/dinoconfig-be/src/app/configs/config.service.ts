@@ -13,7 +13,7 @@ export class ConfigsService {
     @InjectRepository(Brand) private readonly brandRepo: Repository<Brand>,
   ) {}
 
-  async create(userId: number, brandId: number, dto: CreateConfigDto, company: string): Promise<Config> {
+  async create(userId: string, brandId: number, dto: CreateConfigDto, company: string): Promise<Config> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
   
     const config = this.configRepo.create({
@@ -30,7 +30,7 @@ export class ConfigsService {
   }
 
   async update(
-    userId: number,
+    userId: string,
     brandId: number,
     configId: number,
     dto: UpdateConfigDto,
@@ -59,7 +59,7 @@ export class ConfigsService {
     return this.configRepo.save(updated);
   }
 
-  async findOneByBrandAndCompanyId(userId: number, brandId: number, configId: number, company: string): Promise<Config> {
+  async findOneByBrandAndCompanyId(userId: string, brandId: number, configId: number, company: string): Promise<Config> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
 
     const config = await this.configRepo.findOne({
@@ -73,7 +73,7 @@ export class ConfigsService {
     return config;
   }
 
-  async remove(userId: number, brandId: number, configId: number): Promise<void> {
+  async remove(userId: string, brandId: number, configId: number): Promise<void> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
 
     const config = await this.configRepo.findOne({
@@ -87,7 +87,7 @@ export class ConfigsService {
     await this.configRepo.remove(config);
   }
 
-  async findAllConfigsForBrand(userId: number, brandId: number, company: string): Promise<Config[]> {
+  async findAllConfigsForBrand(userId: string, brandId: number, company: string): Promise<Config[]> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
     
     return this.configRepo.find({
@@ -96,10 +96,10 @@ export class ConfigsService {
     });
   }
 
-  private async getBrandByIdForUser(userId: number, brandId: number): Promise<Brand> {
+  private async getBrandByIdForUser(userId: string, brandId: number): Promise<Brand> {
     
     const brand = await this.brandRepo.findOne({
-      where: { user: { id: userId }, id: brandId },
+      where: { user: { auth0Id: userId }, id: brandId },
     });
 
     if (!brand) {

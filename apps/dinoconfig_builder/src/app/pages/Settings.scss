@@ -200,6 +200,17 @@
             flex-direction: column;
             gap: 8px;
 
+            &.api-key-section {
+              grid-column: 1 / -1;
+              gap: 16px;
+
+              .setting-description {
+                color: #6b7280;
+                font-size: 14px;
+                margin: 0 0 12px 0;
+              }
+            }
+
             .setting-label {
               font-weight: 600;
               color: #374151;
@@ -279,12 +290,18 @@
             transform: scale(0.98);
           }
 
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+          }
+
           &.btn-primary {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
 
-            &:hover {
+            &:hover:not(:disabled) {
               box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
               transform: translateY(-1px);
             }
@@ -295,16 +312,321 @@
             color: #374151;
             border: 2px solid #e5e7eb;
 
-            &:hover {
+            &:hover:not(:disabled) {
               border-color: #3b82f6;
               color: #3b82f6;
               background: #f0f9ff;
             }
           }
 
+          &.btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+
+            &:hover:not(:disabled) {
+              box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+              transform: translateY(-1px);
+            }
+          }
+
+          &.btn-icon {
+            padding: 8px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+
+            &:hover:not(:disabled) {
+              background: #e5e7eb;
+              border-color: #d1d5db;
+            }
+          }
+
           svg {
             flex-shrink: 0;
           }
+        }
+      }
+
+      // API Key specific styles
+      .notification {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        margin: 12px 0;
+        animation: slideIn 0.3s ease-out;
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        &.notification-success {
+          background: #d1fae5;
+          color: #065f46;
+          border: 1px solid #6ee7b7;
+        }
+
+        &.notification-error {
+          background: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #fca5a5;
+        }
+      }
+
+      .api-key-display {
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0;
+
+        .api-key-value {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: white;
+          padding: 12px;
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+          margin-bottom: 12px;
+
+          code {
+            flex: 1;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #1e40af;
+            word-break: break-all;
+          }
+        }
+
+        .api-key-warning {
+          margin: 0;
+          font-size: 13px;
+          color: #b45309;
+        }
+      }
+
+      .api-key-info {
+        background: #f0f9ff;
+        border: 2px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0;
+
+        .api-key-status {
+          margin-bottom: 16px;
+
+          .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+
+            &.status-active {
+              background: #d1fae5;
+              color: #065f46;
+            }
+          }
+
+          .api-key-meta {
+            p {
+              margin: 4px 0;
+              font-size: 13px;
+              color: #374151;
+
+              strong {
+                color: #1f2937;
+              }
+            }
+          }
+        }
+      }
+
+      .api-key-empty {
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        margin: 16px 0;
+
+        p {
+          margin: 0 0 16px 0;
+          color: #6b7280;
+          font-size: 14px;
+        }
+      }
+
+      .api-key-docs {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #e5e7eb;
+
+        h4 {
+          margin: 0 0 12px 0;
+          font-size: 14px;
+          color: #374151;
+          font-weight: 600;
+        }
+
+        pre {
+          background: #1e293b;
+          padding: 16px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 0;
+
+          code {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #e2e8f0;
+            line-height: 1.6;
+          }
+        }
+      }
+
+      // API Keys Section
+      .api-keys-section {
+        margin: 16px 0;
+
+        .api-keys-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+
+          h4 {
+            margin: 0;
+            font-size: 14px;
+            color: #374151;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .api-key-create-form {
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+
+        .form-field {
+          margin-bottom: 12px;
+
+          label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 4px;
+          }
+
+          input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #374151;
+            transition: all 0.2s;
+
+            &:focus {
+              outline: none;
+              border-color: #3b82f6;
+              box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+          }
+        }
+
+        .form-actions {
+          display: flex;
+          gap: 8px;
+          margin-top: 16px;
+        }
+      }
+
+      .api-key-item {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.2s;
+
+        &:hover {
+          border-color: #d1d5db;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        &.inactive {
+          opacity: 0.6;
+          background: #f9fafb;
+        }
+
+        .api-key-item-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+
+          .api-key-item-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            h5 {
+              margin: 0;
+              font-size: 15px;
+              color: #1f2937;
+              font-weight: 600;
+            }
+          }
+
+          .api-key-item-actions {
+            display: flex;
+            gap: 8px;
+          }
+        }
+
+        .api-key-item-description {
+          margin: 0 0 12px 0;
+          font-size: 13px;
+          color: #6b7280;
+        }
+
+        .api-key-item-meta {
+          display: flex;
+          gap: 24px;
+          font-size: 12px;
+          color: #6b7280;
+
+          span {
+            strong {
+              color: #374151;
+            }
+          }
+        }
+      }
+
+      // Button sizes
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .status-badge {
+        &.status-inactive {
+          background: #f3f4f6;
+          color: #6b7280;
         }
       }
     }

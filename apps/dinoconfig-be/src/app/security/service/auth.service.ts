@@ -60,8 +60,8 @@ export class AuthService {
     return data.access_token;
   }
 
-  // Get Auth0 Management API token
-  async getSDKToken(req): Promise<string> {
+  // Get Auth0 SDK token
+  async getSDKToken(req): Promise<{ access_token: string; expires_in: number; token_type: string }> {
     const company = brandHeaderExtractor(req);
     const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
@@ -77,7 +77,7 @@ export class AuthService {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new HttpException(err || 'Failed to get management token', res.status);
+      throw new HttpException(err || 'Failed to get SDK token', res.status);
     }
 
     const data = await res.json();

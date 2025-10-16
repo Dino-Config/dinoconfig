@@ -13,31 +13,26 @@ npm install @dinoconfig/dinoconfig-js-sdk
 ```typescript
 import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
 
-// Initialize the SDK
+// Initialize the SDK with your API key
 const dinoconfig = dinoconfigApi({
-  token: 'your-api-token-here',
+  apiKey: 'dino_your-api-key-here',
   baseUrl: 'https://api.dinoconfig.com', // optional
-  company: 'your-company-id', // optional
   apiVersion: 'v1', // optional
   timeout: 10000 // optional
 });
 
-// Get all configurations for a brand
+// The SDK is ready to use immediately!
+// Token exchange happens automatically in the background
 const configs = await dinoconfig.configs.getAllConfigs(123);
 
 // Get a specific configuration
 const config = await dinoconfig.configs.getConfig(123, 456);
-
-// Create a new configuration
-const newConfig = await dinoconfig.configs.createConfig(123, {
-  name: 'My Config',
-  description: 'A sample configuration',
-  formData: {
-    theme: 'dark',
-    language: 'en'
-  }
-});
 ```
+
+**Note:** The SDK automatically handles:
+- API key to token exchange
+- Token refresh when expired
+- Company information extraction
 
 ## Configuration Options
 
@@ -45,11 +40,45 @@ The `dinoconfigApi` function accepts the following configuration options:
 
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
-| `token` | `string` | ✅ | - | Your API authentication token |
+| `apiKey` | `string` | ✅ | - | Your API key for authentication |
 | `baseUrl` | `string` | ❌ | `'https://api.dinoconfig.com'` | Base URL for the DinoConfig API |
-| `company` | `string` | ❌ | - | Company identifier for multi-tenant support |
 | `apiVersion` | `string` | ❌ | `'v1'` | API version to use |
 | `timeout` | `number` | ❌ | `10000` | Request timeout in milliseconds |
+
+## Authentication
+
+The DinoConfig SDK uses API key-based authentication. API keys provide:
+- **Automatic token management** - No manual token refresh needed
+- **Better security** - Keys can be easily revoked from the dashboard
+- **Simplified setup** - Company information is auto-detected
+
+### Getting an API Key
+
+1. Log in to your DinoConfig dashboard
+2. Go to **Settings** → **SDK & API Keys**
+3. Click **Create New Key**
+4. Give it a name and description
+5. Copy the key immediately (you won't be able to see it again!)
+
+### Using the API Key
+
+```typescript
+import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+
+const dinoconfig = dinoconfigApi({
+  apiKey: 'dino_abc123...',
+  baseUrl: 'https://api.dinoconfig.com',
+});
+
+// That's it! The SDK handles everything automatically
+const configs = await dinoconfig.configs.getAllConfigs(brandId);
+```
+
+**What happens behind the scenes:**
+1. SDK exchanges your API key for an access token
+2. Token is stored in memory and used for all requests
+3. Token is automatically refreshed before expiration
+4. Company information is extracted from your account
 
 ## API Methods
 

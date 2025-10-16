@@ -1,25 +1,55 @@
-import { ApiResponse, ApiError, RequestOptions } from './types';
+import { ApiResponse, ApiError, RequestOptions, TokenExchangeResponse } from './types';
 
 export class HttpClient {
   private baseUrl: string;
-  private token: string;
   private defaultTimeout: number;
-  private defaultHeaders: Record<string, string>;
+  private defaultHeaders!: Record<string, string>;
 
   constructor(
     baseUrl: string,
-    token: string,
-    timeout: number = 10000,
-    headers: Record<string, string> = {}
+    timeout: number = 10000
   ) {
     this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
-    this.token = token;
     this.defaultTimeout = timeout;
-    this.defaultHeaders = {
+  }
+
+  public async configureAuthorizationHeader(headers: Record<string, string>): Promise<void> {
+    const token = await this.exchangeApiKeyForToken(headers['X-API-Key']);
+
+    this.defaultHeaders = { 
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
       ...headers,
     };
+  }
+
+
+  /**
+   * Exchange API key for access token
+   */
+  private async exchangeApiKeyForToken(apiKey: string): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/auth/sdk-token/exchange`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to exchange API key for token: ${response.status} ${errorText}`);
+      }
+
+      const data: TokenExchangeResponse = await response.json();
+
+      return data.access_token;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to authenticate with API key: ${errorMessage}`);
+    }
   }
 
   private async request<T>(
@@ -30,8 +60,7 @@ export class HttpClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     const timeout = options.timeout || this.defaultTimeout;
-    const retries = options.retries || 3;
-    const headers = { ...this.defaultHeaders, ...options.headers };
+    const retries = options.retries || 0;
 
     let lastError: Error | null = null;
 
@@ -42,7 +71,7 @@ export class HttpClient {
 
         const requestOptions: RequestInit = {
           method,
-          headers,
+          headers: this.defaultHeaders,
           signal: controller.signal,
         };
 
@@ -113,7 +142,6 @@ export class HttpClient {
   }
 
   setToken(token: string): void {
-    this.token = token;
     this.defaultHeaders['Authorization'] = `Bearer ${token}`;
   }
 

@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Index } from 'typeorm';
 import { Brand } from '../../brands/entities/brand.entity';
+import { ApiKey } from '../../security/entities/api-key.entity';
 
 @Entity('users')
 export class User {
@@ -48,4 +49,7 @@ export class User {
 
   @OneToMany(() => Brand, brand => brand.user, { cascade: true })
   brands: Brand[];
+
+  @OneToMany(() => ApiKey, apiKey => apiKey.user, { cascade: true })
+  apiKeys: ApiKey[];
 }
