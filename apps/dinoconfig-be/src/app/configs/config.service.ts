@@ -96,6 +96,24 @@ export class ConfigsService {
     });
   }
 
+  async findConfigByNameAndValue(userId: string, brandName: string, name: string, valueKey: string, company: string): Promise<{value: any}> {
+    const brand = await this.brandRepo.findOne({
+      where: { user: { auth0Id: userId }, name: brandName, company: company },
+    });
+
+    if (!brand) {
+      throw new NotFoundException(`Brand with name "${brandName}" not found for this user`);
+    }
+
+    const config = await this.configRepo.findOne({
+      where: { brand: { id: brand.id }, name: name, company: company },
+    });
+
+    const value = config?.formData[valueKey];
+
+    return { value };
+  }
+
   private async getBrandByIdForUser(userId: string, brandId: number): Promise<Brand> {
     
     const brand = await this.brandRepo.findOne({

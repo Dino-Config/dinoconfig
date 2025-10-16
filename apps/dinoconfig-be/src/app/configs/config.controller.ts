@@ -7,12 +7,12 @@ import { brandHeaderExtractor } from '../security/jwt-extractor';
 import { Scopes } from '../security/decorators/scope.decorator';
 import { ScopesGuard } from '../security/guard/scope.guard';
 
-@Controller('brands/:brandId/configs')
+@Controller('brands')
 @UseGuards(JwtAuthGuard)
 export class ConfigsController {
   constructor(private readonly configsService: ConfigsService) {}
 
-  @Post()
+  @Post(':brandId/configs')
   create(
     @Request() req,
     @Param('brandId') brandId: string,
@@ -25,7 +25,7 @@ export class ConfigsController {
     return this.configsService.create(req.user.auth0Id, parseInt(brandId), dto, company);
   }
 
-  @Patch(':configId')
+  @Patch(':brandId/configs/:configId')
   update(
     @Request() req,
     @Param('brandId') brandId: string,
@@ -35,7 +35,7 @@ export class ConfigsController {
     return this.configsService.update(req.user.auth0Id, parseInt(brandId), parseInt(configId), dto);
   }
 
-  @Get(':configId')
+  @Get(':brandId/configs/:configId')
   findOne(
     @Request() req,
     @Param('brandId') brandId: string,
@@ -49,7 +49,7 @@ export class ConfigsController {
     return this.configsService.findOneByBrandAndCompanyId(req.user.auth0Id, parseInt(brandId), parseInt(configId), company);
   }
 
-  @Delete(':configId')
+  @Delete(':brandId/configs/:configId')
   remove(
     @Request() req,
     @Param('brandId') brandId: string,
@@ -58,7 +58,7 @@ export class ConfigsController {
     return this.configsService.remove(req.user.auth0Id, parseInt(brandId), parseInt(configId));
   }
 
-  @Get()
+  @Get(':brandId/configs')
   findAllConfigsForBrand(
     @Request() req,
     @Param('brandId') brandId: string,
@@ -70,5 +70,17 @@ export class ConfigsController {
 
 
     return this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), company);
+  }
+
+  @Get(':brandName/configs/:name/:valueKey')
+  @UseGuards(ScopesGuard)
+  @Scopes('read:configs')
+  findConfigByNameAndValue(
+    @Request() req,
+    @Param('brandName') brandName: string,
+    @Param('name') name: string,
+    @Param('valueKey') valueKey: string,
+  ) {
+    return this.configsService.findConfigByNameAndValue(req.user.auth0Id, brandName, name, valueKey, req.user?.company);
   }
 }

@@ -1,25 +1,18 @@
 import { HttpClient } from './http-client';
-import { Config, ApiResponse, RequestOptions } from './types';
+import { ApiResponse, RequestOptions } from './types';
 
 export class ConfigAPI {
   constructor(private httpClient: HttpClient) {}
 
-  /**
-   * Get configuration by name (helper method)
-   */
-  async getConfigByName(
-    brandId: number,
+  async getConfigValue(
+    brandName: string,
     configName: string,
+    configValueKey: string,
     options?: RequestOptions
-  ): Promise<ApiResponse<Config | null>> {
+  ): Promise<ApiResponse<any>> {
     try {
-      const response = await this.httpClient.get<Config[]>(`/api/brands/${brandId}/configs`, options);
-      const config = response.data.find(c => c.name === configName);
-      
-      return {
-        data: config || null,
-        success: true,
-      };
+      const response = await this.httpClient.get<any>(`/api/brands/${brandName}/configs/${configName}/${configValueKey}`, options);
+      return response;      
     } catch (error) {
       throw error;
     }
