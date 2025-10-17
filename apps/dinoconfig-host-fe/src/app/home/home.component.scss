@@ -696,12 +696,15 @@
       }
       
       .feature-icon {
-        font-size: 2.5rem;
-        margin-bottom: 16px;
-        
-        @media (max-width: 768px) {
-          font-size: 2rem;
-        }
+        width: 100px;
+        height: 100px;
+        margin-top: 12px;
+        animation: float 3s ease-in-out infinite;
+      }
+    
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
       }
       
       h4 {

@@ -1,12 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Spinner } from '../components';
 import { useUser } from '../auth/user-context';
+import { subscriptionService, SubscriptionStatus } from '../services/subscription.service';
 import './Profile.scss';
 
 export default function Profile() {
+    const navigate = useNavigate();
     const { user, loading, refreshUser } = useUser();
     const [error, setError] = useState<string | null>(null);
-    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['personal', 'address', 'account', 'brands']));
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['personal', 'address', 'account', 'subscription', 'brands']));
+    const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+    const [loadingSubscription, setLoadingSubscription] = useState(true);
+
+    useEffect(() => {
+      loadSubscription();
+    }, []);
+
+    const loadSubscription = async () => {
+      try {
+        const status = await subscriptionService.getSubscriptionStatus();
+        setSubscription(status);
+      } catch (err) {
+        console.error('Failed to load subscription:', err);
+      } finally {
+        setLoadingSubscription(false);
+      }
+    };
 
     const toggleSection = (section: string) => {
       const newExpanded = new Set(expandedSections);
@@ -153,6 +173,81 @@ export default function Profile() {
                     <span className="field-value">{user?.country || 'Not provided'}</span>
                   </div>
                 </div>
+                )}
+              </div>
+
+              <div className="profile-section">
+                <button 
+                  className="section-toggle"
+                  onClick={() => toggleSection('subscription')}
+                >
+                  <svg 
+                    className={`chevron ${expandedSections.has('subscription') ? 'open' : ''}`}
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 16 16" 
+                    fill="none"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="section-title">Subscription & Plan</span>
+                </button>
+                
+                {expandedSections.has('subscription') && (
+                  <div className="profile-grid">
+                    {loadingSubscription ? (
+                      <div className="profile-field full-width">
+                        <span className="field-value">Loading subscription details...</span>
+                      </div>
+                    ) : subscription ? (
+                      <>
+                        <div className="profile-field">
+                          <span className="field-label">Current Plan:</span>
+                          <span className={`field-value tier-badge tier-badge--${subscription.tier}`}>
+                            {subscriptionService.getTierDisplayName(subscription.tier)}
+                          </span>
+                        </div>
+                        <div className="profile-field">
+                          <span className="field-label">Status:</span>
+                          <span className={`field-value status ${subscription.isActive ? 'active' : 'inactive'}`}>
+                            {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                          </span>
+                        </div>
+                        <div className="profile-field">
+                          <span className="field-label">Max Brands:</span>
+                          <span className="field-value">
+                            {subscription.limits.maxBrands === -1 ? 'Unlimited' : subscription.limits.maxBrands}
+                          </span>
+                        </div>
+                        <div className="profile-field">
+                          <span className="field-label">Max Configs per Brand:</span>
+                          <span className="field-value">
+                            {subscription.limits.maxConfigsPerBrand === -1 ? 'Unlimited' : subscription.limits.maxConfigsPerBrand}
+                          </span>
+                        </div>
+                        {subscription.currentPeriodEnd && (
+                          <div className="profile-field">
+                            <span className="field-label">Renewal Date:</span>
+                            <span className="field-value">
+                              {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="profile-field full-width">
+                          <button 
+                            className="btn btn-primary manage-subscription-btn" 
+                            onClick={() => navigate('/subscription')}
+                          >
+                            {subscription.tier === 'free' ? 'Upgrade Plan' : 'Manage Subscription'}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="profile-field full-width">
+                        <span className="field-value">Unable to load subscription details</span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 

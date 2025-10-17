@@ -2,8 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { JSONSchema7 } from "json-schema";
 import { BrandHeader, ConfigSidebar, ConfigBuilderPanel, NotificationSystem, Spinner } from "../components";
+import { SubscriptionLimitWarning } from "../components/subscription-limit-warning";
 import { ConfigService } from "../services/configService";
+import { subscriptionService, SubscriptionStatus } from "../services/subscription.service";
 import { Config, Brand, Notification, ConfirmDialog, PromptDialog } from "../types";
+import axios from "../auth/axios-interceptor";
 import "./MultiConfigBuilder.scss";
 
 export default function MultiConfigBuilder() {
@@ -14,6 +17,9 @@ export default function MultiConfigBuilder() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
+  const [limitErrorMessage, setLimitErrorMessage] = useState<string>('');
 
   // Notification system
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -90,6 +96,20 @@ export default function MultiConfigBuilder() {
         }
       });
     });
+  };
+
+  // Load subscription status
+  useEffect(() => {
+    loadSubscription();
+  }, []);
+
+  const loadSubscription = async () => {
+    try {
+      const status = await subscriptionService.getSubscriptionStatus();
+      setSubscription(status);
+    } catch (err) {
+      console.error('Failed to load subscription:', err);
+    }
   };
 
   // load configs and brand info initially
@@ -175,8 +195,19 @@ export default function MultiConfigBuilder() {
       const response = await ConfigService.createConfig(parseInt(brandId), { name });
       setConfigs(prev => [...prev, response]);
       setSelectedId(response.id);
+      // Clear limit warning if successful
+      setLimitReached(false);
+      setLimitErrorMessage('');
     } catch (err: any) {
-      showNotification('error', err.message || 'Failed to create config');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to create config';
+      showNotification('error', errorMessage);
+      
+      // Check if it's a subscription limit error
+      if (axios.isAxiosError(err) && err.response?.status === 403 && 
+          errorMessage.includes('maximum number of configs')) {
+        setLimitReached(true);
+        setLimitErrorMessage(errorMessage);
+      }
     }
   };
 
@@ -284,6 +315,15 @@ export default function MultiConfigBuilder() {
     <div className="multi-config-builder">
       <div className="main-layout">
         <BrandHeader brand={brand} />
+
+        {limitReached && subscription && (
+          <div style={{ padding: '0 20px', marginTop: '20px' }}>
+            <SubscriptionLimitWarning 
+              message={limitErrorMessage || "You've reached your config limit"} 
+              currentTier={subscription.tier}
+            />
+          </div>
+        )}
 
         <div className="main-content">
           <ConfigSidebar

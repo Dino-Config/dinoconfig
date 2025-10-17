@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, OneToOne, Index } from 'typeorm';
 import { Brand } from '../../brands/entities/brand.entity';
 import { ApiKey } from '../../security/entities/api-key.entity';
 

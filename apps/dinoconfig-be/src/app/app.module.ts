@@ -7,9 +7,10 @@ import { AuthController } from './security/controller/auth.controller';
 import { UsersModule } from './users/users.module';
 import { BrandsModule } from './brands/brands.module';
 import { ConfigsModule } from './configs/configs.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, UsersModule, BrandsModule, ConfigsModule],
+  imports: [DatabaseModule, AuthModule, UsersModule, BrandsModule, ConfigsModule, SubscriptionsModule],
   controllers: [AppController, AuthController],
   providers: [AppService],
 })

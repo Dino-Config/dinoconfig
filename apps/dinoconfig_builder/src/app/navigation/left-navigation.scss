@@ -375,5 +375,80 @@
         }
       }
     }
+
+    .subscription-tier-box {
+      padding: 14px 16px;
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 4px;
+
+      &:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        transform: translateY(-2px);
+      }
+
+      .tier-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .tier-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: #6b7280;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .tier-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 6px 12px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+
+          &--free {
+            background-color: #e3f2fd;
+            color: #1976d2;
+          }
+
+          &--pro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+          }
+
+          &--custom {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+          }
+        }
+      }
+
+      .upgrade-btn-small {
+        width: 100%;
+        padding: 8px 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 12px;
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+      }
+    }
   }
 }

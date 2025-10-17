@@ -5,3 +5,4 @@ export { default as NotificationSystem } from './NotificationSystem';
 export { default as Spinner } from './Spinner';
 export { default as ConfigModal } from './ConfigModal';
 export { default as FieldTypeSelector } from './FieldTypeSelector';
+export { Notification, useNotification } from './notification';

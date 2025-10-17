@@ -1,19 +1,24 @@
-import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, UnauthorizedException, Inject, forwardRef } from '@nestjs/common';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { ConfigsService } from './config.service';
 import { brandHeaderExtractor } from '../security/jwt-extractor';
+import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Scopes } from '../security/decorators/scope.decorator';
 import { ScopesGuard } from '../security/guard/scope.guard';
 
 @Controller('brands')
 @UseGuards(JwtAuthGuard)
 export class ConfigsController {
-  constructor(private readonly configsService: ConfigsService) {}
+  constructor(
+    private readonly configsService: ConfigsService,
+    @Inject(forwardRef(() => SubscriptionService))
+    private readonly subscriptionService: SubscriptionService
+  ) {}
 
   @Post(':brandId/configs')
-  create(
+  async create(
     @Request() req,
     @Param('brandId') brandId: string,
     @Body() dto: CreateConfigDto) {
@@ -21,6 +26,9 @@ export class ConfigsController {
     if (!company) {
       throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
     }
+
+    // Check if user has reached config limit for this brand
+    await this.subscriptionService.checkConfigLimit(req.user.id, parseInt(brandId));
 
     return this.configsService.create(req.user.auth0Id, parseInt(brandId), dto, company);
   }

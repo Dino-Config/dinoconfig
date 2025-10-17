@@ -1,0 +1,51 @@
+.subscription-limit-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  margin-bottom: 20px;
+
+  &__icon {
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+
+  &__content {
+    flex: 1;
+
+    h3 {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #856404;
+    }
+
+    p {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      color: #856404;
+      line-height: 1.5;
+    }
+  }
+
+  &__button {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+  }
+}
+

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
 import { useUser } from "../auth/user-context";
 import { environment } from "../../environments";
+import { useState, useEffect } from "react";
+import { subscriptionService, SubscriptionStatus } from "../services/subscription.service";
 import "./left-navigation.scss";
 
 type LeftNavigationProps = {  
@@ -14,6 +16,7 @@ type LeftNavigationProps = {
 export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: LeftNavigationProps) {
   const navigate = useNavigate();
   const { user, loading } = useUser();
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
 
   const goBuilder = () => {
     const lastBrandId = localStorage.getItem('lastBrandId');
@@ -42,6 +45,21 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
     } catch (error) {
       console.error('Logout error:', error);
       window.location.href = environment.homeUrl;
+    }
+  };
+
+  useEffect(() => {
+    if (user && !loading) {
+      loadSubscription();
+    }
+  }, [user, loading]);
+
+  const loadSubscription = async () => {
+    try {
+      const status = await subscriptionService.getSubscriptionStatus();
+      setSubscription(status);
+    } catch (err) {
+      console.error('Failed to load subscription:', err);
     }
   };
 
@@ -120,6 +138,22 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
 
       {/* User info and logout section */}
       <div className="nav-footer">
+        {!loading && user && subscription && !isCollapsed && (
+          <div className="subscription-tier-box" onClick={() => navigate('/subscription')}>
+            <div className="tier-info">
+              <span className="tier-label">Current Plan</span>
+              <span className={`tier-badge tier-badge--${subscription.tier}`}>
+                {subscriptionService.getTierDisplayName(subscription.tier)}
+              </span>
+            </div>
+            {subscription.tier === 'free' && (
+              <button className="upgrade-btn-small">
+                Upgrade to Pro
+              </button>
+            )}
+          </div>
+        )}
+
         {!loading && user && (
           <div className="user-info">
             <div className="user-avatar">

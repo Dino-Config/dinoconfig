@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../auth/axios-interceptor";
 import { environment } from "../../environments";
 import { Spinner } from "../components";
+import { SubscriptionLimitWarning } from "../components/subscription-limit-warning";
+import { subscriptionService, SubscriptionStatus } from "../services/subscription.service";
 import "./brand-add.scss";
 
 interface BrandFormData {
@@ -22,6 +24,21 @@ export default function BrandAdd() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
+
+  useEffect(() => {
+    loadSubscription();
+  }, []);
+
+  const loadSubscription = async () => {
+    try {
+      const status = await subscriptionService.getSubscriptionStatus();
+      setSubscription(status);
+    } catch (err) {
+      console.error('Failed to load subscription:', err);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -50,7 +67,13 @@ export default function BrandAdd() {
       navigate('/');
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to create brand');
+        const errorMessage = err.response?.data?.message || 'Failed to create brand';
+        setError(errorMessage);
+        
+        // Check if it's a subscription limit error
+        if (err.response?.status === 403 && errorMessage.includes('maximum number of brands')) {
+          setLimitReached(true);
+        }
       } else {
         setError('An error occurred');
       }
@@ -66,6 +89,13 @@ export default function BrandAdd() {
           <h1>Welcome to DinoConfig</h1>
           <p>First, let's create your brand to get started with building configurations</p>
         </div>
+
+        {limitReached && subscription && (
+          <SubscriptionLimitWarning 
+            message={error || "You've reached your brand limit"} 
+            currentTier={subscription.tier}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="brand-form">
           <div className="form-group">
