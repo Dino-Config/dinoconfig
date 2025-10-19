@@ -60,7 +60,7 @@
           "customWebpackConfig": {
             "path": "apps/dinoconfig-host-fe/webpack.prod.config.ts"
           },
-          "deployUrl": "/apps/dinoconfig-host-fe/"
+          "deployUrl": "/"
         },
         "development": {
           "buildOptimizer": false,
