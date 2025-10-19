@@ -99,6 +99,8 @@ export const SubscriptionPage: React.FC = () => {
 
   // Drag scroll functionality
   useEffect(() => {
+    console.log('REACT ENV VARIABLE', process.env.REACT_APP_GREETING)
+
     const plansGrid = document.querySelector('.plans-grid') as HTMLElement;
     if (!plansGrid) return;
 
@@ -106,7 +108,6 @@ export const SubscriptionPage: React.FC = () => {
     let startX: number;
     let scrollLeft: number;
 
-    console.log('REACT ENV VARIABLE', process.env.REACT_APP_GREETING)
     const handleMouseDown = (e: Event) => {
       const mouseEvent = e as MouseEvent;
       isDown = true;
