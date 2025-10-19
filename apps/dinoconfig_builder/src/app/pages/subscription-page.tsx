@@ -99,7 +99,7 @@ export const SubscriptionPage: React.FC = () => {
 
   // Drag scroll functionality
   useEffect(() => {
-    console.log('REACT ENV VARIABLE', process.env.REACT_APP_GREETING)
+    console.log('REACT ENV VARIABLE', process.env.NX_PUBLIC_REACT_GREETING)
 
     const plansGrid = document.querySelector('.plans-grid') as HTMLElement;
     if (!plansGrid) return;
