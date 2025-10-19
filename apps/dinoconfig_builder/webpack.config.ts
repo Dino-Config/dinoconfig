@@ -7,7 +7,7 @@ const isProd = process.env.NODE_ENV === 'production';
 module.exports = {
   output: {
     path: join(__dirname, '../../dist/apps/dinoconfig_builder'),
-    publicPath: isProd ? '/apps/dinoconfig_builder/' : '/'
+    publicPath: '/'
   },
   devServer: {
     port: 4201,
@@ -23,7 +23,7 @@ module.exports = {
       compiler: 'babel',
       main: './src/main.tsx',
       index: './src/index.html',
-      baseHref: isProd ? '/apps/dinoconfig_builder/' : '/',
+      baseHref: '/',
       assets: ['./src/favicon.ico', './src/assets', './src/_redirects'],
       styles: ['./src/styles.scss'],
       outputHashing: isProd ? 'all' : 'none',
