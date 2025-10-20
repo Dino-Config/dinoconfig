@@ -38,7 +38,6 @@ const PlanCard: React.FC<PlanCardProps> = ({
   const getButtonText = () => {
     if (isCurrentPlan) return 'Current Plan';
     if (isProcessing) return 'Processing...';
-    if (tier === 'free') return 'Downgrade to Free';
     if (tier === 'custom') return 'Contact Sales';
     if (!currentTier || currentTier === 'free') return `Upgrade to ${name}`;
     return 'Change Plan';
@@ -268,20 +267,6 @@ export const SubscriptionPage: React.FC = () => {
 
   const plans = [
     {
-      name: 'Free',
-      price: '$0',
-      period: '/month',
-      description: 'Perfect for getting started',
-      features: [
-        '1 brand',
-        '1 config per brand',
-        'Basic SDK',
-        'Community support'
-      ],
-      tier: 'free',
-      priceId: environment.stripeFreePriceId || 'price_free'
-    },
-    {
       name: 'Starter',
       price: '$9.99',
       period: '/month',
@@ -384,9 +369,6 @@ export const SubscriptionPage: React.FC = () => {
                   handleContactSales();
                 } else if (subscription?.tier === plan.tier) {
                   return;
-                } else if (plan.priceId === 'free') {
-                  // Handle downgrade to free
-                  handleCancelSubscription();
                 } else if (subscription && subscription.tier !== 'free' && plan.tier !== subscription.tier) {
                   // Handle plan changes for existing subscribers
                   handleChangePlan(plan.priceId, plan.tier);

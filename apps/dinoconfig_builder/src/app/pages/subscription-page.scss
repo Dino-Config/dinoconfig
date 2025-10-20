@@ -149,41 +149,11 @@
 
   .plans-grid {
     display: flex;
+    justify-content: center;
     gap: 24px;
     margin-bottom: 48px;
-    overflow-x: auto;
-    overflow-y: visible;
-    padding-bottom: 16px;
     padding-top: 32px;
-    scroll-behavior: smooth;
-    cursor: grab;
-    user-select: none;
-
-    &:active {
-      cursor: grabbing;
-    }
-
-    // Hide scrollbar but keep functionality
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-
-    &::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 4px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
-      
-      &:hover {
-        background: rgba(0, 0, 0, 0.3);
-      }
-    }
+    flex-wrap: wrap;
 
     // Ensure plan cards don't shrink
     .plan-card {
