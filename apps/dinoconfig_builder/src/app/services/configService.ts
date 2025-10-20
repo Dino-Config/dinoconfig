@@ -7,7 +7,15 @@ export class ConfigService {
     const response = await axios.get(`${environment.apiUrl}/brands`, {
       withCredentials: true
     });
-    return response.data;
+    
+    // Handle both array response and object with brands + limitViolations
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else if (response.data.brands && Array.isArray(response.data.brands)) {
+      return response.data.brands;
+    } else {
+      return [];
+    }
   }
 
   static async getBrand(brandId: number): Promise<Brand> {
@@ -23,7 +31,15 @@ export class ConfigService {
     const response = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs`, {
       withCredentials: true
     });
-    return response.data;
+    
+    // Handle both array response and object with configs + limitViolations
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else if (response.data.configs && Array.isArray(response.data.configs)) {
+      return response.data.configs;
+    } else {
+      return [];
+    }
   }
 
   static async createConfig(brandId: number, configData: Partial<Config>): Promise<Config> {

@@ -25,13 +25,6 @@ export class SubscriptionController {
     const subscription = await this.subscriptionService.getOrCreateDefaultSubscription(user.id);
     const limits = this.subscriptionService.getTierLimits(subscription.tier);
 
-    console.log(`Status check for user ${user.id}:`);
-    console.log(`- Tier: ${subscription.tier}`);
-    console.log(`- Status: ${subscription.status}`);
-    console.log(`- Stripe Customer ID: ${subscription.stripeCustomerId}`);
-    console.log(`- Stripe Subscription ID: ${subscription.stripeSubscriptionId}`);
-    console.log(`- Stripe Price ID: ${subscription.stripePriceId}`);
-
     return {
       tier: subscription.tier,
       status: subscription.status,
@@ -46,14 +39,6 @@ export class SubscriptionController {
 
   @Post('checkout-session')
   async createCheckoutSession(@Req() req, @Body() body: any) {
-    console.log('=== CHECKOUT SESSION REQUEST ===');
-    console.log('Request headers:', req.headers);
-    console.log('Request body:', body);
-    console.log('Body type:', typeof body);
-    console.log('Body keys:', Object.keys(body || {}));
-    console.log('Raw body exists:', !!req.body);
-    console.log('Raw body:', req.body);
-    
     const { auth0Id } = req.user;
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
@@ -61,22 +46,15 @@ export class SubscriptionController {
       throw new Error('User not found');
     }
 
-    console.log('Price ID from body:', body?.priceId);
-
     if (!body || !body.priceId) {
       console.error('Missing price ID. Body:', JSON.stringify(body, null, 2));
       throw new Error('Price ID is required in request body');
     }
 
-    console.log(`Creating checkout session for user ${user.id} with price ID: ${body.priceId}`);
-
     const session = await this.stripeService.createCheckoutSession(
       user,
       body.priceId
     );
-
-    console.log(`Checkout session created: ${session.id}`);
-    console.log('=== END CHECKOUT SESSION REQUEST ===');
 
     return { sessionId: session.id, url: session.url };
   }
@@ -131,11 +109,8 @@ export class SubscriptionController {
       };
     }
 
-    // Fetch latest subscription from Stripe
     const stripeSubscription = await this.stripeService.getSubscription(subscription.stripeSubscriptionId);
-    console.log(`Refresh: Stripe price ID: ${stripeSubscription.items.data[0].price.id}`);
     const tier = this.stripeService.getTierFromPriceId(stripeSubscription.items.data[0].price.id);
-    console.log(`Refresh: Mapped tier: ${tier}`);
     const status = this.stripeService.mapStripeStatus(stripeSubscription.status);
 
     // Update local subscription
@@ -169,28 +144,17 @@ export class SubscriptionController {
       throw new Error('User not found');
     }
 
-    console.log(`Testing webhook for user ${user.id}`);
-    
-    // Get the user's subscription
     const subscription = await this.subscriptionService.findByUserId(user.id);
     
     if (!subscription || !subscription.stripeSubscriptionId) {
       return { message: 'No Stripe subscription found for user' };
     }
 
-    console.log(`Found subscription: ${subscription.stripeSubscriptionId}`);
-    
-    // Manually trigger the subscription update logic
     const stripeSubscription = await this.stripeService.getSubscription(subscription.stripeSubscriptionId);
-    console.log(`Retrieved Stripe subscription: ${stripeSubscription.id}`);
-    console.log(`Price ID: ${stripeSubscription.items.data[0].price.id}`);
-    
     const tier = this.stripeService.getTierFromPriceId(stripeSubscription.items.data[0].price.id);
-    console.log(`Mapped tier: ${tier}`);
     
     const status = this.stripeService.mapStripeStatus(stripeSubscription.status);
     
-    // Update the subscription
     const updatedSubscription = await this.subscriptionService.createOrUpdateSubscription(user.id, {
       tier,
       status,
@@ -215,8 +179,6 @@ export class SubscriptionController {
       throw new Error('User not found');
     }
 
-    console.log(`Changing subscription plan for user ${user.id} to price ID: ${body.priceId}`);
-
     const subscription = await this.subscriptionService.findByUserId(user.id);
     
     if (!subscription || !subscription.stripeSubscriptionId) {
@@ -239,8 +201,6 @@ export class SubscriptionController {
         stripePriceId: body.priceId,
       });
 
-      console.log(`Subscription plan changed to ${tier} for user ${user.id}`);
-
       return {
         message: 'Subscription plan changed successfully',
         newTier: tier,
@@ -261,8 +221,6 @@ export class SubscriptionController {
       throw new Error('User not found');
     }
 
-    console.log(`Cancelling subscription for user ${user.id}`);
-
     const subscription = await this.subscriptionService.findByUserId(user.id);
     
     if (!subscription || !subscription.stripeSubscriptionId) {
@@ -273,15 +231,13 @@ export class SubscriptionController {
       // Cancel the subscription in Stripe
       await this.stripeService.cancelSubscription(subscription.stripeSubscriptionId);
 
-      // Update local subscription to free tier
-      const updatedLocalSubscription = await this.subscriptionService.createOrUpdateSubscription(user.id, {
-        tier: 'free' as any,
-        status: 'cancelled' as any,
-        stripeSubscriptionId: subscription.stripeSubscriptionId,
-        stripePriceId: subscription.stripePriceId,
-      });
+      // Cancel any existing FREE subscriptions for this customer
+      if (subscription.stripeCustomerId) {
+        await this.stripeService.cancelAllFreeSubscriptions(subscription.stripeCustomerId);
+      }
 
-      console.log(`Subscription cancelled and downgraded to free for user ${user.id}`);
+      // Update local subscription to free tier (this will clear Stripe fields)
+      const updatedLocalSubscription = await this.subscriptionService.cancelSubscription(user.id);
 
       return {
         message: 'Subscription cancelled successfully',
@@ -293,5 +249,51 @@ export class SubscriptionController {
       throw new Error('Failed to cancel subscription. Please try again.');
     }
   }
+
+  @Post('cleanup-free-subscriptions')
+  async cleanupFreeSubscriptions(@Req() req) {
+    const { auth0Id } = req.user;
+    const user = await this.usersService.findByAuth0Id(auth0Id);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const subscription = await this.subscriptionService.findByUserId(user.id);
+    
+    if (!subscription || !subscription.stripeCustomerId) {
+      throw new Error('No Stripe customer found');
+    }
+
+    try {
+      await this.stripeService.cancelAllFreeSubscriptions(subscription.stripeCustomerId);
+      return {
+        message: 'FREE subscriptions cleaned up successfully'
+      };
+    } catch (error) {
+      console.error('Failed to cleanup FREE subscriptions:', error);
+      throw new Error('Failed to cleanup FREE subscriptions. Please try again.');
+    }
+  }
+
+  @Get('limit-violations')
+  async checkLimitViolations(@Req() req) {
+    const { auth0Id } = req.user;
+    const user = await this.usersService.findByAuth0Id(auth0Id);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const violations = await this.subscriptionService.checkLimitViolations(user.id);
+    
+    return {
+      hasViolations: violations.hasViolations,
+      violations: violations.violations,
+      currentTier: violations.currentTier,
+      limits: violations.limits
+    };
+  }
+
 }
 

@@ -99,7 +99,6 @@ export const SubscriptionPage: React.FC = () => {
 
   // Drag scroll functionality
   useEffect(() => {
-    console.log('REACT ENV VARIABLE', process.env.NX_PUBLIC_REACT_GREETING)
 
     const plansGrid = document.querySelector('.plans-grid') as HTMLElement;
     if (!plansGrid) return;
@@ -220,10 +219,11 @@ export const SubscriptionPage: React.FC = () => {
     try {
       setProcessingTier(tierName);
       const result = await subscriptionService.changeSubscriptionPlan(priceId);
-      console.log('Plan change result:', result);
       showNotification(`Successfully changed to ${result.newTier} plan!`, 'success');
-      // Reload subscription status
-      loadSubscription();
+      const refreshedStatus = await subscriptionService.refreshSubscriptionStatus();
+      setSubscription(refreshedStatus);
+      // Notify other components about subscription change
+      window.dispatchEvent(new CustomEvent('subscriptionChanged'));
     } catch (error) {
       console.error('Failed to change subscription plan:', error);
       showNotification('Failed to change subscription plan. Please try again.', 'error');
@@ -244,10 +244,11 @@ export const SubscriptionPage: React.FC = () => {
     try {
       setProcessingTier('free');
       const result = await subscriptionService.cancelSubscription();
-      console.log('Cancel result:', result);
       showNotification('Subscription cancelled successfully. You are now on the Free plan.', 'success');
-      // Reload subscription status
-      loadSubscription();
+      const refreshedStatus = await subscriptionService.refreshSubscriptionStatus();
+      setSubscription(refreshedStatus);
+      // Notify other components about subscription change
+      window.dispatchEvent(new CustomEvent('subscriptionChanged'));
     } catch (error) {
       console.error('Failed to cancel subscription:', error);
       showNotification('Failed to cancel subscription. Please try again.', 'error');
@@ -255,6 +256,7 @@ export const SubscriptionPage: React.FC = () => {
       setProcessingTier(null);
     }
   };
+
 
   if (loading) {
     return (
@@ -418,6 +420,7 @@ export const SubscriptionPage: React.FC = () => {
             </div>
           </div>
         )}
+
 
         {/* <div className="features-comparison">
           <h2 className="comparison-title">Why upgrade?</h2>

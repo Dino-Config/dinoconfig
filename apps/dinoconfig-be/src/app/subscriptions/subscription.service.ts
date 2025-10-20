@@ -12,6 +12,20 @@ export interface TierLimits {
   maxConfigsPerBrand: number;
 }
 
+export interface LimitViolation {
+  type: 'brands' | 'configs';
+  current: number;
+  limit: number;
+  message: string;
+}
+
+export interface LimitViolationsResult {
+  hasViolations: boolean;
+  violations: LimitViolation[];
+  currentTier: SubscriptionTier;
+  limits: TierLimits;
+}
+
 @Injectable()
 export class SubscriptionService {
   constructor(
@@ -57,9 +71,9 @@ export class SubscriptionService {
     if (existing) {
       existing.tier = dto.tier;
       existing.status = dto.status || existing.status;
-      existing.stripeCustomerId = dto.stripeCustomerId || existing.stripeCustomerId;
-      existing.stripeSubscriptionId = dto.stripeSubscriptionId || existing.stripeSubscriptionId;
-      existing.stripePriceId = dto.stripePriceId || existing.stripePriceId;
+      existing.stripeCustomerId = dto.stripeCustomerId !== undefined ? dto.stripeCustomerId : existing.stripeCustomerId;
+      existing.stripeSubscriptionId = dto.stripeSubscriptionId !== undefined ? dto.stripeSubscriptionId : existing.stripeSubscriptionId;
+      existing.stripePriceId = dto.stripePriceId !== undefined ? dto.stripePriceId : existing.stripePriceId;
       existing.maxBrands = limits.maxBrands;
       existing.maxConfigsPerBrand = limits.maxConfigsPerBrand;
       
@@ -184,8 +198,79 @@ export class SubscriptionService {
     subscription.tier = SubscriptionTier.FREE;
     subscription.maxBrands = 1;
     subscription.maxConfigsPerBrand = 1;
+    // Clear Stripe-related fields since subscription is cancelled
+    subscription.stripeSubscriptionId = null;
+    subscription.stripePriceId = null;
 
     return this.subscriptionRepo.save(subscription);
+  }
+
+  async checkLimitViolations(userId: number): Promise<LimitViolationsResult> {
+    // Force a fresh query by bypassing any potential caching
+    const subscription = await this.subscriptionRepo.findOne({
+      where: { user: { id: userId } },
+      relations: ['user'],
+      cache: false // Disable caching to ensure fresh data
+    });
+    
+    if (!subscription) {
+      // If no subscription found, create default FREE subscription
+      const defaultSub = await this.createOrUpdateSubscription(userId, {
+        tier: SubscriptionTier.FREE,
+        status: SubscriptionStatus.ACTIVE,
+      });
+      return this.checkLimitViolationsWithSubscription(defaultSub, userId);
+    }
+    
+    return this.checkLimitViolationsWithSubscription(subscription, userId);
+  }
+
+  private async checkLimitViolationsWithSubscription(subscription: Subscription, userId: number): Promise<LimitViolationsResult> {
+    const limits = this.getTierLimits(subscription.tier);
+    const violations: LimitViolation[] = [];
+
+    // Check brand limit violations
+    if (limits.maxBrands !== -1) {
+      const brandCount = await this.brandRepo.count({
+        where: { user: { id: userId } }
+      });
+
+      if (brandCount > limits.maxBrands) {
+        violations.push({
+          type: 'brands',
+          current: brandCount,
+          limit: limits.maxBrands,
+          message: `You have ${brandCount} brands but your ${subscription.tier} plan only allows ${limits.maxBrands} brands. Please upgrade to continue using all your brands.`
+        });
+      }
+    }
+
+    // Check config limit violations per brand
+    if (limits.maxConfigsPerBrand !== -1) {
+      const brands = await this.brandRepo.find({
+        where: { user: { id: userId } },
+        relations: ['configs']
+      });
+
+      for (const brand of brands) {
+        const configCount = brand.configs?.length || 0;
+        if (configCount > limits.maxConfigsPerBrand) {
+          violations.push({
+            type: 'configs',
+            current: configCount,
+            limit: limits.maxConfigsPerBrand,
+            message: `Brand "${brand.name}" has ${configCount} configs but your ${subscription.tier} plan only allows ${limits.maxConfigsPerBrand} configs per brand. Please upgrade to continue using all configs.`
+          });
+        }
+      }
+    }
+
+    return {
+      hasViolations: violations.length > 0,
+      violations,
+      currentTier: subscription.tier,
+      limits
+    };
   }
 }
 

@@ -54,6 +54,21 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
     }
   }, [user, loading]);
 
+  // Listen for subscription changes
+  useEffect(() => {
+    const handleSubscriptionChange = () => {
+      if (user && !loading) {
+        loadSubscription();
+      }
+    };
+
+    window.addEventListener('subscriptionChanged', handleSubscriptionChange);
+    
+    return () => {
+      window.removeEventListener('subscriptionChanged', handleSubscriptionChange);
+    };
+  }, [user, loading]);
+
   const loadSubscription = async () => {
     try {
       const status = await subscriptionService.getSubscriptionStatus();

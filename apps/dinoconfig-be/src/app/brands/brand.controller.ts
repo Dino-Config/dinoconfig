@@ -22,6 +22,25 @@ export class BrandsController {
     if (!company) {
       throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
     }
+    
+    // Get user by auth0Id from JWT token
+    const { auth0Id } = req.user;
+    const user = await this.usersService.findByAuth0Id(auth0Id);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    
+    // Check for limit violations
+    const violations = await this.subscriptionService.checkLimitViolations(user.id);
+    if (violations.hasViolations) {
+      // Return brands with violation info
+      const brands = await this.brandsService.findAllByCompany(company);
+      return {
+        brands,
+        limitViolations: violations
+      };
+    }
+    
     return this.brandsService.findAllByCompany(company);
   }
 

@@ -32,7 +32,15 @@ export default function BrandSelection() {
       const response = await axios.get(`${environment.apiUrl}/brands`, {
         withCredentials: true
       });
-      setBrands(response.data);
+      
+      // Handle both array response and object with brands + limitViolations
+      if (Array.isArray(response.data)) {
+        setBrands(response.data);
+      } else if (response.data.brands && Array.isArray(response.data.brands)) {
+        setBrands(response.data.brands);
+      } else {
+        setBrands([]);
+      }
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Failed to load brands');

@@ -21,6 +21,23 @@ export interface PortalSessionResponse {
   url: string;
 }
 
+export interface LimitViolation {
+  type: 'brands' | 'configs';
+  current: number;
+  limit: number;
+  message: string;
+}
+
+export interface LimitViolationsResult {
+  hasViolations: boolean;
+  violations: LimitViolation[];
+  currentTier: string;
+  limits: {
+    maxBrands: number;
+    maxConfigsPerBrand: number;
+  };
+}
+
 class SubscriptionService {
   private baseUrl = environment.apiUrl;
 
@@ -98,6 +115,17 @@ class SubscriptionService {
     );
     return response.data;
   }
+
+  async checkLimitViolations(): Promise<LimitViolationsResult> {
+    const response = await axios.get<LimitViolationsResult>(
+      `${this.baseUrl}/subscriptions/limit-violations`,
+      {
+        withCredentials: true 
+      }
+    );
+    return response.data;
+  }
+
 
   getTierDisplayName(tier: string): string {
     switch (tier) {

@@ -12,9 +12,6 @@ export class WebhookController {
     @Req() request: RawBodyRequest<Request>,
     @Headers('stripe-signature') signature: string
   ) {
-    console.log('Webhook received, signature:', signature);
-    console.log('Raw body exists:', !!request.rawBody);
-    console.log('Raw body length:', request.rawBody?.length || 0);
 
     const payload = request.rawBody;
 
@@ -30,7 +27,6 @@ export class WebhookController {
 
     try {
       await this.stripeService.handleWebhook(payload, signature);
-      console.log('Webhook processed successfully');
     } catch (error) {
       console.error('Webhook processing failed:', error);
       throw error;

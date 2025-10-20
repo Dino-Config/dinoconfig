@@ -106,6 +106,10 @@ export class StripeService {
         await this.handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
         break;
       
+      case 'customer.subscription.created':
+        await this.handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+        break;
+      
       case 'invoice.payment_succeeded':
         await this.handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
         break;
@@ -159,6 +163,7 @@ export class StripeService {
       return;
     }
 
+    const oldTier = subscription.tier;
     const tier = this.getTierFromPriceId(stripeSubscription.items.data[0].price.id);
     const status = this.mapStripeStatus(stripeSubscription.status);
 
@@ -169,7 +174,51 @@ export class StripeService {
       stripePriceId: stripeSubscription.items.data[0].price.id,
     });
 
+    // Check for limit violations after tier change
+    const violations = await this.subscriptionService.checkLimitViolations(subscription.user.id);
+    if (violations.hasViolations) {
+      this.logger.warn(`User ${subscription.user.id} has limit violations after downgrading from ${oldTier} to ${tier}`);
+      violations.violations.forEach(violation => {
+        this.logger.warn(`Violation: ${violation.message}`);
+      });
+    }
+
     this.logger.log(`Subscription updated for user ${subscription.user.id}`);
+  }
+
+  private async handleSubscriptionCreated(stripeSubscription: Stripe.Subscription): Promise<void> {
+    const tier = this.getTierFromPriceId(stripeSubscription.items.data[0].price.id);
+    
+    // If Stripe automatically created a FREE subscription, cancel it immediately
+    if (tier === SubscriptionTier.FREE) {
+      this.logger.warn(`Stripe automatically created a FREE subscription ${stripeSubscription.id}, cancelling it`);
+      try {
+        await this.stripe.subscriptions.cancel(stripeSubscription.id);
+        this.logger.log(`Cancelled automatic FREE subscription ${stripeSubscription.id}`);
+      } catch (error) {
+        this.logger.error(`Failed to cancel automatic FREE subscription ${stripeSubscription.id}:`, error);
+      }
+      return;
+    }
+    
+    // For paid subscriptions, find the user and update their subscription
+    const customer = await this.stripe.customers.retrieve(stripeSubscription.customer as string);
+    if (!customer || customer.deleted || !(customer as Stripe.Customer).metadata?.userId) {
+      this.logger.error(`No userId found in customer metadata for subscription ${stripeSubscription.id}`);
+      return;
+    }
+    
+    const userId = parseInt((customer as Stripe.Customer).metadata.userId);
+    const status = this.mapStripeStatus(stripeSubscription.status);
+    
+    await this.subscriptionService.createOrUpdateSubscription(userId, {
+      tier,
+      status,
+      stripeSubscriptionId: stripeSubscription.id,
+      stripePriceId: stripeSubscription.items.data[0].price.id,
+    });
+    
+    this.logger.log(`Subscription created for user ${userId}: ${tier} tier`);
   }
 
   private async handleSubscriptionDeleted(stripeSubscription: Stripe.Subscription): Promise<void> {
@@ -182,7 +231,18 @@ export class StripeService {
       return;
     }
 
+    const oldTier = subscription.tier;
     await this.subscriptionService.cancelSubscription(subscription.user.id);
+    
+    // Check for limit violations after cancellation (downgrade to free)
+    const violations = await this.subscriptionService.checkLimitViolations(subscription.user.id);
+    if (violations.hasViolations) {
+      this.logger.warn(`User ${subscription.user.id} has limit violations after cancelling subscription (downgrading from ${oldTier} to free)`);
+      violations.violations.forEach(violation => {
+        this.logger.warn(`Violation: ${violation.message}`);
+      });
+    }
+    
     this.logger.log(`Subscription cancelled for user ${subscription.user.id}`);
   }
 
@@ -255,6 +315,27 @@ export class StripeService {
 
   async cancelSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     return this.stripe.subscriptions.cancel(subscriptionId);
+  }
+
+  async cancelAllFreeSubscriptions(customerId: string): Promise<void> {
+    try {
+      // Get all active subscriptions for the customer
+      const subscriptions = await this.stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active'
+      });
+
+      // Cancel any FREE subscriptions
+      for (const subscription of subscriptions.data) {
+        const tier = this.getTierFromPriceId(subscription.items.data[0].price.id);
+        if (tier === SubscriptionTier.FREE) {
+          this.logger.log(`Cancelling existing FREE subscription ${subscription.id} for customer ${customerId}`);
+          await this.stripe.subscriptions.cancel(subscription.id);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Failed to cancel FREE subscriptions for customer ${customerId}:`, error);
+    }
   }
 
   public getTierFromPriceId(priceId: string): SubscriptionTier {

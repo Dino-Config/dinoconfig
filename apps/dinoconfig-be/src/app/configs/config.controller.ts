@@ -67,7 +67,7 @@ export class ConfigsController {
   }
 
   @Get(':brandId/configs')
-  findAllConfigsForBrand(
+  async findAllConfigsForBrand(
     @Request() req,
     @Param('brandId') brandId: string,
   ) {
@@ -76,6 +76,16 @@ export class ConfigsController {
       throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
     }
 
+    // Check for limit violations
+    const violations = await this.subscriptionService.checkLimitViolations(req.user.id);
+    if (violations.hasViolations) {
+      // Return configs with violation info
+      const configs = await this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), company);
+      return {
+        configs,
+        limitViolations: violations
+      };
+    }
 
     return this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), company);
   }
