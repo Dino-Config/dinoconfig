@@ -1,3 +1,3 @@
-/assets/*    /apps/dinoconfig-host-fe/assets/:splat   200
+/assets/*    /dinoconfig-host-fe/assets/:splat   200
 
-/* /apps/dinoconfig-host-fe/index.html 200
+/* /dinoconfig-host-fe/index.html 200
