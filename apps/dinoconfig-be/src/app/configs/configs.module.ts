@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Config } from './entities/config.entity';
+import { ActiveVersion } from './entities/active-version.entity';
 import { ConfigsController } from './config.controller';
 import { ConfigsService } from './config.service';
 import { BrandsModule } from '../brands/brands.module';
@@ -9,7 +10,7 @@ import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Config, Brand]),
+    TypeOrmModule.forFeature([Config, Brand, ActiveVersion]),
     BrandsModule,
     forwardRef(() => SubscriptionsModule)
   ],

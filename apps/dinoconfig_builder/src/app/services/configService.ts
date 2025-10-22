@@ -51,5 +51,28 @@ export class ConfigService {
       withCredentials: true
     });
   }
+
+  static async getConfigVersions(brandId: number, configId: number): Promise<Config[]> {
+    const response = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs/${configId}/versions`, {
+      withCredentials: true
+    });
+    return response.data;
+  }
+
+
+  static async getActiveConfig(brandId: number, configName: string): Promise<Config | null> {
+    const response = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs/${configName}/active`, {
+      withCredentials: true
+    });
+    return response.data;
+  }
+
+  static async setActiveVersion(brandId: number, configName: string, version: number): Promise<void> {
+    await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${configName}/active-version`, {
+      version: version
+    }, {
+      withCredentials: true
+    });
+  }
 }
 

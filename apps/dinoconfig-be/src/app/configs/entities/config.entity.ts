@@ -1,8 +1,9 @@
 // config.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index } from 'typeorm';
 import { Brand } from '../../brands/entities/brand.entity';
 
 @Entity('configs')
+@Index(['brand', 'name', 'version', 'company'], { unique: true })
 export class Config {
   @PrimaryGeneratedColumn('increment')
   id: number;

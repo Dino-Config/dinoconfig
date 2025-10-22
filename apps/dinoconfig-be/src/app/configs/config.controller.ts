@@ -22,15 +22,10 @@ export class ConfigsController {
     @Request() req,
     @Param('brandId') brandId: string,
     @Body() dto: CreateConfigDto) {
-    const company = brandHeaderExtractor(req);
-    if (!company) {
-      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
-    }
-
     // Check if user has reached config limit for this brand
     await this.subscriptionService.checkConfigLimit(req.user.id, parseInt(brandId));
 
-    return this.configsService.create(req.user.auth0Id, parseInt(brandId), dto, company);
+    return this.configsService.create(req.user.auth0Id, parseInt(brandId), dto, req.user.company);
   }
 
   @Patch(':brandId/configs/:configId')
@@ -40,7 +35,7 @@ export class ConfigsController {
     @Param('configId') configId: string,
     @Body() dto: UpdateConfigDto,
   ) {
-    return this.configsService.update(req.user.auth0Id, parseInt(brandId), parseInt(configId), dto);
+    return this.configsService.update(req.user.auth0Id, parseInt(brandId), parseInt(configId), dto, req.user.company);
   }
 
   @Get(':brandId/configs/:configId')
@@ -49,12 +44,7 @@ export class ConfigsController {
     @Param('brandId') brandId: string,
     @Param('configId') configId: string,
   ) {
-    const company = brandHeaderExtractor(req);
-    if (!company) {
-      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
-    }
-
-    return this.configsService.findOneByBrandAndCompanyId(req.user.auth0Id, parseInt(brandId), parseInt(configId), company);
+    return this.configsService.findOneByBrandAndCompanyId(req.user.auth0Id, parseInt(brandId), parseInt(configId), req.user.company);
   }
 
   @Delete(':brandId/configs/:configId')
@@ -71,13 +61,36 @@ export class ConfigsController {
     @Request() req,
     @Param('brandId') brandId: string,
   ) {
-    const company = brandHeaderExtractor(req);
-    if (!company) {
-      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
-    }
+    return this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), req.user.company);
+  }
+
+  @Get(':brandId/configs/:configId/versions')
+  getConfigVersions(
+    @Request() req,
+    @Param('brandId') brandId: string,
+    @Param('configId') configId: number,
+  ) {
+    return this.configsService.getConfigVersionsById(req.user.auth0Id, parseInt(brandId), configId, req.user.company);
+  }
 
 
-    return this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), company);
+  @Get(':brandId/configs/:configName/active')
+  getActiveConfig(
+    @Request() req,
+    @Param('brandId') brandId: string,
+    @Param('configName') configName: string,
+  ) {
+    return this.configsService.getActiveConfig(req.user.auth0Id, parseInt(brandId), configName, req.user.company);
+  }
+
+  @Patch(':brandId/configs/:configName/active-version')
+  setActiveVersion(
+    @Request() req,
+    @Param('brandId') brandId: string,
+    @Param('configName') configName: string,
+    @Body() body: { version: number },
+  ) {
+    return this.configsService.setActiveVersionByName(req.user.auth0Id, parseInt(brandId), configName, body.version, req.user.company);
   }
 
   @Get(':brandName/configs/:name/:valueKey')
@@ -90,5 +103,17 @@ export class ConfigsController {
     @Param('valueKey') valueKey: string,
   ) {
     return this.configsService.findConfigByNameAndValue(req.user.auth0Id, brandName, name, valueKey, req.user?.company);
+  }
+
+
+  @Get(':brandName/configs/:name/active')
+  @UseGuards(ScopesGuard)
+  @Scopes('read:configs')
+  getActiveConfigForSDK(
+    @Request() req,
+    @Param('brandName') brandName: string,
+    @Param('name') name: string,
+  ) {
+    return this.configsService.getActiveConfigForSDK(brandName, name, req.user?.company);
   }
 }
