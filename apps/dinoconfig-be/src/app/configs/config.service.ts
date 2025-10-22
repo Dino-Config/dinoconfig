@@ -6,6 +6,7 @@ import { ActiveVersion } from './entities/active-version.entity';
 import { Brand } from '../brands/entities/brand.entity';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
+import { UpdateConfigResponseDto } from './dto/update-config-response.dto';
 
 @Injectable()
 export class ConfigsService {
@@ -56,7 +57,7 @@ export class ConfigsService {
     configId: number,
     dto: UpdateConfigDto,
     company: string,
-  ): Promise<Config> {
+  ): Promise<UpdateConfigResponseDto> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
 
     const existing = await this.configRepo.findOne({
@@ -95,7 +96,13 @@ export class ConfigsService {
     // Update the active version for this config name
     await this.setActiveVersionForConfig(brand.id, savedConfig.name, savedConfig.version, company);
     
-    return savedConfig;
+    // Get all versions for this config name to return in response
+    const allVersions = await this.getConfigVersions(userId, brandId, savedConfig.name, company);
+    
+    return {
+      config: savedConfig,
+      versions: allVersions
+    };
   }
 
   async findOneByBrandAndCompanyId(userId: string, brandId: number, configId: number, company: string): Promise<Config> {

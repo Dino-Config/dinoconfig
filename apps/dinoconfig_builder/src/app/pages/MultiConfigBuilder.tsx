@@ -17,6 +17,7 @@ export default function MultiConfigBuilder() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
   const [activeVersions, setActiveVersions] = useState<Record<string, number>>({});
+  const [configVersions, setConfigVersions] = useState<Config[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
@@ -163,7 +164,7 @@ export default function MultiConfigBuilder() {
     }
   };
 
-  // when selectedId changes, load its schema/ui/formData
+  // when selectedId changes, load its schema/ui/formData and versions
   useEffect(() => {
     if (!selectedId) {
       // reset to empty
@@ -171,8 +172,12 @@ export default function MultiConfigBuilder() {
       setUiSchema({});
       setFormData({});
       setSelectedVersion(null);
+      setConfigVersions([]);
       return;
     }
+    
+    // Load versions for the selected config (only when config changes)
+    loadConfigVersions(selectedId);
     
     // If a specific version is selected, load that version
     if (selectedVersion) {
@@ -185,7 +190,19 @@ export default function MultiConfigBuilder() {
         setSelectedVersion(cfg.version);
       }
     }
-  }, [selectedId, configs, selectedVersion]);
+  }, [selectedId]); // Remove configs and selectedVersion from dependencies to avoid multiple calls
+
+  const loadConfigVersions = async (configId: number) => {
+    try {
+      if (!brandId) return;
+      
+      const versions = await ConfigService.getConfigVersions(parseInt(brandId), configId);
+      setConfigVersions(versions);
+    } catch (error: any) {
+      showNotification('error', 'Failed to load config versions');
+      console.error('Error loading config versions:', error);
+    }
+  };
 
   const loadConfigVersion = async (configId: number, version: number) => {
     try {
@@ -257,14 +274,36 @@ export default function MultiConfigBuilder() {
     }
     
     try {
-      await ConfigService.updateConfig(parseInt(brandId), selectedId, {
+      const response = await ConfigService.updateConfig(parseInt(brandId), selectedId, {
         formData,
         schema,
         uiSchema
       });
       
-      // Reload configs
-      await loadBrandAndConfigs(parseInt(brandId));
+      const { config: updatedConfig, versions } = response;
+      
+      // Update local state with the new config version instead of reloading everything
+      setConfigs(prev => {
+        // Remove the old version of this config and add the new one
+        const filteredConfigs = prev.filter(c => c.id !== selectedId);
+        return [...filteredConfigs, updatedConfig];
+      });
+      
+      // Update active versions to reflect the new version
+      setActiveVersions(prev => ({
+        ...prev,
+        [updatedConfig.name]: updatedConfig.version
+      }));
+      
+      // Update the selected version to the new version
+      setSelectedVersion(updatedConfig.version);
+      
+      // Update the selectedId to point to the new config version
+      setSelectedId(updatedConfig.id);
+      
+      // Update versions from the response (no additional API call needed!)
+      setConfigVersions(versions);
+      
       showNotification('success', "Config saved and submitted successfully!");
     } catch (err: any) {
       showNotification('error', err.message || 'Failed to save config');
@@ -298,12 +337,31 @@ export default function MultiConfigBuilder() {
     if (!newName || newName.trim() === '') return;
     
     try {
-      await ConfigService.updateConfig(parseInt(brandId!), id, {
+      const response = await ConfigService.updateConfig(parseInt(brandId!), id, {
         name: newName.trim()
       });
       
-      // Update local state
-      setConfigs(prev => prev.map(c => c.id === id ? { ...c, name: newName.trim() } : c));
+      const { config: updatedConfig, versions } = response;
+      
+      // Update local state with the new config version from response
+      setConfigs(prev => {
+        // Remove the old version of this config and add the new one
+        const filteredConfigs = prev.filter(c => c.id !== id);
+        return [...filteredConfigs, updatedConfig];
+      });
+      
+      // Update active versions to reflect the new version
+      setActiveVersions(prev => ({
+        ...prev,
+        [updatedConfig.name]: updatedConfig.version
+      }));
+      
+      // If this was the selected config, update the selected version and versions
+      if (selectedId === id) {
+        setSelectedVersion(updatedConfig.version);
+        setSelectedId(updatedConfig.id);
+        setConfigVersions(versions);
+      }
       
       showNotification('success', "Config renamed successfully");
     } catch (err: any) {
@@ -395,6 +453,7 @@ export default function MultiConfigBuilder() {
                 onSetActiveVersion={(version) => handleSetActiveVersion(selectedConfig.name, version)}
                 activeVersion={activeVersions[selectedConfig.name]}
                 onNotification={showNotification}
+                versions={configVersions}
               />
             )}
 

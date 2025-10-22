@@ -12,6 +12,7 @@ interface VersionSelectorProps {
   onSetActiveVersion: (version: number) => void;
   activeVersion?: number;
   onNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
+  versions?: Config[];
 }
 
 export const VersionSelector: React.FC<VersionSelectorProps> = ({
@@ -22,34 +23,18 @@ export const VersionSelector: React.FC<VersionSelectorProps> = ({
   onVersionSelect,
   onSetActiveVersion,
   activeVersion,
-  onNotification
+  onNotification,
+  versions = []
 }) => {
-  const [versions, setVersions] = useState<Config[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSettingActive, setIsSettingActive] = useState(false);
   const [previewVersion, setPreviewVersion] = useState<Config | null>(null);
 
   useEffect(() => {
-    loadVersions();
-  }, [brandId, configId]);
-
-  const loadVersions = async () => {
-    try {
-      setIsLoading(true);
-      const versionsData = await ConfigService.getConfigVersions(brandId, configId);
-      setVersions(versionsData);
-      
-      // Set the first version as preview by default
-      if (versionsData.length > 0) {
-        setPreviewVersion(versionsData[0]);
-      }
-    } catch (error: any) {
-      onNotification('error', 'Failed to load config versions');
-      console.error('Error loading versions:', error);
-    } finally {
-      setIsLoading(false);
+    // Set the first version as preview by default when versions change
+    if (versions.length > 0) {
+      setPreviewVersion(versions[0]);
     }
-  };
+  }, [versions]);
 
   const handleSetActiveVersion = async (version: number) => {
     try {
@@ -82,14 +67,6 @@ export const VersionSelector: React.FC<VersionSelectorProps> = ({
       minute: '2-digit'
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="version-selector">
-        <div className="version-selector__loading">Loading versions...</div>
-      </div>
-    );
-  }
 
   if (versions.length === 0) {
     return null;

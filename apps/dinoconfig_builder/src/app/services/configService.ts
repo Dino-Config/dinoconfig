@@ -39,7 +39,7 @@ export class ConfigService {
     return response.data;
   }
 
-  static async updateConfig(brandId: number, configId: number, configData: Partial<Config>): Promise<Config> {
+  static async updateConfig(brandId: number, configId: number, configData: Partial<Config>): Promise<{config: Config, versions: Config[]}> {
     const response = await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${configId}`, configData, {
       withCredentials: true
     });
