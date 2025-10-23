@@ -361,7 +361,11 @@ export default function ConfigBuilderPanel({
                 <div className="save-config-actions">
                   <button
                     className="btn btn-success"
-                    type="submit"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onSave();
+                    }}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

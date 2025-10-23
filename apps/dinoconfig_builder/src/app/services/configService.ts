@@ -55,7 +55,7 @@ export class ConfigService {
     return response.data;
   }
 
-  static async updateConfig(brandId: number, configId: number, configData: Partial<Config>): Promise<Config> {
+  static async updateConfig(brandId: number, configId: number, configData: Partial<Config>): Promise<{config: Config, versions: Config[]}> {
     const response = await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${configId}`, configData, {
       withCredentials: true
     });
@@ -64,6 +64,29 @@ export class ConfigService {
 
   static async deleteConfig(brandId: number, configId: number): Promise<void> {
     await axios.delete(`${environment.apiUrl}/brands/${brandId}/configs/${configId}`, {
+      withCredentials: true
+    });
+  }
+
+  static async getConfigVersions(brandId: number, configId: number): Promise<Config[]> {
+    const response = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs/${configId}/versions`, {
+      withCredentials: true
+    });
+    return response.data;
+  }
+
+
+  static async getActiveConfig(brandId: number, configName: string): Promise<Config | null> {
+    const response = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs/${configName}/active`, {
+      withCredentials: true
+    });
+    return response.data;
+  }
+
+  static async setActiveVersion(brandId: number, configName: string, version: number): Promise<void> {
+    await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${configName}/active-version`, {
+      version: version
+    }, {
       withCredentials: true
     });
   }

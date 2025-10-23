@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { JSONSchema7 } from "json-schema";
-import { BrandHeader, ConfigSidebar, ConfigBuilderPanel, NotificationSystem, Spinner } from "../components";
+import { BrandHeader, ConfigSidebar, ConfigBuilderPanel, NotificationSystem, Spinner, VersionSelector } from "../components";
 import { SubscriptionLimitWarning } from "../components/subscription-limit-warning";
 import { ConfigService } from "../services/configService";
 import { subscriptionService, SubscriptionStatus } from "../services/subscription.service";
@@ -15,6 +15,9 @@ export default function MultiConfigBuilder() {
   const [configs, setConfigs] = useState<Config[]>([]);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
+  const [activeVersions, setActiveVersions] = useState<Record<string, number>>({});
+  const [configVersions, setConfigVersions] = useState<Config[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
@@ -147,6 +150,13 @@ export default function MultiConfigBuilder() {
 
       const configsData = await ConfigService.getConfigs(brandId);
       setConfigs(configsData);
+
+      // Since the backend now returns only active versions, we can set the active versions directly
+      const activeVersionsData: Record<string, number> = {};
+      for (const config of configsData) {
+        activeVersionsData[config.name] = config.version;
+      }
+      setActiveVersions(activeVersionsData);
     } catch (err: any) {
       setError(err.message || 'Failed to load brand and configs');
     } finally {
@@ -154,38 +164,83 @@ export default function MultiConfigBuilder() {
     }
   };
 
-  // when selectedId changes, load its schema/ui/formData
+  // when selectedId changes, load its schema/ui/formData and versions
   useEffect(() => {
     if (!selectedId) {
       // reset to empty
       setSchema({ type: "object", properties: {}, required: [] });
       setUiSchema({});
       setFormData({});
+      setSelectedVersion(null);
+      setConfigVersions([]);
       return;
     }
-    const cfg = configs.find(c => c.id === selectedId);
-    if (cfg) {
-      // Prefer stored schema/uiSchema/formData if present
-      const effectiveSchema = (cfg.schema as any) ?? { type: "object", properties: {}, required: [] };
-      const effectiveUiSchema = (cfg.uiSchema as any) ?? {};
-      const effectiveFormData = cfg.formData ?? {};
-
-      // If no schema provided but formData exists, infer simple string-based schema
-      if (!cfg.schema && effectiveFormData && Object.keys(effectiveFormData).length > 0) {
-        const properties: Record<string, any> = {};
-        Object.keys(effectiveFormData).forEach(key => {
-          const val = effectiveFormData[key];
-          const inferredType = typeof val === 'number' ? 'number' : typeof val === 'boolean' ? 'boolean' : 'string';
-          properties[key] = { type: inferredType, title: key };
-        });
-        setSchema({ type: "object", properties, title: cfg.name });
-      } else {
-        setSchema(effectiveSchema as any);
+    
+    // Load versions for the selected config (only when config changes)
+    loadConfigVersions(selectedId);
+    
+    // If a specific version is selected, load that version
+    if (selectedVersion) {
+      loadConfigVersion(selectedId, selectedVersion);
+    } else {
+      // Load the latest version by default
+      const cfg = configs.find(c => c.id === selectedId);
+      if (cfg) {
+        loadConfigData(cfg);
+        setSelectedVersion(cfg.version);
       }
-      setUiSchema(effectiveUiSchema);
-      setFormData(effectiveFormData);
     }
-  }, [selectedId, configs]);
+  }, [selectedId]); // Remove configs and selectedVersion from dependencies to avoid multiple calls
+
+  const loadConfigVersions = async (configId: number) => {
+    try {
+      if (!brandId) return;
+      
+      const versions = await ConfigService.getConfigVersions(parseInt(brandId), configId);
+      setConfigVersions(versions);
+    } catch (error: any) {
+      showNotification('error', 'Failed to load config versions');
+      console.error('Error loading config versions:', error);
+    }
+  };
+
+  const loadConfigVersion = async (configId: number, version: number) => {
+    try {
+      if (!brandId) return;
+      
+      const versions = await ConfigService.getConfigVersions(parseInt(brandId), configId);
+      const versionConfig = versions.find(v => v.version === version);
+      
+      if (versionConfig) {
+        loadConfigData(versionConfig);
+      }
+    } catch (error: any) {
+      showNotification('error', 'Failed to load config version');
+      console.error('Error loading config version:', error);
+    }
+  };
+
+  const loadConfigData = (cfg: Config) => {
+    // Prefer stored schema/uiSchema/formData if present
+    const effectiveSchema = (cfg.schema as any) ?? { type: "object", properties: {}, required: [] };
+    const effectiveUiSchema = (cfg.uiSchema as any) ?? {};
+    const effectiveFormData = cfg.formData ?? {};
+
+    // If no schema provided but formData exists, infer simple string-based schema
+    if (!cfg.schema && effectiveFormData && Object.keys(effectiveFormData).length > 0) {
+      const properties: Record<string, any> = {};
+      Object.keys(effectiveFormData).forEach(key => {
+        const val = effectiveFormData[key];
+        const inferredType = typeof val === 'number' ? 'number' : typeof val === 'boolean' ? 'boolean' : 'string';
+        properties[key] = { type: inferredType, title: key };
+      });
+      setSchema({ type: "object", properties, title: cfg.name });
+    } else {
+      setSchema(effectiveSchema as any);
+    }
+    setUiSchema(effectiveUiSchema);
+    setFormData(effectiveFormData);
+  };
 
   // create a new config skeleton and open it for editing
   const handleCreateConfig = async (name: string) => {
@@ -219,14 +274,36 @@ export default function MultiConfigBuilder() {
     }
     
     try {
-      await ConfigService.updateConfig(parseInt(brandId), selectedId, {
+      const response = await ConfigService.updateConfig(parseInt(brandId), selectedId, {
         formData,
         schema,
         uiSchema
       });
       
-      // Reload configs
-      await loadBrandAndConfigs(parseInt(brandId));
+      const { config: updatedConfig, versions } = response;
+      
+      // Update local state with the new config version instead of reloading everything
+      setConfigs(prev => {
+        // Remove the old version of this config and add the new one
+        const filteredConfigs = prev.filter(c => c.id !== selectedId);
+        return [...filteredConfigs, updatedConfig];
+      });
+      
+      // Update active versions to reflect the new version
+      setActiveVersions(prev => ({
+        ...prev,
+        [updatedConfig.name]: updatedConfig.version
+      }));
+      
+      // Update the selected version to the new version
+      setSelectedVersion(updatedConfig.version);
+      
+      // Update the selectedId to point to the new config version
+      setSelectedId(updatedConfig.id);
+      
+      // Update versions from the response (no additional API call needed!)
+      setConfigVersions(versions);
+      
       showNotification('success', "Config saved and submitted successfully!");
     } catch (err: any) {
       showNotification('error', err.message || 'Failed to save config');
@@ -260,12 +337,31 @@ export default function MultiConfigBuilder() {
     if (!newName || newName.trim() === '') return;
     
     try {
-      await ConfigService.updateConfig(parseInt(brandId!), id, {
+      const response = await ConfigService.updateConfig(parseInt(brandId!), id, {
         name: newName.trim()
       });
       
-      // Update local state
-      setConfigs(prev => prev.map(c => c.id === id ? { ...c, name: newName.trim() } : c));
+      const { config: updatedConfig, versions } = response;
+      
+      // Update local state with the new config version from response
+      setConfigs(prev => {
+        // Remove the old version of this config and add the new one
+        const filteredConfigs = prev.filter(c => c.id !== id);
+        return [...filteredConfigs, updatedConfig];
+      });
+      
+      // Update active versions to reflect the new version
+      setActiveVersions(prev => ({
+        ...prev,
+        [updatedConfig.name]: updatedConfig.version
+      }));
+      
+      // If this was the selected config, update the selected version and versions
+      if (selectedId === id) {
+        setSelectedVersion(updatedConfig.version);
+        setSelectedId(updatedConfig.id);
+        setConfigVersions(versions);
+      }
       
       showNotification('success', "Config renamed successfully");
     } catch (err: any) {
@@ -284,6 +380,17 @@ export default function MultiConfigBuilder() {
     a.download = `${cfg.name || "config"}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleVersionSelect = (version: number) => {
+    setSelectedVersion(version);
+  };
+
+  const handleSetActiveVersion = (configName: string, version: number) => {
+    setActiveVersions(prev => ({
+      ...prev,
+      [configName]: version
+    }));
   };
 
   if (isLoading) {
@@ -335,18 +442,34 @@ export default function MultiConfigBuilder() {
             onCreate={handleCreateConfig}
           />
 
-          <ConfigBuilderPanel
-            selectedConfig={selectedConfig}
-            schema={schema}
-            uiSchema={uiSchema}
-            formData={formData}
-            onSchemaChange={setSchema}
-            onUiSchemaChange={setUiSchema}
-            onFormDataChange={setFormData}
-            onSave={handleSaveConfig}
-            onExport={exportSelected}
-            onNotification={showNotification}
-          />
+          <div className="config-content">
+            {selectedConfig && (
+              <VersionSelector
+                brandId={parseInt(brandId!)}
+                configId={selectedConfig.id}
+                configName={selectedConfig.name}
+                selectedVersion={selectedVersion}
+                onVersionSelect={handleVersionSelect}
+                onSetActiveVersion={(version) => handleSetActiveVersion(selectedConfig.name, version)}
+                activeVersion={activeVersions[selectedConfig.name]}
+                onNotification={showNotification}
+                versions={configVersions}
+              />
+            )}
+
+            <ConfigBuilderPanel
+              selectedConfig={selectedConfig}
+              schema={schema}
+              uiSchema={uiSchema}
+              formData={formData}
+              onSchemaChange={setSchema}
+              onUiSchemaChange={setUiSchema}
+              onFormDataChange={setFormData}
+              onSave={handleSaveConfig}
+              onExport={exportSelected}
+              onNotification={showNotification}
+            />
+          </div>
         </div>
       </div>
 
