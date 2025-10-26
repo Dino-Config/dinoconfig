@@ -61,6 +61,16 @@ export class ConfigsController {
     @Request() req,
     @Param('brandId') brandId: string,
   ) {
+    // Check for limit violations
+    const violations = await this.subscriptionService.checkLimitViolations(req.user.id);
+    if (violations.hasViolations) {
+      // Return configs with violation info
+      const configs = await this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), req.user.company);
+      return {
+        configs,
+        limitViolations: violations
+      };
+    }
     return this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), req.user.company);
   }
 
@@ -72,17 +82,6 @@ export class ConfigsController {
   ) {
     return this.configsService.getConfigVersionsById(req.user.auth0Id, parseInt(brandId), configId, req.user.company);
   }
-
-    // Check for limit violations
-    const violations = await this.subscriptionService.checkLimitViolations(req.user.id);
-    if (violations.hasViolations) {
-      // Return configs with violation info
-      const configs = await this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), company);
-      return {
-        configs,
-        limitViolations: violations
-      };
-    }
 
   @Get(':brandId/configs/:configName/active')
   getActiveConfig(
