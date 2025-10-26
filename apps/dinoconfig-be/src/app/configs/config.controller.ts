@@ -23,7 +23,7 @@ export class ConfigsController {
     @Param('brandId') brandId: string,
     @Body() dto: CreateConfigDto) {
     // Check if user has reached config limit for this brand
-    await this.subscriptionService.checkConfigLimit(req.user.id, parseInt(brandId));
+    await this.subscriptionService.checkConfigLimit(req.user.id, parseInt(brandId), req.user.company);
 
     return this.configsService.create(req.user.auth0Id, parseInt(brandId), dto, req.user.company);
   }

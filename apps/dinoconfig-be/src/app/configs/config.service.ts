@@ -136,57 +136,52 @@ export class ConfigsService {
   async findAllConfigsForBrand(userId: string, brandId: number, company: string): Promise<Config[]> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
     
-    // Get all unique config names for this brand
-    const uniqueConfigNames = await this.configRepo
-      .createQueryBuilder('config')
-      .select('DISTINCT config.name', 'name')
-      .where('config.brandId = :brandId', { brandId: brand.id })
-      .andWhere('config.company = :company', { company })
-      .getRawMany();
+    // Get all active versions for this brand from active_versions table
+    const activeVersions = await this.activeVersionRepo.find({
+      where: { 
+        brand: { id: brand.id }, 
+        company: company 
+      },
+    });
     
-    // For each unique config name, get the active version or latest version
-    const activeConfigs: Config[] = [];
-    
-    for (const configName of uniqueConfigNames) {
-      const name = configName.name;
-      
-      // First try to get the active version
-      const activeVersion = await this.activeVersionRepo.findOne({
+    // Get all configs that match active versions using Promise.all for parallel queries
+    const activeConfigPromises = activeVersions.map(av => 
+      this.configRepo.findOne({
         where: { 
           brand: { id: brand.id }, 
-          configName: name,
+          name: av.configName,
+          version: av.activeVersion,
           company: company 
         },
-      });
-      
-      let config: Config | null = null;
-      
-      if (activeVersion) {
-        // Get the active version
-        config = await this.configRepo.findOne({
-          where: { 
-            brand: { id: brand.id }, 
-            name: name,
-            version: activeVersion.activeVersion,
-            company: company 
-          },
-        });
-      }
-      
-      // If no active version found, get the latest version
-      if (!config) {
-        config = await this.configRepo.findOne({
-          where: { 
-            brand: { id: brand.id }, 
-            name: name,
-            company: company 
-          },
-          order: { version: 'DESC' },
-        });
-      }
-      
-      if (config) {
-        activeConfigs.push(config);
+      })
+    );
+    
+    let activeConfigs = (await Promise.all(activeConfigPromises)).filter(c => c !== null) as Config[];
+    
+    // Get names of configs that have active versions
+    const configsWithActiveVersions = activeVersions.map(av => av.configName);
+    
+    // Get all unique config names for this brand
+    const allConfigs = await this.configRepo.find({
+      where: { 
+        brand: { id: brand.id }, 
+        company: company 
+      },
+    });
+    
+    // Get unique config names
+    const uniqueConfigNames = [...new Set(allConfigs.map(c => c.name))];
+    
+    // For configs without active versions, get the latest version
+    for (const configName of uniqueConfigNames) {
+      if (!configsWithActiveVersions.includes(configName)) {
+        const config = allConfigs
+          .filter(c => c.name === configName)
+          .sort((a, b) => b.version - a.version)[0];
+        
+        if (config) {
+          activeConfigs.push(config);
+        }
       }
     }
     

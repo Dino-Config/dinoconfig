@@ -4,8 +4,8 @@ import { Repository } from 'typeorm';
 import { Subscription, SubscriptionTier, SubscriptionStatus } from './entities/subscription.entity';
 import { User } from '../users/entities/user.entity';
 import { Brand } from '../brands/entities/brand.entity';
-import { Config } from '../configs/entities/config.entity';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
+import { ActiveVersion } from '../configs/entities/active-version.entity';
 
 export interface TierLimits {
   maxBrands: number;
@@ -32,7 +32,7 @@ export class SubscriptionService {
     @InjectRepository(Subscription) private subscriptionRepo: Repository<Subscription>,
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Brand) private brandRepo: Repository<Brand>,
-    @InjectRepository(Config) private configRepo: Repository<Config>,
+    @InjectRepository(ActiveVersion) private activeVersionRepo: Repository<ActiveVersion>,
   ) {}
 
   async findByUserId(userId: number): Promise<Subscription | null> {
@@ -117,7 +117,7 @@ export class SubscriptionService {
       case SubscriptionTier.STARTER:
         return {
           maxBrands: 5,
-          maxConfigsPerBrand: 10
+          maxConfigsPerBrand: 3
         };
       case SubscriptionTier.PRO:
         return {
@@ -150,15 +150,15 @@ export class SubscriptionService {
     }
   }
 
-  async checkConfigLimit(userId: number, brandId: number): Promise<void> {
+  async checkConfigLimit(userId: number, brandId: number, company: string): Promise<void> {
     const subscription = await this.getOrCreateDefaultSubscription(userId);
     
     if (subscription.maxConfigsPerBrand === -1) {
       return; // unlimited
     }
 
-    const configCount = await this.configRepo.count({
-      where: { brand: { id: brandId, user: { id: userId } } }
+    const configCount = await this.activeVersionRepo.count({
+      where: { brand: { id: brandId }, company: company }
     });
 
     if (configCount >= subscription.maxConfigsPerBrand) {
@@ -245,15 +245,18 @@ export class SubscriptionService {
       }
     }
 
-    // Check config limit violations per brand
+    // Check config limit violations per brand using active_versions table
     if (limits.maxConfigsPerBrand !== -1) {
       const brands = await this.brandRepo.find({
-        where: { user: { id: userId } },
-        relations: ['configs']
+        where: { user: { id: userId } }
       });
 
       for (const brand of brands) {
-        const configCount = brand.configs?.length || 0;
+        // Count active versions (configs) for this brand
+        const configCount = await this.activeVersionRepo.count({
+          where: { brand: { id: brand.id } }
+        });
+        
         if (configCount > limits.maxConfigsPerBrand) {
           violations.push({
             type: 'configs',
