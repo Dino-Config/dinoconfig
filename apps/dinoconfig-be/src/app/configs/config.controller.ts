@@ -113,16 +113,4 @@ export class ConfigsController {
   ) {
     return this.configsService.findConfigByNameAndValue(req.user.auth0Id, brandName, name, valueKey, req.user?.company);
   }
-
-
-  @Get(':brandName/configs/:name/active')
-  @UseGuards(ScopesGuard)
-  @Scopes('read:configs')
-  getActiveConfigForSDK(
-    @Request() req,
-    @Param('brandName') brandName: string,
-    @Param('name') name: string,
-  ) {
-    return this.configsService.getActiveConfigForSDK(brandName, name, req.user?.company);
-  }
 }
