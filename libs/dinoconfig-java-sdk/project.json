@@ -1,0 +1,23 @@
+{
+    "name": "dinoconfig-java-sdk",
+    "root": "libs/dinoconfig-java-sdk",
+    "sourceRoot": "libs/dinoconfig-java-sdk/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "cd libs/dinoconfig-java-sdk && ./gradlew build"
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "cd libs/dinoconfig-java-sdk && ./gradlew test"
+            }
+        }
+    },
+    "tags": [
+        "type:java"
+    ]
+}
