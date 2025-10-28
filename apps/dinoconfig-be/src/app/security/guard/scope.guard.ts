@@ -7,6 +7,7 @@ export class ScopesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const requiredScopes = this.reflector.get<string[]>('scopes', context.getHandler());
+
     if (!requiredScopes || requiredScopes.length === 0) return true;
 
     const request = context.switchToHttp().getRequest();

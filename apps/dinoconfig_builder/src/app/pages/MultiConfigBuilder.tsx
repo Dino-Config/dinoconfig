@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { JSONSchema7 } from "json-schema";
 import { BrandHeader, ConfigSidebar, ConfigBuilderPanel, NotificationSystem, Spinner, VersionSelector } from "../components";
@@ -164,6 +164,10 @@ export default function MultiConfigBuilder() {
     }
   };
 
+  // Track if we're loading versions to prevent race conditions
+  const isLoadingVersionsRef = useRef(false);
+  const lastLoadedVersionRef = useRef<number | null>(null);
+
   // when selectedId changes, load its schema/ui/formData and versions
   useEffect(() => {
     if (!selectedId) {
@@ -173,24 +177,46 @@ export default function MultiConfigBuilder() {
       setFormData({});
       setSelectedVersion(null);
       setConfigVersions([]);
+      lastLoadedVersionRef.current = null;
       return;
     }
     
-    // Load versions for the selected config (only when config changes)
-    loadConfigVersions(selectedId);
+    // Reset selected version when config changes
+    setSelectedVersion(null);
+    lastLoadedVersionRef.current = null;
+    isLoadingVersionsRef.current = true;
     
-    // If a specific version is selected, load that version
-    if (selectedVersion) {
-      loadConfigVersion(selectedId, selectedVersion);
-    } else {
-      // Load the latest version by default
-      const cfg = configs.find(c => c.id === selectedId);
-      if (cfg) {
-        loadConfigData(cfg);
-        setSelectedVersion(cfg.version);
-      }
+    // Load all versions for this config
+    loadConfigVersions(selectedId);
+  }, [selectedId]); // Reset and load when config changes
+  
+  // When configVersions are loaded, automatically load the latest version
+  useEffect(() => {
+    if (!selectedId || configVersions.length === 0) return;
+    
+    // If this was triggered by the initial version load, load the latest version
+    if (isLoadingVersionsRef.current) {
+      const latestVersion = configVersions[0]; // Assuming versions are ordered by latest first
+      loadConfigData(latestVersion);
+      setSelectedVersion(latestVersion.version);
+      lastLoadedVersionRef.current = latestVersion.version;
+      isLoadingVersionsRef.current = false;
     }
-  }, [selectedId]); // Remove configs and selectedVersion from dependencies to avoid multiple calls
+  }, [configVersions]);
+  
+  // When selectedVersion changes (from manual selection in VersionSelector), load that specific version
+  useEffect(() => {
+    if (!selectedId || !selectedVersion || configVersions.length === 0) return;
+    if (isLoadingVersionsRef.current) return; // Don't load during initial version loading
+    if (lastLoadedVersionRef.current === selectedVersion) return; // Don't reload if already loaded
+    
+    // Load the specific version if it exists in configVersions
+    const versionConfig = configVersions.find(v => v.version === selectedVersion);
+    if (versionConfig) {
+      loadConfigData(versionConfig);
+      lastLoadedVersionRef.current = selectedVersion;
+    }
+  }, [selectedVersion]);
 
   const loadConfigVersions = async (configId: number) => {
     try {
@@ -238,8 +264,22 @@ export default function MultiConfigBuilder() {
     } else {
       setSchema(effectiveSchema as any);
     }
+    
     setUiSchema(effectiveUiSchema);
-    setFormData(effectiveFormData);
+    
+    // Initialize formData with defaults for any boolean fields in schema that are missing
+    const initializedFormData = { ...effectiveFormData };
+    if (effectiveSchema.properties) {
+      Object.keys(effectiveSchema.properties).forEach(key => {
+        const property = (effectiveSchema.properties as Record<string, any>)[key];
+        // If this is a boolean field and not in formData, set it to false
+        if (property.type === 'boolean' && !(key in initializedFormData)) {
+          initializedFormData[key] = false;
+        }
+      });
+    }
+    
+    setFormData(initializedFormData);
   };
 
   // create a new config skeleton and open it for editing
@@ -386,11 +426,19 @@ export default function MultiConfigBuilder() {
     setSelectedVersion(version);
   };
 
-  const handleSetActiveVersion = (configName: string, version: number) => {
+  const handleSetActiveVersion = async (configName: string, version: number) => {
+    // Update the active version tracking
     setActiveVersions(prev => ({
       ...prev,
       [configName]: version
     }));
+    
+    // If this is the currently selected config, switch to the newly active version
+    const currentConfig = configs.find(c => c.id === selectedId);
+    if (currentConfig && currentConfig.name === configName) {
+      // Switch to the newly active version to refresh the Live Preview
+      setSelectedVersion(version);
+    }
   };
 
   if (isLoading) {

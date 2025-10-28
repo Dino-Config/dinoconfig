@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
@@ -42,6 +42,12 @@ export default function ConfigBuilderPanel({
   const [showValidations, setShowValidations] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [showJsonData, setShowJsonData] = useState(true);
+
+  // Reset preview state when config changes
+  useEffect(() => {
+    setShowPreview(true);
+    setShowJsonData(true);
+  }, [selectedConfig?.id]);
 
   const handleFieldChange = (key: keyof FieldConfig) => (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value;
@@ -118,6 +124,28 @@ export default function ConfigBuilderPanel({
 
     const widget = getWidget(field.type);
     ensureUiEntry(fName, widget);
+
+    // Initialize formData with default value based on field type
+    let defaultValue: any = undefined;
+    if (field.type === "checkbox") {
+      // Boolean checkboxes default to false
+      defaultValue = false;
+    } else if (["number", "range"].includes(field.type)) {
+      defaultValue = 0;
+    } else if (["radio", "select"].includes(field.type) && field.options) {
+      // For radio and select with options, set the first option as default
+      const options = field.options.split(",").map(o => o.trim()).filter(Boolean);
+      defaultValue = options[0] || "";
+    } else {
+      // For text fields, default to empty string
+      defaultValue = "";
+    }
+
+    // Update formData with the default value
+    onFormDataChange({
+      ...formData,
+      [fName]: defaultValue
+    });
 
     onNotification?.('success', `Field "${fName}" added successfully!`);
     setField({ name: "", type: "text", label: "", options: "", required: false });
@@ -350,6 +378,7 @@ export default function ConfigBuilderPanel({
           {showPreview && (
             <div className="preview-content">
               <Form
+                key={selectedConfig?.id || 'no-config'}
                 schema={schema}
                 uiSchema={uiSchema}
                 formData={formData}
