@@ -1,21 +1,21 @@
 {
     "name": "dinoconfig-java-sdk-demo",
-    "root": "apps/dinoconfig-java-sdk-demo",
-    "sourceRoot": "apps/dinoconfig-java-sdk-demo/src",
+    "root": "apps/demo/dinoconfig-java-sdk-demo",
+    "sourceRoot": "apps/demo/dinoconfig-java-sdk-demo/src",
     "projectType": "application",
     "targets": {
         "build": {
             "executor": "nx:run-commands",
             "options": {
                 "command": "./gradlew build",
-                "cwd": "apps/dinoconfig-java-sdk-demo"
+                "cwd": "apps/demo/dinoconfig-java-sdk-demo"
             }
         },
         "serve": {
             "executor": "nx:run-commands",
             "options": {
                 "command": "./gradlew run",
-                "cwd": "apps/dinoconfig-java-sdk-demo"
+                "cwd": "apps/demo/dinoconfig-java-sdk-demo"
             }
         }
     },

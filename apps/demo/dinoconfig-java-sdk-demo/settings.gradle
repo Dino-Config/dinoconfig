@@ -14,4 +14,4 @@ rootProject.name = 'dinoconfig-java-sdk-demo'
 include('app')
 // Include the SDK library from the libs directory
 include 'sdk-lib'
-project(':sdk-lib').projectDir = new File('../../libs/dinoconfig-java-sdk/lib')
+project(':sdk-lib').projectDir = new File('../../../libs/dinoconfig-java-sdk/lib')
