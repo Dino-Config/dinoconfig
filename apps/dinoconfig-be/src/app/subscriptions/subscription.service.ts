@@ -6,6 +6,7 @@ import { User } from '../users/entities/user.entity';
 import { Brand } from '../brands/entities/brand.entity';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { ActiveVersion } from '../configs/entities/active-version.entity';
+import { Feature } from '../features/enums/feature.enum';
 
 export interface TierLimits {
   maxBrands: number;
@@ -117,7 +118,7 @@ export class SubscriptionService {
       case SubscriptionTier.STARTER:
         return {
           maxBrands: 5,
-          maxConfigsPerBrand: 3
+          maxConfigsPerBrand: 10
         };
       case SubscriptionTier.PRO:
         return {
@@ -130,6 +131,76 @@ export class SubscriptionService {
           maxConfigsPerBrand: -1 // unlimited
         };
     }
+  }
+
+  /**
+   * Get all features available for a specific tier
+   */
+  getTierFeatures(tier: SubscriptionTier): Feature[] {
+    const featureMap: { [key in SubscriptionTier]: Feature[] } = {
+      [SubscriptionTier.FREE]: [
+        Feature.BASIC_CONFIGS,
+        Feature.BASIC_SDK,
+      ],
+      [SubscriptionTier.STARTER]: [
+        Feature.BASIC_CONFIGS,
+        Feature.BASIC_SDK,
+        Feature.MULTIPLE_BRANDS,
+        Feature.CONFIG_VERSIONING,
+        Feature.WEBHOOKS,
+        Feature.ANALYTICS,
+      ],
+      [SubscriptionTier.PRO]: [
+        Feature.BASIC_CONFIGS,
+        Feature.BASIC_SDK,
+        Feature.MULTIPLE_BRANDS,
+        Feature.UNLIMITED_BRANDS,
+        Feature.UNLIMITED_CONFIGS,
+        Feature.CONFIG_VERSIONING,
+        Feature.CONFIG_ROLLBACK,
+        Feature.WEBHOOKS,
+        Feature.ADVANCED_SDK,
+        Feature.API_RATE_LIMIT_INCREASED,
+        Feature.ADVANCED_TARGETING,
+        Feature.USER_SEGMENTATION,
+        Feature.AB_TESTING,
+        Feature.ANALYTICS,
+        Feature.ADVANCED_ANALYTICS,
+        Feature.AUDIT_LOGS,
+        Feature.TEAM_COLLABORATION,
+        Feature.PRIORITY_SUPPORT,
+      ],
+      [SubscriptionTier.CUSTOM]: Object.values(Feature), // All features
+    };
+
+    return featureMap[tier] || [];
+  }
+
+  /**
+   * Check if a tier has a specific feature
+   */
+  hasFeature(tier: SubscriptionTier, status: SubscriptionStatus, feature: Feature): boolean {
+    // If subscription is not active, only allow basic features
+    if (status !== SubscriptionStatus.ACTIVE && status !== SubscriptionStatus.TRIALING) {
+      return feature === Feature.BASIC_CONFIGS || feature === Feature.BASIC_SDK;
+    }
+
+    const features = this.getTierFeatures(tier);
+    return features.includes(feature);
+  }
+
+  /**
+   * Get features as a map for easy lookup
+   */
+  getFeaturesMap(tier: SubscriptionTier, status: SubscriptionStatus): { [key in Feature]?: boolean } {
+    const featuresMap: { [key in Feature]?: boolean } = {};
+    const allFeatures = Object.values(Feature);
+
+    for (const feature of allFeatures) {
+      featuresMap[feature] = this.hasFeature(tier, status, feature);
+    }
+
+    return featuresMap;
   }
 
   async checkBrandLimit(userId: number): Promise<void> {

@@ -90,3 +90,4 @@ export interface PromptDialog {
   onCancel: () => void;
 }
 
+export { Feature, type FeatureMap } from './features';

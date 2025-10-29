@@ -24,6 +24,7 @@ export class SubscriptionController {
 
     const subscription = await this.subscriptionService.getOrCreateDefaultSubscription(user.id);
     const limits = this.subscriptionService.getTierLimits(subscription.tier);
+    const features = this.subscriptionService.getFeaturesMap(subscription.tier, subscription.status);
 
     return {
       tier: subscription.tier,
@@ -32,6 +33,7 @@ export class SubscriptionController {
         maxBrands: limits.maxBrands,
         maxConfigsPerBrand: limits.maxConfigsPerBrand
       },
+      features,
       currentPeriodEnd: subscription.currentPeriodEnd,
       isActive: subscription.status === 'active' || subscription.status === 'trialing'
     };

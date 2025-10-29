@@ -10,3 +10,5 @@ export { Notification, useNotification } from './notification';
 export { SubscriptionLimitWarning } from './subscription-limit-warning';
 export { SubscriptionViolationModal } from './subscription-violation-modal';
 export { LimitViolationGuard } from './limit-violation-guard';
+export { FeatureGate, FeatureTooltip } from './FeatureGate';
+export { FeatureBadge } from './FeatureBadge';
