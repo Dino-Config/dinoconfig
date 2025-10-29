@@ -10,6 +10,8 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
-rootProject.name = 'dinoconfig-java-sdk'
-include('lib')
-
+rootProject.name = 'dinoconfig-java-sdk-demo'
+include('app')
+// Include the SDK library from the libs directory
+include 'sdk-lib'
+project(':sdk-lib').projectDir = new File('../../libs/dinoconfig-java-sdk/lib')

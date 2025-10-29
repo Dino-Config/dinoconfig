@@ -143,14 +143,6 @@
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps"
       }
-    },
-    {
-      "plugin": "@nx/gradle",
-      "options": {
-        "testTargetName": "test",
-        "classesTargetName": "classes",
-        "buildTargetName": "build"
-      }
     }
   ],
   "release": {

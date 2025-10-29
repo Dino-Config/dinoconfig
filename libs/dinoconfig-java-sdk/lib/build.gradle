@@ -21,11 +21,19 @@ dependencies {
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api libs.commons.math3
-
-    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-    implementation libs.guava
+    // HTTP client for API communication
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    
+    // JSON processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
+    
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    
+    // Optional dependencies - remove if not needed
+    // api libs.commons.math3
+    // implementation libs.guava
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

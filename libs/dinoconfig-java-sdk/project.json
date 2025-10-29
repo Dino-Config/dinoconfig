@@ -7,13 +7,15 @@
         "build": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "cd libs/dinoconfig-java-sdk && ./gradlew build"
+                "command": "./gradlew clean build",
+                "cwd": "libs/dinoconfig-java-sdk"
             }
         },
         "test": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "cd libs/dinoconfig-java-sdk && ./gradlew test"
+                "command": "./gradlew test",
+                "cwd": "libs/dinoconfig-java-sdk"
             }
         }
     },

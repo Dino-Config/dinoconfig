@@ -1,9 +1,8 @@
-import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, UnauthorizedException, Inject, forwardRef } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, Inject, forwardRef } from '@nestjs/common';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { ConfigsService } from './config.service';
-import { brandHeaderExtractor } from '../security/jwt-extractor';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Scopes } from '../security/decorators/scope.decorator';
 import { ScopesGuard } from '../security/guard/scope.guard';
