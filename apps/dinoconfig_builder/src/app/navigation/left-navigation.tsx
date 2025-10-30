@@ -1,5 +1,5 @@
 import axios from "../auth/axios-interceptor";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
 import { useUser } from "../auth/user-context";
 import { environment } from "../../environments";
@@ -15,6 +15,7 @@ type LeftNavigationProps = {
 
 export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: LeftNavigationProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading } = useUser();
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
 
@@ -31,6 +32,7 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
 
   const goProfile = () => navigate(`/profile`);
   const goSettings = () => navigate(`/settings`);
+  const goSettingsFeatures = () => navigate(`/settings/features`);
 
   const handleLogout = async () => {
     try {
@@ -147,6 +149,19 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
                 <span className={isCollapsed ? 'hidden' : ''}>Settings</span>
               </button>
             </li>
+            {/* Settings child: Features (visible as nested under Settings) */}
+            {!isCollapsed && location.pathname.startsWith('/settings') && (
+              <li className="nav-item nav-subitem">
+                <button 
+                  className={`nav-link ${location.pathname.startsWith('/settings/features') ? 'active' : ''}`}
+                  onClick={goSettingsFeatures}
+                  title={isCollapsed ? 'Features' : ''}
+                >
+                  <span className="nav-sub-bullet" />
+                  <span className={isCollapsed ? 'hidden' : ''}>Features</span>
+                </button>
+              </li>
+            )}
           </ul>
         </div>
       </div>
