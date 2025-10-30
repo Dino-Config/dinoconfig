@@ -173,6 +173,7 @@ class SubscriptionService {
     const descriptions: { [key in Feature]: string } = {
       [Feature.BASIC_CONFIGS]: 'Create and manage basic configurations',
       [Feature.BASIC_SDK]: 'Access to basic SDK features',
+      [Feature.MULTIPLE_CONFIGS]: 'Create multiple configurations',
       [Feature.UNLIMITED_CONFIGS]: 'Create unlimited configurations',
       [Feature.CONFIG_VERSIONING]: 'Track configuration version history',
       [Feature.CONFIG_ROLLBACK]: 'Rollback configurations to previous versions',

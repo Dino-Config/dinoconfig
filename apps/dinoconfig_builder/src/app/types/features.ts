@@ -8,6 +8,7 @@ export enum Feature {
   BASIC_SDK = 'basic_sdk',
   
   // Advanced configuration features
+  MULTIPLE_CONFIGS = 'multiple_configs',
   UNLIMITED_CONFIGS = 'unlimited_configs',
   CONFIG_VERSIONING = 'config_versioning',
   CONFIG_ROLLBACK = 'config_rollback',

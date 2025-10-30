@@ -50,6 +50,13 @@ export class SubscriptionService {
     });
   }
 
+  private async findByUserIdentifier(userIdOrAuth0Id: number | string): Promise<Subscription | null> {
+    if (typeof userIdOrAuth0Id === 'number') {
+      return this.findByUserId(userIdOrAuth0Id);
+    }
+    return this.findByAuth0Id(userIdOrAuth0Id);
+  }
+
   async findByStripeCustomerId(stripeCustomerId: string): Promise<Subscription | null> {
     return this.subscriptionRepo.findOne({
       where: { stripeCustomerId },
@@ -64,8 +71,8 @@ export class SubscriptionService {
     });
   }
 
-  async createOrUpdateSubscription(userId: number, dto: CreateSubscriptionDto): Promise<Subscription> {
-    const existing = await this.findByUserId(userId);
+  async createOrUpdateSubscription(userIdOrAuth0Id: number | string, dto: CreateSubscriptionDto): Promise<Subscription> {
+    const existing = await this.findByUserIdentifier(userIdOrAuth0Id);
     
     const limits = this.getTierLimits(dto.tier);
     
@@ -81,8 +88,20 @@ export class SubscriptionService {
       return this.subscriptionRepo.save(existing);
     }
 
+    // Load the user entity by id or auth0Id
+    let user: User | null = null;
+    if (typeof userIdOrAuth0Id === 'number') {
+      user = await this.userRepo.findOne({ where: { id: userIdOrAuth0Id } });
+    } else {
+      user = await this.userRepo.findOne({ where: { auth0Id: userIdOrAuth0Id } });
+    }
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     const subscription = this.subscriptionRepo.create({
-      user: { id: userId },
+      user: { id: user.id },
       tier: dto.tier,
       status: dto.status || SubscriptionStatus.ACTIVE,
       stripeCustomerId: dto.stripeCustomerId,
@@ -95,11 +114,11 @@ export class SubscriptionService {
     return this.subscriptionRepo.save(subscription);
   }
 
-  async getOrCreateDefaultSubscription(userId: number): Promise<Subscription> {
-    let subscription = await this.findByUserId(userId);
+  async getOrCreateDefaultSubscription(userIdOrAuth0Id: number | string): Promise<Subscription> {
+    let subscription = await this.findByUserIdentifier(userIdOrAuth0Id);
     
     if (!subscription) {
-      subscription = await this.createOrUpdateSubscription(userId, {
+      subscription = await this.createOrUpdateSubscription(userIdOrAuth0Id, {
         tier: SubscriptionTier.FREE,
         status: SubscriptionStatus.ACTIVE,
       });
@@ -146,9 +165,8 @@ export class SubscriptionService {
         Feature.BASIC_CONFIGS,
         Feature.BASIC_SDK,
         Feature.MULTIPLE_BRANDS,
-        Feature.CONFIG_VERSIONING,
+        Feature.MULTIPLE_CONFIGS,
         Feature.WEBHOOKS,
-        Feature.ANALYTICS,
       ],
       [SubscriptionTier.PRO]: [
         Feature.BASIC_CONFIGS,
@@ -203,15 +221,17 @@ export class SubscriptionService {
     return featuresMap;
   }
 
-  async checkBrandLimit(userId: number): Promise<void> {
-    const subscription = await this.getOrCreateDefaultSubscription(userId);
+  async checkBrandLimit(userIdOrAuth0Id: number | string): Promise<void> {
+    const subscription = await this.getOrCreateDefaultSubscription(userIdOrAuth0Id);
     
     if (subscription.maxBrands === -1) {
       return; // unlimited
     }
 
     const brandCount = await this.brandRepo.count({
-      where: { user: { id: userId } }
+      where: typeof userIdOrAuth0Id === 'number'
+        ? { user: { id: userIdOrAuth0Id } }
+        : { user: { auth0Id: userIdOrAuth0Id } }
     });
 
     if (brandCount >= subscription.maxBrands) {
@@ -221,8 +241,8 @@ export class SubscriptionService {
     }
   }
 
-  async checkConfigLimit(userId: number, brandId: number, company: string): Promise<void> {
-    const subscription = await this.getOrCreateDefaultSubscription(userId);
+  async checkConfigLimit(userIdOrAuth0Id: number | string, brandId: number, company: string): Promise<void> {
+    const subscription = await this.getOrCreateDefaultSubscription(userIdOrAuth0Id);
     
     if (subscription.maxConfigsPerBrand === -1) {
       return; // unlimited
@@ -240,12 +260,12 @@ export class SubscriptionService {
   }
 
   async updateStripeSubscription(
-    userId: number,
+    userIdOrAuth0Id: number | string,
     stripeSubscriptionId: string,
     status: SubscriptionStatus,
     currentPeriodEnd: Date
   ): Promise<Subscription> {
-    const subscription = await this.findByUserId(userId);
+    const subscription = await this.findByUserIdentifier(userIdOrAuth0Id);
     
     if (!subscription) {
       throw new NotFoundException('Subscription not found');
@@ -258,8 +278,8 @@ export class SubscriptionService {
     return this.subscriptionRepo.save(subscription);
   }
 
-  async cancelSubscription(userId: number): Promise<Subscription> {
-    const subscription = await this.findByUserId(userId);
+  async cancelSubscription(userIdOrAuth0Id: number | string): Promise<Subscription> {
+    const subscription = await this.findByUserIdentifier(userIdOrAuth0Id);
     
     if (!subscription) {
       throw new NotFoundException('Subscription not found');
@@ -276,34 +296,38 @@ export class SubscriptionService {
     return this.subscriptionRepo.save(subscription);
   }
 
-  async checkLimitViolations(userId: number): Promise<LimitViolationsResult> {
+  async checkLimitViolations(userIdOrAuth0Id: number | string): Promise<LimitViolationsResult> {
     // Force a fresh query by bypassing any potential caching
     const subscription = await this.subscriptionRepo.findOne({
-      where: { user: { id: userId } },
+      where: typeof userIdOrAuth0Id === 'number'
+        ? { user: { id: userIdOrAuth0Id } }
+        : { user: { auth0Id: userIdOrAuth0Id } },
       relations: ['user'],
       cache: false // Disable caching to ensure fresh data
     });
     
     if (!subscription) {
       // If no subscription found, create default FREE subscription
-      const defaultSub = await this.createOrUpdateSubscription(userId, {
+      const defaultSub = await this.createOrUpdateSubscription(userIdOrAuth0Id, {
         tier: SubscriptionTier.FREE,
         status: SubscriptionStatus.ACTIVE,
       });
-      return this.checkLimitViolationsWithSubscription(defaultSub, userId);
+      return this.checkLimitViolationsWithSubscription(defaultSub, userIdOrAuth0Id);
     }
     
-    return this.checkLimitViolationsWithSubscription(subscription, userId);
+    return this.checkLimitViolationsWithSubscription(subscription, userIdOrAuth0Id);
   }
 
-  private async checkLimitViolationsWithSubscription(subscription: Subscription, userId: number): Promise<LimitViolationsResult> {
+  private async checkLimitViolationsWithSubscription(subscription: Subscription, userIdOrAuth0Id: number | string): Promise<LimitViolationsResult> {
     const limits = this.getTierLimits(subscription.tier);
     const violations: LimitViolation[] = [];
 
     // Check brand limit violations
     if (limits.maxBrands !== -1) {
       const brandCount = await this.brandRepo.count({
-        where: { user: { id: userId } }
+        where: typeof userIdOrAuth0Id === 'number'
+          ? { user: { id: userIdOrAuth0Id } }
+          : { user: { auth0Id: userIdOrAuth0Id } }
       });
 
       if (brandCount > limits.maxBrands) {
@@ -319,7 +343,9 @@ export class SubscriptionService {
     // Check config limit violations per brand using active_versions table
     if (limits.maxConfigsPerBrand !== -1) {
       const brands = await this.brandRepo.find({
-        where: { user: { id: userId } }
+        where: typeof userIdOrAuth0Id === 'number'
+          ? { user: { id: userIdOrAuth0Id } }
+          : { user: { auth0Id: userIdOrAuth0Id } }
       });
 
       for (const brand of brands) {

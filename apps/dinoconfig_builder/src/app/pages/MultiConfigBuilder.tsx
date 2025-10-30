@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { JSONSchema7 } from "json-schema";
-import { BrandHeader, ConfigSidebar, ConfigBuilderPanel, NotificationSystem, Spinner, VersionSelector } from "../components";
+import { BrandHeader, ConfigSidebar, ConfigBuilderPanel, NotificationSystem, Spinner, VersionSelector, FeatureGate } from "../components";
 import { SubscriptionLimitWarning } from "../components/subscription-limit-warning";
 import { ConfigService } from "../services/configService";
 import { subscriptionService, SubscriptionStatus } from "../services/subscription.service";
-import { Config, Brand, Notification, ConfirmDialog, PromptDialog } from "../types";
+import { Config, Brand, Notification, ConfirmDialog, PromptDialog, Feature } from "../types";
 import axios from "../auth/axios-interceptor";
 import "./MultiConfigBuilder.scss";
 
@@ -225,6 +225,12 @@ export default function MultiConfigBuilder() {
       const versions = await ConfigService.getConfigVersions(parseInt(brandId), configId);
       setConfigVersions(versions);
     } catch (error: any) {
+      if (error.response?.status === 403) {
+        console.log('Version history not available on current plan');
+        setConfigVersions([]);
+        return;
+      }
+
       showNotification('error', 'Failed to load config versions');
       console.error('Error loading config versions:', error);
     }
@@ -492,17 +498,30 @@ export default function MultiConfigBuilder() {
 
           <div className="config-content">
             {selectedConfig && (
-              <VersionSelector
-                brandId={parseInt(brandId!)}
-                configId={selectedConfig.id}
-                configName={selectedConfig.name}
-                selectedVersion={selectedVersion}
-                onVersionSelect={handleVersionSelect}
-                onSetActiveVersion={(version) => handleSetActiveVersion(selectedConfig.name, version)}
-                activeVersion={activeVersions[selectedConfig.name]}
-                onNotification={showNotification}
-                versions={configVersions}
-              />
+              <FeatureGate 
+                feature={Feature.CONFIG_VERSIONING}
+                fallback={
+                  <div className="version-upgrade-prompt">
+                    <div className="upgrade-prompt-content">
+                      <h4>Version History Available on Pro Plan</h4>
+                      <p>Upgrade to Starter to access configuration version history, rollback capabilities, and track all changes to your configs.</p>
+                      <a href="/subscription" className="upgrade-link">View Plans</a>
+                    </div>
+                  </div>
+                }
+              >
+                <VersionSelector
+                  brandId={parseInt(brandId!)}
+                  configId={selectedConfig.id}
+                  configName={selectedConfig.name}
+                  selectedVersion={selectedVersion}
+                  onVersionSelect={handleVersionSelect}
+                  onSetActiveVersion={(version) => handleSetActiveVersion(selectedConfig.name, version)}
+                  activeVersion={activeVersions[selectedConfig.name]}
+                  onNotification={showNotification}
+                  versions={configVersions}
+                />
+              </FeatureGate>
             )}
 
             <ConfigBuilderPanel

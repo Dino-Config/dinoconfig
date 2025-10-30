@@ -1,12 +1,12 @@
-import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, UnauthorizedException, Inject, forwardRef } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, UnauthorizedException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { ConfigsService } from './config.service';
-import { brandHeaderExtractor } from '../security/jwt-extractor';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Scopes } from '../security/decorators/scope.decorator';
 import { ScopesGuard } from '../security/guard/scope.guard';
+import { Feature } from '../features/enums/feature.enum';
 
 @Controller('brands')
 @UseGuards(JwtAuthGuard)
@@ -22,8 +22,7 @@ export class ConfigsController {
     @Request() req,
     @Param('brandId') brandId: string,
     @Body() dto: CreateConfigDto) {
-    // Check if user has reached config limit for this brand
-    await this.subscriptionService.checkConfigLimit(req.user.id, parseInt(brandId), req.user.company);
+    await this.subscriptionService.checkConfigLimit(req.user.auth0Id, parseInt(brandId), req.user.company);
 
     return this.configsService.create(req.user.auth0Id, parseInt(brandId), dto, req.user.company);
   }
@@ -62,7 +61,7 @@ export class ConfigsController {
     @Param('brandId') brandId: string,
   ) {
     // Check for limit violations
-    const violations = await this.subscriptionService.checkLimitViolations(req.user.id);
+    const violations = await this.subscriptionService.checkLimitViolations(req.user.auth0Id);
     if (violations.hasViolations) {
       // Return configs with violation info
       const configs = await this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), req.user.company);
@@ -75,7 +74,7 @@ export class ConfigsController {
   }
 
   @Get(':brandId/configs/:configId/versions')
-  getConfigVersions(
+  async getConfigVersions(
     @Request() req,
     @Param('brandId') brandId: string,
     @Param('configId') configId: number,
@@ -93,12 +92,25 @@ export class ConfigsController {
   }
 
   @Patch(':brandId/configs/:configName/active-version')
-  setActiveVersion(
+  async setActiveVersion(
     @Request() req,
     @Param('brandId') brandId: string,
     @Param('configName') configName: string,
     @Body() body: { version: number },
   ) {
+    const subscription = await this.subscriptionService.getOrCreateDefaultSubscription(req.user.auth0Id);
+    const hasVersioningFeature = this.subscriptionService.hasFeature(
+      subscription.tier,
+      subscription.status,
+      Feature.CONFIG_VERSIONING
+    );
+
+    if (!hasVersioningFeature) {
+      throw new ForbiddenException(
+        'Configuration versioning is available on Starter plan and above. Please upgrade to manage versions.'
+      );
+    }
+
     return this.configsService.setActiveVersionByName(req.user.auth0Id, parseInt(brandId), configName, body.version, req.user.company);
   }
 

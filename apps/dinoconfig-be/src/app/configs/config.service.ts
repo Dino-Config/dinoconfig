@@ -7,6 +7,8 @@ import { Brand } from '../brands/entities/brand.entity';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { UpdateConfigResponseDto } from './dto/update-config-response.dto';
+import { SubscriptionService } from '../subscriptions/subscription.service';
+import { Feature } from '../features/enums/feature.enum';
 
 @Injectable()
 export class ConfigsService {
@@ -14,7 +16,13 @@ export class ConfigsService {
     @InjectRepository(Config) private readonly configRepo: Repository<Config>,
     @InjectRepository(ActiveVersion) private readonly activeVersionRepo: Repository<ActiveVersion>,
     @InjectRepository(Brand) private readonly brandRepo: Repository<Brand>,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
+
+  private async userHasVersioning(userId: string): Promise<boolean> {
+    const sub = await this.subscriptionService.getOrCreateDefaultSubscription(userId);
+    return this.subscriptionService.hasFeature(sub.tier, sub.status, Feature.CONFIG_VERSIONING);
+  }
 
   async create(userId: string, brandId: number, dto: CreateConfigDto, company: string): Promise<Config> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
@@ -135,6 +143,24 @@ export class ConfigsService {
 
   async findAllConfigsForBrand(userId: string, brandId: number, company: string): Promise<Config[]> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
+    const hasVersioning = await this.userHasVersioning(userId);
+    
+    if (!hasVersioning) {
+      const allConfigs = await this.configRepo.find({
+        where: { 
+          brand: { id: brand.id }, 
+          company: company 
+        },
+      });
+      const latestByName = new Map<string, Config>();
+      for (const cfg of allConfigs) {
+        const existing = latestByName.get(cfg.name);
+        if (!existing || cfg.version > existing.version) {
+          latestByName.set(cfg.name, cfg);
+        }
+      }
+      return Array.from(latestByName.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
     
     // Get all active versions for this brand from active_versions table
     const activeVersions = await this.activeVersionRepo.find({
@@ -207,7 +233,17 @@ export class ConfigsService {
 
   async getConfigVersions(userId: string, brandId: number, configName: string, company: string): Promise<Config[]> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
-    
+    const hasVersioning = await this.userHasVersioning(userId);
+
+    if (!hasVersioning) {
+      // Return only the latest version
+      const latest = await this.configRepo.findOne({
+        where: { name: configName, brand: { id: brand.id }, company: company },
+        order: { version: 'DESC' },
+      });
+      return latest ? [latest] : [];
+    }
+
     return this.configRepo.find({
       where: { name: configName, brand: { id: brand.id }, company: company },
       order: { version: 'DESC' },
@@ -232,35 +268,31 @@ export class ConfigsService {
 
   async getActiveConfig(userId: string, brandId: number, configName: string, company: string): Promise<Config | null> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
+    const hasVersioning = await this.userHasVersioning(userId);
     
+    if (!hasVersioning) {
+      // No versioning: always return latest from configs table
+      return this.configRepo.findOne({
+        where: { brand: { id: brand.id }, name: configName, company: company },
+        order: { version: 'DESC' },
+      });
+    }
+
     // Get the active version for this config name
     const activeVersion = await this.activeVersionRepo.findOne({
-      where: { 
-        brand: { id: brand.id }, 
-        configName: configName,
-        company: company 
-      },
+      where: { brand: { id: brand.id }, configName: configName, company: company },
     });
     
     if (!activeVersion) {
-      // If no active version is set, return the latest version
+      // Fallback to latest if active not set
       return this.configRepo.findOne({
-        where: { 
-          brand: { id: brand.id }, 
-          name: configName,
-          company: company 
-        },
+        where: { brand: { id: brand.id }, name: configName, company: company },
         order: { version: 'DESC' },
       });
     }
     
     return this.configRepo.findOne({
-      where: { 
-        brand: { id: brand.id }, 
-        name: configName,
-        version: activeVersion.activeVersion,
-        company: company 
-      },
+      where: { brand: { id: brand.id }, name: configName, version: activeVersion.activeVersion, company: company },
     });
   }
 
