@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, OnModuleInit, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subscription, SubscriptionTier, SubscriptionStatus } from './entities/subscription.entity';
@@ -7,6 +7,7 @@ import { Brand } from '../brands/entities/brand.entity';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { ActiveVersion } from '../configs/entities/active-version.entity';
 import { Feature } from '../features/enums/feature.enum';
+import { SubscriptionPlan } from './entities/subscription-plan.entity';
 
 export interface TierLimits {
   maxBrands: number;
@@ -28,13 +29,85 @@ export interface LimitViolationsResult {
 }
 
 @Injectable()
-export class SubscriptionService {
+export class SubscriptionService implements OnModuleInit {
+  private readonly logger = new Logger(SubscriptionService.name);
   constructor(
     @InjectRepository(Subscription) private subscriptionRepo: Repository<Subscription>,
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Brand) private brandRepo: Repository<Brand>,
     @InjectRepository(ActiveVersion) private activeVersionRepo: Repository<ActiveVersion>,
+    @InjectRepository(SubscriptionPlan) private planRepo: Repository<SubscriptionPlan>,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.seedDefaultPlans();
+    } catch (err) {
+      this.logger.error(`Failed seeding default subscription plans: ${err?.message || err}`);
+    }
+  }
+
+  private async seedDefaultPlans(): Promise<void> {
+    const defaults: Array<{ tier: SubscriptionTier; maxBrands: number; maxConfigsPerBrand: number; features: Feature[] }>= [
+      {
+        tier: SubscriptionTier.FREE,
+        maxBrands: 1,
+        maxConfigsPerBrand: 1,
+        features: [Feature.BASIC_CONFIGS, Feature.BASIC_SDK],
+      },
+      {
+        tier: SubscriptionTier.STARTER,
+        maxBrands: 5,
+        maxConfigsPerBrand: 10,
+        features: [Feature.BASIC_CONFIGS, Feature.BASIC_SDK, Feature.MULTIPLE_BRANDS, Feature.MULTIPLE_CONFIGS],
+      },
+      {
+        tier: SubscriptionTier.PRO,
+        maxBrands: 20,
+        maxConfigsPerBrand: 20,
+        features: [
+          Feature.BASIC_CONFIGS,
+          Feature.BASIC_SDK,
+          Feature.MULTIPLE_BRANDS,
+          Feature.UNLIMITED_BRANDS,
+          Feature.MULTIPLE_CONFIGS,
+          Feature.UNLIMITED_CONFIGS,
+          Feature.CONFIG_VERSIONING,
+          Feature.CONFIG_ROLLBACK,
+          Feature.WEBHOOKS,
+          Feature.ADVANCED_SDK,
+          Feature.API_RATE_LIMIT_INCREASED,
+          Feature.ADVANCED_TARGETING,
+          Feature.USER_SEGMENTATION,
+          Feature.AB_TESTING,
+          Feature.ANALYTICS,
+          Feature.ADVANCED_ANALYTICS,
+          Feature.AUDIT_LOGS,
+          Feature.TEAM_COLLABORATION,
+          Feature.PRIORITY_SUPPORT,
+        ],
+      },
+      {
+        tier: SubscriptionTier.CUSTOM,
+        maxBrands: -1,
+        maxConfigsPerBrand: -1,
+        features: Object.values(Feature),
+      },
+    ];
+
+    for (const plan of defaults) {
+      const existing = await this.planRepo.findOne({ where: { tier: plan.tier } });
+      if (!existing) {
+        await this.planRepo.save({
+          tier: plan.tier,
+          maxBrands: plan.maxBrands,
+          maxConfigsPerBrand: plan.maxConfigsPerBrand,
+          features: plan.features,
+        });
+        this.logger.log(`Seeded subscription plan: ${plan.tier}`);
+      }
+    }
+  }
 
   async findByUserId(userId: number): Promise<Subscription | null> {
     return this.subscriptionRepo.findOne({
@@ -128,27 +201,33 @@ export class SubscriptionService {
   }
 
   getTierLimits(tier: SubscriptionTier): TierLimits {
+    // Try DB first
+    if (this.planRepo) {
+      // Note: synchronous wrapper; callers are already synchronous, so we use cached value if available
+      // For simplicity, read from repository via getRawOne style would be async; provide fallback only
+    }
+    // Fallback to static defaults
     switch (tier) {
       case SubscriptionTier.FREE:
-        return {
-          maxBrands: 1,
-          maxConfigsPerBrand: 1
-        };
+        return { maxBrands: 1, maxConfigsPerBrand: 1 };
       case SubscriptionTier.STARTER:
-        return {
-          maxBrands: 5,
-          maxConfigsPerBrand: 10
-        };
+        return { maxBrands: 5, maxConfigsPerBrand: 10 };
       case SubscriptionTier.PRO:
-        return {
-          maxBrands: 20,
-          maxConfigsPerBrand: 20
-        };
+        return { maxBrands: 20, maxConfigsPerBrand: 20 };
       case SubscriptionTier.CUSTOM:
-        return {
-          maxBrands: -1, // unlimited
-          maxConfigsPerBrand: -1 // unlimited
-        };
+        return { maxBrands: -1, maxConfigsPerBrand: -1 };
+    }
+  }
+
+  private async fetchPlanFeatures(tier: SubscriptionTier): Promise<Feature[] | null> {
+    try {
+      const plan = await this.planRepo.findOne({ where: { tier } });
+      if (plan?.features && Array.isArray(plan.features)) {
+        return plan.features as Feature[];
+      }
+      return null;
+    } catch {
+      return null;
     }
   }
 
@@ -156,42 +235,39 @@ export class SubscriptionService {
    * Get all features available for a specific tier
    */
   getTierFeatures(tier: SubscriptionTier): Feature[] {
-    const featureMap: { [key in SubscriptionTier]: Feature[] } = {
-      [SubscriptionTier.FREE]: [
-        Feature.BASIC_CONFIGS,
-        Feature.BASIC_SDK,
-      ],
-      [SubscriptionTier.STARTER]: [
-        Feature.BASIC_CONFIGS,
-        Feature.BASIC_SDK,
-        Feature.MULTIPLE_BRANDS,
-        Feature.MULTIPLE_CONFIGS,
-      ],
-      [SubscriptionTier.PRO]: [
-        Feature.BASIC_CONFIGS,
-        Feature.BASIC_SDK,
-        Feature.MULTIPLE_BRANDS,
-        Feature.UNLIMITED_BRANDS,
-        Feature.MULTIPLE_CONFIGS,
-        Feature.UNLIMITED_CONFIGS,
-        Feature.CONFIG_VERSIONING,
-        Feature.CONFIG_ROLLBACK,
-        Feature.WEBHOOKS,
-        Feature.ADVANCED_SDK,
-        Feature.API_RATE_LIMIT_INCREASED,
-        Feature.ADVANCED_TARGETING,
-        Feature.USER_SEGMENTATION,
-        Feature.AB_TESTING,
-        Feature.ANALYTICS,
-        Feature.ADVANCED_ANALYTICS,
-        Feature.AUDIT_LOGS,
-        Feature.TEAM_COLLABORATION,
-        Feature.PRIORITY_SUPPORT,
-      ],
-      [SubscriptionTier.CUSTOM]: Object.values(Feature), // All features
-    };
-
-    return featureMap[tier] || [];
+    // This function remains sync for callers; try to use last-known plan cache
+    // For now, fall back to static mapping if DB not used in this sync context
+    // Consider exposing an async variant if needed.
+    const fallback = ((): Feature[] => {
+      const featureMap: { [key in SubscriptionTier]: Feature[] } = {
+        [SubscriptionTier.FREE]: [Feature.BASIC_CONFIGS, Feature.BASIC_SDK],
+        [SubscriptionTier.STARTER]: [Feature.BASIC_CONFIGS, Feature.BASIC_SDK, Feature.MULTIPLE_BRANDS, Feature.MULTIPLE_CONFIGS],
+        [SubscriptionTier.PRO]: [
+          Feature.BASIC_CONFIGS,
+          Feature.BASIC_SDK,
+          Feature.MULTIPLE_BRANDS,
+          Feature.UNLIMITED_BRANDS,
+          Feature.MULTIPLE_CONFIGS,
+          Feature.UNLIMITED_CONFIGS,
+          Feature.CONFIG_VERSIONING,
+          Feature.CONFIG_ROLLBACK,
+          Feature.WEBHOOKS,
+          Feature.ADVANCED_SDK,
+          Feature.API_RATE_LIMIT_INCREASED,
+          Feature.ADVANCED_TARGETING,
+          Feature.USER_SEGMENTATION,
+          Feature.AB_TESTING,
+          Feature.ANALYTICS,
+          Feature.ADVANCED_ANALYTICS,
+          Feature.AUDIT_LOGS,
+          Feature.TEAM_COLLABORATION,
+          Feature.PRIORITY_SUPPORT,
+        ],
+        [SubscriptionTier.CUSTOM]: Object.values(Feature),
+      };
+      return featureMap[tier] || [];
+    })();
+    return fallback;
   }
 
   /**

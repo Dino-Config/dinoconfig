@@ -7,6 +7,8 @@ import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Scopes } from '../security/decorators/scope.decorator';
 import { ScopesGuard } from '../security/guard/scope.guard';
 import { Feature } from '../features/enums/feature.enum';
+import { RequireFeature } from '../subscriptions/decorators/require-feature.decorator';
+import { FeatureGuard } from '../subscriptions/guards/feature.guard';
 
 @Controller('brands')
 @UseGuards(JwtAuthGuard)
@@ -92,25 +94,14 @@ export class ConfigsController {
   }
 
   @Patch(':brandId/configs/:configName/active-version')
+  @RequireFeature(Feature.CONFIG_VERSIONING)
+  @UseGuards(FeatureGuard)
   async setActiveVersion(
     @Request() req,
     @Param('brandId') brandId: string,
     @Param('configName') configName: string,
     @Body() body: { version: number },
   ) {
-    const subscription = await this.subscriptionService.getOrCreateDefaultSubscription(req.user.auth0Id);
-    const hasVersioningFeature = this.subscriptionService.hasFeature(
-      subscription.tier,
-      subscription.status,
-      Feature.CONFIG_VERSIONING
-    );
-
-    if (!hasVersioningFeature) {
-      throw new ForbiddenException(
-        'Configuration versioning is available on Starter plan and above. Please upgrade to manage versions.'
-      );
-    }
-
     return this.configsService.setActiveVersionByName(req.user.auth0Id, parseInt(brandId), configName, body.version, req.user.company);
   }
 

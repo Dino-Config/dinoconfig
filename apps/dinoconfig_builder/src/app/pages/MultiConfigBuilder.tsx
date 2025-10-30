@@ -504,7 +504,7 @@ export default function MultiConfigBuilder() {
                   <div className="version-upgrade-prompt">
                     <div className="upgrade-prompt-content">
                       <h4>Version History Available on Pro Plan</h4>
-                      <p>Upgrade to Starter to access configuration version history, rollback capabilities, and track all changes to your configs.</p>
+                      <p>Upgrade to Pro to access configuration version history, rollback capabilities, and track all changes to your configs.</p>
                       <a href="/subscription" className="upgrade-link">View Plans</a>
                     </div>
                   </div>
