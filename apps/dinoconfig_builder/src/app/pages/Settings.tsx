@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import './Settings.scss';
 import axios from 'axios';
 import { environment } from '../../environments';
+import { useFeatures } from '../hooks/useFeatures';
+import { Feature } from '../types/features';
+import { FeatureBadge } from '../components';
+import { subscriptionService } from '../services/subscription.service';
 
 interface ApiKey {
   id: number;
@@ -21,7 +25,7 @@ interface ApiKeyList {
 }
 
 export default function Settings() {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['general', 'builder', 'export', 'sdk']));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['general', 'builder', 'export', 'sdk', 'features']));
   const [apiKeys, setApiKeys] = useState<ApiKeyList | null>(null);
   const [generatedApiKey, setGeneratedApiKey] = useState<{ key: string; name: string } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -29,6 +33,7 @@ export default function Settings() {
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyDescription, setNewKeyDescription] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { subscription, hasFeature, loading: featuresLoading } = useFeatures();
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -286,6 +291,124 @@ export default function Settings() {
                         Include UI schema
                       </label>
                     </div>
+                  </div>
+                </div>
+                )}
+              </div>
+
+              <div className="settings-section">
+                <button 
+                  className="section-toggle"
+                  onClick={() => toggleSection('features')}
+                >
+                  <svg 
+                    className={`chevron ${expandedSections.has('features') ? 'open' : ''}`}
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 16 16" 
+                    fill="none"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="section-title">Features & Subscription</span>
+                </button>
+                
+                {expandedSections.has('features') && (
+                <div className="settings-grid">
+                  <div className="setting-item features-section">
+                    {featuresLoading ? (
+                      <div className="features-loading">Loading features...</div>
+                    ) : subscription ? (
+                      <>
+                        <div className="subscription-info">
+                          <div className="subscription-tier">
+                            <span className="tier-label">Current Plan:</span>
+                            <span className={`tier-badge tier-${subscription.tier}`}>
+                              {subscriptionService.getTierDisplayName(subscription.tier)}
+                            </span>
+                            {subscription.status !== 'active' && subscription.status !== 'trialing' && (
+                              <span className="status-warning">({subscription.status})</span>
+                            )}
+                          </div>
+                          <div className="subscription-limits">
+                            <div className="limit-item">
+                              <span className="limit-label">Brands:</span>
+                              <span className="limit-value">
+                                {subscription.limits.maxBrands === -1 ? 'Unlimited' : subscription.limits.maxBrands}
+                              </span>
+                            </div>
+                            <div className="limit-item">
+                              <span className="limit-label">Configs per Brand:</span>
+                              <span className="limit-value">
+                                {subscription.limits.maxConfigsPerBrand === -1 ? 'Unlimited' : subscription.limits.maxConfigsPerBrand}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="features-list">
+                          <h4>Available Features</h4>
+                          <div className="features-grid">
+                            {Object.values(Feature).map((feature) => {
+                              const isEnabled = hasFeature(feature);
+                              const description = subscriptionService.getFeatureDescription(feature);
+                              
+                              // Determine which tier this feature belongs to
+                              let featureTier: 'free' | 'starter' | 'pro' | 'custom' = 'free';
+                              if (feature === Feature.BASIC_CONFIGS || feature === Feature.BASIC_SDK) {
+                                featureTier = 'free';
+                              } else if ([Feature.MULTIPLE_BRANDS, Feature.MULTIPLE_CONFIGS,].includes(feature)) {
+                                featureTier = 'starter';
+                              } else if ([Feature.UNLIMITED_BRANDS, Feature.UNLIMITED_CONFIGS, Feature.CONFIG_ROLLBACK, Feature.ADVANCED_SDK, Feature.API_RATE_LIMIT_INCREASED, Feature.ADVANCED_TARGETING, Feature.USER_SEGMENTATION, Feature.AB_TESTING, Feature.ADVANCED_ANALYTICS, Feature.AUDIT_LOGS, Feature.TEAM_COLLABORATION, Feature.PRIORITY_SUPPORT].includes(feature)) {
+                                featureTier = 'pro';
+                              } else {
+                                featureTier = 'custom';
+                              }
+
+                              return (
+                                <div 
+                                  key={feature} 
+                                  className={`feature-item ${isEnabled ? 'enabled' : 'disabled'}`}
+                                  title={description}
+                                >
+                                  <div className="feature-status">
+                                    {isEnabled ? (
+                                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="icon-enabled">
+                                        <circle cx="10" cy="10" r="9" fill="#10b981" stroke="#059669" strokeWidth="2"/>
+                                        <path d="M6 10L9 13L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                      </svg>
+                                    ) : (
+                                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="icon-disabled">
+                                        <circle cx="10" cy="10" r="9" fill="#e5e7eb" stroke="#d1d5db" strokeWidth="2"/>
+                                        <path d="M7 10L13 10" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"/>
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <div className="feature-info">
+                                    <div className="feature-name">{description}</div>
+                                    {!isEnabled && <FeatureBadge tier={featureTier} size="small" />}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {subscription.tier !== 'custom' && (
+                          <div className="upgrade-prompt">
+                            <h4>Want more features?</h4>
+                            <p>Upgrade your plan to unlock additional capabilities for your configurations.</p>
+                            <a href="/subscription" className="btn btn-primary">
+                              View Plans & Upgrade
+                            </a>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="features-error">
+                        <p>Unable to load subscription features.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 )}

@@ -234,6 +234,22 @@
         .nav-item {
           margin-bottom: 4px;
 
+          &.nav-subitem {
+            .nav-link {
+              padding-left: 44px;
+              font-size: 13px;
+            }
+
+            .nav-sub-bullet {
+              width: 6px;
+              height: 6px;
+              border-radius: 50%;
+              background: #9ca3af;
+              margin-right: 12px;
+              flex-shrink: 0;
+            }
+          }
+
           .nav-link {
             width: 100%;
             display: flex;

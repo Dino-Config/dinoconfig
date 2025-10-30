@@ -6,6 +6,9 @@ import { ConfigsService } from './config.service';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Scopes } from '../security/decorators/scope.decorator';
 import { ScopesGuard } from '../security/guard/scope.guard';
+import { Feature } from '../features/enums/feature.enum';
+import { RequireFeature } from '../subscriptions/decorators/require-feature.decorator';
+import { FeatureGuard } from '../subscriptions/guards/feature.guard';
 
 @Controller('brands')
 @UseGuards(JwtAuthGuard)
@@ -21,8 +24,7 @@ export class ConfigsController {
     @Request() req,
     @Param('brandId') brandId: string,
     @Body() dto: CreateConfigDto) {
-    // Check if user has reached config limit for this brand
-    await this.subscriptionService.checkConfigLimit(req.user.id, parseInt(brandId), req.user.company);
+    await this.subscriptionService.checkConfigLimit(req.user.auth0Id, parseInt(brandId), req.user.company);
 
     return this.configsService.create(req.user.auth0Id, parseInt(brandId), dto, req.user.company);
   }
@@ -61,7 +63,7 @@ export class ConfigsController {
     @Param('brandId') brandId: string,
   ) {
     // Check for limit violations
-    const violations = await this.subscriptionService.checkLimitViolations(req.user.id);
+    const violations = await this.subscriptionService.checkLimitViolations(req.user.auth0Id);
     if (violations.hasViolations) {
       // Return configs with violation info
       const configs = await this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), req.user.company);
@@ -74,7 +76,7 @@ export class ConfigsController {
   }
 
   @Get(':brandId/configs/:configId/versions')
-  getConfigVersions(
+  async getConfigVersions(
     @Request() req,
     @Param('brandId') brandId: string,
     @Param('configId') configId: number,
@@ -92,7 +94,9 @@ export class ConfigsController {
   }
 
   @Patch(':brandId/configs/:configName/active-version')
-  setActiveVersion(
+  @RequireFeature(Feature.CONFIG_VERSIONING)
+  @UseGuards(FeatureGuard)
+  async setActiveVersion(
     @Request() req,
     @Param('brandId') brandId: string,
     @Param('configName') configName: string,

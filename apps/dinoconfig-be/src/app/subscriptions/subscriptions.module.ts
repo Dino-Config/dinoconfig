@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { Subscription } from './entities/subscription.entity';
+import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { User } from '../users/entities/user.entity';
 import { Brand } from '../brands/entities/brand.entity';
 import { ActiveVersion } from '../configs/entities/active-version.entity';
@@ -13,7 +14,7 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Subscription, User, Brand, ActiveVersion]),
+    TypeOrmModule.forFeature([Subscription, SubscriptionPlan, User, Brand, ActiveVersion]),
     ConfigModule,
     UsersModule,
   ],
