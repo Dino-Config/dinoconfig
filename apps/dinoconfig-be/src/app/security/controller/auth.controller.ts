@@ -186,7 +186,6 @@ export class AuthController {
    * Exchange API key for SDK token
    */
   @Post('sdk-token/exchange')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   async exchangeApiKeyForToken(@Headers('x-api-key') apiKey: string) {
     if (!apiKey) {
