@@ -20,7 +20,6 @@ export class SubscriptionPlan {
   @Column({ type: 'int' })
   maxConfigsPerBrand: number;
 
-  // Stored as JSON array of feature enum string values
   @Column({ type: 'jsonb', nullable: true })
   features?: string[] | null;
 }

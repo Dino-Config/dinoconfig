@@ -357,7 +357,7 @@ export default function Settings() {
                               let featureTier: 'free' | 'starter' | 'pro' | 'custom' = 'free';
                               if (feature === Feature.BASIC_CONFIGS || feature === Feature.BASIC_SDK) {
                                 featureTier = 'free';
-                              } else if ([Feature.MULTIPLE_BRANDS, Feature.CONFIG_VERSIONING, Feature.WEBHOOKS, Feature.ANALYTICS].includes(feature)) {
+                              } else if ([Feature.MULTIPLE_BRANDS, Feature.MULTIPLE_CONFIGS,].includes(feature)) {
                                 featureTier = 'starter';
                               } else if ([Feature.UNLIMITED_BRANDS, Feature.UNLIMITED_CONFIGS, Feature.CONFIG_ROLLBACK, Feature.ADVANCED_SDK, Feature.API_RATE_LIMIT_INCREASED, Feature.ADVANCED_TARGETING, Feature.USER_SEGMENTATION, Feature.AB_TESTING, Feature.ADVANCED_ANALYTICS, Feature.AUDIT_LOGS, Feature.TEAM_COLLABORATION, Feature.PRIORITY_SUPPORT].includes(feature)) {
                                 featureTier = 'pro';
