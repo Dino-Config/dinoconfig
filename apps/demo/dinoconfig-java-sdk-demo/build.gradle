@@ -1,0 +1,11 @@
+// Root build.gradle for dinoconfig-java-sdk-demo
+// This file is required for NX Gradle plugin integration
+
+// Apply common settings to all subprojects
+subprojects {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
