@@ -32,6 +32,7 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
 
   const goProfile = () => navigate(`/profile`);
   const goSettings = () => navigate(`/settings`);
+  const goSettingsSdk = () => navigate(`/settings/sdk`);
   const goSettingsFeatures = () => navigate(`/settings/features`);
 
   const handleLogout = async () => {
@@ -150,6 +151,18 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
               </button>
             </li>
             {/* Settings child: Features (visible as nested under Settings) */}
+            {!isCollapsed && location.pathname.startsWith('/settings') && (
+              <li className="nav-item nav-subitem">
+                <button 
+                  className={`nav-link ${location.pathname.startsWith('/settings/sdk') ? 'active' : ''}`}
+                  onClick={goSettingsSdk}
+                  title={isCollapsed ? 'SDK & API Keys' : ''}
+                >
+                  <span className="nav-sub-bullet" />
+                  <span className={isCollapsed ? 'hidden' : ''}>SDK & API Keys</span>
+                </button>
+              </li>
+            )}
             {!isCollapsed && location.pathname.startsWith('/settings') && (
               <li className="nav-item nav-subitem">
                 <button 
