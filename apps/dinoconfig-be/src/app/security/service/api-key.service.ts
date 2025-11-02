@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApiKey } from '../entities/api-key.entity';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ApiKeyService {
@@ -21,6 +22,21 @@ export class ApiKeyService {
   }
 
   /**
+   * Hash an API key using bcrypt
+   */
+  private async hashApiKey(apiKey: string): Promise<string> {
+    const saltRounds = 10;
+    return bcrypt.hash(apiKey, saltRounds);
+  }
+
+  /**
+   * Hash an API key using SHA-256
+   */
+  private hashApiKeySha256(apiKey: string): string {
+    return crypto.createHash('sha256').update(apiKey).digest('hex');
+  }
+
+  /**
    * Create a new API key for a user
    */
   async createApiKey(
@@ -28,7 +44,7 @@ export class ApiKeyService {
     name: string,
     description?: string,
     expiresAt?: Date,
-  ): Promise<ApiKey> {
+  ): Promise<ApiKey & { key: string }> {
     // Check if a key with the same name exists for this user
     const existingKey = await this.apiKeyRepo.findOne({
       where: { auth0Id, name },
@@ -39,9 +55,12 @@ export class ApiKeyService {
     }
 
     const key = this.generateApiKeyString();
+    const keyHash = await this.hashApiKey(key); // bcrypt hash for secure storage
+    const keyHashSha256 = this.hashApiKeySha256(key); // SHA-256 hash for SDK validation
 
     const apiKey = this.apiKeyRepo.create({
-      key,
+      keyHash,
+      keyHashSha256,
       name,
       description,
       auth0Id,
@@ -49,15 +68,31 @@ export class ApiKeyService {
       isActive: true,
     });
 
-    return this.apiKeyRepo.save(apiKey);
+    const savedApiKey = await this.apiKeyRepo.save(apiKey);
+
+    // Return with plain text key (only time it's exposed)
+    return {
+      ...savedApiKey,
+      key, // Return plain text key for display to user
+    };
   }
 
   /**
    * Find API key by key string and validate
+   * Expects a SHA-256 hashed key string from the SDK
    */
   async validateApiKey(keyString: string): Promise<ApiKey | null> {
+    // Validate that the keyString is a SHA-256 hash (64 hex characters)
+    const isSha256Hash = /^[a-f0-9]{64}$/i.test(keyString);
+    
+    if (!isSha256Hash) {
+      // If not a valid SHA-256 hash, it's an invalid key format
+      return null;
+    }
+
+    // Lookup by SHA-256 hash
     const apiKey = await this.apiKeyRepo.findOne({
-      where: { key: keyString, isActive: true },
+      where: { keyHashSha256: keyString, isActive: true },
       relations: ['user'],
     });
 

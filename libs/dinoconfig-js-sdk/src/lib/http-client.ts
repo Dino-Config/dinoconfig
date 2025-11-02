@@ -13,8 +13,26 @@ export class HttpClient {
     this.defaultTimeout = timeout;
   }
 
+  /**
+   * Hash an API key using SHA-256
+   */
+  private async hashApiKey(apiKey: string): Promise<string> {
+    // Use Web Crypto API if available (browser and Node.js 18+)
+    if (typeof crypto !== 'undefined' && 'subtle' in crypto) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(apiKey);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    // Fallback for older environments (should not happen with modern SDKs)
+    throw new Error('Crypto API not available. Please use a modern environment.');
+  }
+
   public async configureAuthorizationHeader(headers: Record<string, string>): Promise<void> {
-    const token = await this.exchangeApiKeyForToken(headers['X-API-Key']);
+    const apiKey = headers['X-API-Key'];
+    const hashedApiKey = await this.hashApiKey(apiKey);
+    const token = await this.exchangeApiKeyForToken(hashedApiKey);
 
     this.defaultHeaders = { 
       'Content-Type': 'application/json',
@@ -26,14 +44,15 @@ export class HttpClient {
 
   /**
    * Exchange API key for access token
+   * Receives a hashed API key and sends it to the server
    */
-  private async exchangeApiKeyForToken(apiKey: string): Promise<string> {
+  private async exchangeApiKeyForToken(hashedApiKey: string): Promise<string> {
     try {
       const response = await fetch(`${this.baseUrl}/api/auth/sdk-token/exchange`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
+          'x-api-key': hashedApiKey,
         },
         credentials: 'include',
       });

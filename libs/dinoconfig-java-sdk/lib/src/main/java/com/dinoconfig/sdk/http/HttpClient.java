@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +45,34 @@ public class HttpClient {
     }
     
     /**
+     * Hash an API key using SHA-256
+     * @param apiKey The API key to hash
+     * @return The SHA-256 hash as a hexadecimal string
+     * @throws IOException if hashing fails
+     */
+    private String hashApiKey(String apiKey) throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(apiKey.getBytes("UTF-8"));
+            
+            // Convert bytes to hexadecimal string
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException("SHA-256 algorithm not available: " + e.getMessage(), e);
+        } catch (UnsupportedEncodingException e) {
+            throw new IOException("UTF-8 encoding not supported: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
      * Configure authorization header by exchanging API key for token
      * @param headers Headers containing the API key
      * @throws IOException if authentication fails
@@ -52,7 +83,9 @@ public class HttpClient {
             throw new IllegalArgumentException("X-API-Key header is required");
         }
         
-        String token = exchangeApiKeyForToken(apiKey);
+        // Hash the API key before sending
+        String hashedApiKey = hashApiKey(apiKey);
+        String token = exchangeApiKeyForToken(hashedApiKey);
 
         this.defaultHeaders = new HashMap<>();
         this.defaultHeaders.put("Content-Type", "application/json");
@@ -62,18 +95,19 @@ public class HttpClient {
     
     /**
      * Exchange API key for access token
-     * @param apiKey The API key to exchange
+     * Receives a hashed API key and sends it to the server
+     * @param hashedApiKey The hashed API key to exchange
      * @return The access token
      * @throws IOException if the exchange fails
      */
-    private String exchangeApiKeyForToken(String apiKey) throws IOException {
+    private String exchangeApiKeyForToken(String hashedApiKey) throws IOException {
         try {
             RequestBody body = RequestBody.create("", MediaType.get("application/json"));
             Request request = new Request.Builder()
                     .url(baseUrl + "/api/auth/sdk-token/exchange")
                     .post(body)
                     .addHeader("Content-Type", "application/json")
-                    .addHeader("x-api-key", apiKey)
+                    .addHeader("x-api-key", hashedApiKey)
                     .build();
             
             try (Response response = client.newCall(request).execute()) {
