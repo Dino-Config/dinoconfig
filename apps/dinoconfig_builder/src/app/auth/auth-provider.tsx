@@ -16,27 +16,18 @@ export const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null means "unknown yet"
+  const [loading, setLoading] = useState(true);
 
   const checkAuthStatus = async () => {
-    setLoading(true);
     try {
-      await axios.get(`${environment.apiUrl}/auth/validate`, { 
-        withCredentials: true,
-        timeout: 10000 // 10 second timeout
-      });
+      await axios.get(`${environment.apiUrl}/auth/validate`, { withCredentials: true, timeout: 10000 });
       setIsAuthenticated(true);
     } catch (error: any) {
-      // If validation fails, try to renew the token
       const renewed = await tokenRenewalService.forceRenewal();
       if (renewed) {
-        // Try validation again after renewal
         try {
-          await axios.get(`${environment.apiUrl}/auth/validate`, { 
-            withCredentials: true,
-            timeout: 10000
-          });
+          await axios.get(`${environment.apiUrl}/auth/validate`, { withCredentials: true, timeout: 10000 });
           setIsAuthenticated(true);
         } catch {
           setIsAuthenticated(false);
@@ -44,22 +35,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setIsAuthenticated(false);
       }
-      // Note: Redirect is handled by axios interceptor
     } finally {
       setLoading(false);
     }
-  };
-
-  const refreshAuth = async () => {
-    await checkAuthStatus();
   };
 
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
+  if (loading || isAuthenticated === null) {
+    // Keep children unmounted until we know the auth status
+    return null; 
+  }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading, refreshAuth }}>
+    <AuthContext.Provider value={{ isAuthenticated, loading, refreshAuth: checkAuthStatus }}>
       {children}
     </AuthContext.Provider>
   );

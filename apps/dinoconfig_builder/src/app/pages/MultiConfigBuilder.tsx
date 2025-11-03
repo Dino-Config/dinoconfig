@@ -4,7 +4,8 @@ import { JSONSchema7 } from "json-schema";
 import { BrandHeader, ConfigSidebar, ConfigBuilderPanel, NotificationSystem, Spinner, VersionSelector, FeatureGate } from "../components";
 import { SubscriptionLimitWarning } from "../components/subscription-limit-warning";
 import { ConfigService } from "../services/configService";
-import { subscriptionService, SubscriptionStatus } from "../services/subscription.service";
+import { subscriptionService } from "../services/subscription.service";
+import { useSubscription } from "../auth/subscription-context";
 import { Config, Brand, Notification, ConfirmDialog, PromptDialog, Feature } from "../types";
 import axios from "../auth/axios-interceptor";
 import "./MultiConfigBuilder.scss";
@@ -20,7 +21,7 @@ export default function MultiConfigBuilder() {
   const [configVersions, setConfigVersions] = useState<Config[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const { subscription } = useSubscription();
   const [limitReached, setLimitReached] = useState(false);
   const [limitErrorMessage, setLimitErrorMessage] = useState<string>('');
 
@@ -101,19 +102,6 @@ export default function MultiConfigBuilder() {
     });
   };
 
-  // Load subscription status
-  useEffect(() => {
-    loadSubscription();
-  }, []);
-
-  const loadSubscription = async () => {
-    try {
-      const status = await subscriptionService.getSubscriptionStatus();
-      setSubscription(status);
-    } catch (err) {
-      console.error('Failed to load subscription:', err);
-    }
-  };
 
   // load configs and brand info initially
   useEffect(() => {

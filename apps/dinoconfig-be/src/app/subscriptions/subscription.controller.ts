@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Req, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, UseGuards, HttpCode, HttpStatus, Header } from '@nestjs/common';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
 import { SubscriptionService } from './subscription.service';
 import { UsersService } from '../users/user.service';
@@ -14,6 +14,7 @@ export class SubscriptionController {
   ) {}
 
   @Get('status')
+  @Header('Cache-Control', 'public, max-age=100, must-revalidate, immutable')
   async getSubscriptionStatus(@Req() req) {
     const { auth0Id } = req.user;
     const user = await this.usersService.findByAuth0Id(auth0Id);
@@ -203,10 +204,28 @@ export class SubscriptionController {
         stripePriceId: body.priceId,
       });
 
+      // Get updated subscription status and violations
+      const violations = await this.subscriptionService.checkLimitViolations(user.id);
+      const limits = this.subscriptionService.getTierLimits(updatedLocalSubscription.tier);
+      const features = this.subscriptionService.getFeaturesMap(updatedLocalSubscription.tier, updatedLocalSubscription.status);
+
       return {
         message: 'Subscription plan changed successfully',
         newTier: tier,
-        subscriptionId: subscription.stripeSubscriptionId
+        subscriptionId: subscription.stripeSubscriptionId,
+        // Full subscription status (same format as limit-violations endpoint)
+        tier: updatedLocalSubscription.tier,
+        status: updatedLocalSubscription.status,
+        limits: {
+          maxBrands: limits.maxBrands,
+          maxConfigsPerBrand: limits.maxConfigsPerBrand
+        },
+        features,
+        currentPeriodEnd: updatedLocalSubscription.currentPeriodEnd,
+        isActive: updatedLocalSubscription.status === 'active' || updatedLocalSubscription.status === 'trialing',
+        // Limit violations
+        hasViolations: violations.hasViolations,
+        violations: violations.violations,
       };
     } catch (error) {
       console.error('Failed to change subscription plan:', error);
@@ -241,10 +260,28 @@ export class SubscriptionController {
       // Update local subscription to free tier (this will clear Stripe fields)
       const updatedLocalSubscription = await this.subscriptionService.cancelSubscription(user.id);
 
+      // Get updated subscription status and violations
+      const violations = await this.subscriptionService.checkLimitViolations(user.id);
+      const limits = this.subscriptionService.getTierLimits(updatedLocalSubscription.tier);
+      const features = this.subscriptionService.getFeaturesMap(updatedLocalSubscription.tier, updatedLocalSubscription.status);
+
       return {
         message: 'Subscription cancelled successfully',
         newTier: 'free',
-        subscriptionId: subscription.stripeSubscriptionId
+        subscriptionId: subscription.stripeSubscriptionId,
+        // Full subscription status (same format as limit-violations endpoint)
+        tier: updatedLocalSubscription.tier,
+        status: updatedLocalSubscription.status,
+        limits: {
+          maxBrands: limits.maxBrands,
+          maxConfigsPerBrand: limits.maxConfigsPerBrand
+        },
+        features,
+        currentPeriodEnd: updatedLocalSubscription.currentPeriodEnd,
+        isActive: updatedLocalSubscription.status === 'active' || updatedLocalSubscription.status === 'trialing',
+        // Limit violations
+        hasViolations: violations.hasViolations,
+        violations: violations.violations,
       };
     } catch (error) {
       console.error('Failed to cancel subscription:', error);
@@ -279,6 +316,7 @@ export class SubscriptionController {
   }
 
   @Get('limit-violations')
+  // @Header('Cache-Control', 'public, max-age=100, must-revalidate, immutable')
   async checkLimitViolations(@Req() req) {
     const { auth0Id } = req.user;
     const user = await this.usersService.findByAuth0Id(auth0Id);
@@ -288,12 +326,24 @@ export class SubscriptionController {
     }
 
     const violations = await this.subscriptionService.checkLimitViolations(user.id);
+    const subscription = await this.subscriptionService.getOrCreateDefaultSubscription(user.id);
+    const limits = this.subscriptionService.getTierLimits(subscription.tier);
+    const features = this.subscriptionService.getFeaturesMap(subscription.tier, subscription.status);
     
     return {
+      // Full subscription status
+      tier: subscription.tier,
+      status: subscription.status,
+      limits: {
+        maxBrands: limits.maxBrands,
+        maxConfigsPerBrand: limits.maxConfigsPerBrand
+      },
+      features,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+      isActive: subscription.status === 'active' || subscription.status === 'trialing',
+      // Limit violations
       hasViolations: violations.hasViolations,
       violations: violations.violations,
-      currentTier: violations.currentTier,
-      limits: violations.limits
     };
   }
 

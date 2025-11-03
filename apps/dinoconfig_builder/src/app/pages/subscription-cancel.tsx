@@ -1,28 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { subscriptionService, SubscriptionStatus } from '../services/subscription.service';
+import { subscriptionService } from '../services/subscription.service';
+import { useSubscription } from '../auth/subscription-context';
 import './subscription-cancel.scss';
 
 export const SubscriptionCancel: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadCurrentSubscription();
-  }, []);
-
-  const loadCurrentSubscription = async () => {
-    try {
-      const status = await subscriptionService.getSubscriptionStatus();
-      setSubscription(status);
-    } catch (error) {
-      console.error('Failed to load subscription status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { subscription, loading } = useSubscription();
 
   const getCurrentTierName = () => {
     if (!subscription) return 'Free';

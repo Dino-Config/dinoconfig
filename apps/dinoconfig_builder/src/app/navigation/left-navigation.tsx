@@ -2,9 +2,9 @@ import axios from "../auth/axios-interceptor";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
 import { useUser } from "../auth/user-context";
+import { useSubscription } from "../auth/subscription-context";
 import { environment } from "../../environments";
-import { useState, useEffect } from "react";
-import { subscriptionService, SubscriptionStatus } from "../services/subscription.service";
+import { subscriptionService } from "../services/subscription.service";
 import "./left-navigation.scss";
 
 type LeftNavigationProps = {  
@@ -17,7 +17,7 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading } = useUser();
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const { subscription } = useSubscription();
 
   const goBuilder = () => {
     const lastBrandId = localStorage.getItem('lastBrandId');
@@ -48,36 +48,6 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
     } catch (error) {
       console.error('Logout error:', error);
       window.location.href = environment.homeUrl;
-    }
-  };
-
-  useEffect(() => {
-    if (user && !loading) {
-      loadSubscription();
-    }
-  }, [user, loading]);
-
-  // Listen for subscription changes
-  useEffect(() => {
-    const handleSubscriptionChange = () => {
-      if (user && !loading) {
-        loadSubscription();
-      }
-    };
-
-    window.addEventListener('subscriptionChanged', handleSubscriptionChange);
-    
-    return () => {
-      window.removeEventListener('subscriptionChanged', handleSubscriptionChange);
-    };
-  }, [user, loading]);
-
-  const loadSubscription = async () => {
-    try {
-      const status = await subscriptionService.getSubscriptionStatus();
-      setSubscription(status);
-    } catch (err) {
-      console.error('Failed to load subscription:', err);
     }
   };
 
