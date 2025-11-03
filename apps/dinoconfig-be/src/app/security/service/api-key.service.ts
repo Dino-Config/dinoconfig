@@ -30,10 +30,10 @@ export class ApiKeyService {
   }
 
   /**
-   * Hash an API key using SHA-256
+   * Compare an API key with a bcrypt hash
    */
-  private hashApiKeySha256(apiKey: string): string {
-    return crypto.createHash('sha256').update(apiKey).digest('hex');
+  private async compareApiKey(apiKey: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(apiKey, hash);
   }
 
   /**
@@ -56,11 +56,9 @@ export class ApiKeyService {
 
     const key = this.generateApiKeyString();
     const keyHash = await this.hashApiKey(key); // bcrypt hash for secure storage
-    const keyHashSha256 = this.hashApiKeySha256(key); // SHA-256 hash for SDK validation
 
     const apiKey = this.apiKeyRepo.create({
       keyHash,
-      keyHashSha256,
       name,
       description,
       auth0Id,
@@ -79,42 +77,40 @@ export class ApiKeyService {
 
   /**
    * Find API key by key string and validate
-   * Expects a SHA-256 hashed key string from the SDK
+   * Receives plain text API key from SDK, hashes it and compares with stored bcrypt hash
    */
   async validateApiKey(keyString: string): Promise<ApiKey | null> {
-    // Validate that the keyString is a SHA-256 hash (64 hex characters)
-    const isSha256Hash = /^[a-f0-9]{64}$/i.test(keyString);
-    
-    if (!isSha256Hash) {
-      // If not a valid SHA-256 hash, it's an invalid key format
-      return null;
-    }
-
-    // Lookup by SHA-256 hash
-    const apiKey = await this.apiKeyRepo.findOne({
-      where: { keyHashSha256: keyString, isActive: true },
+    // Load all active API keys to compare against
+    // Note: bcrypt uses salt, so we can't do direct DB lookup - we must compare each hash
+    const allActiveKeys = await this.apiKeyRepo.find({
+      where: { isActive: true },
       relations: ['user'],
     });
 
-    if (!apiKey) {
-      return null;
+    // Compare plain text key against each stored bcrypt hash
+    for (const apiKey of allActiveKeys) {
+      const isValid = await this.compareApiKey(keyString, apiKey.keyHash);
+      if (isValid) {
+        // Check if key is expired
+        if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
+          return null;
+        }
+
+        // Check if user is active
+        if (!apiKey.user.isActive) {
+          return null;
+        }
+
+        // Update last used timestamp
+        apiKey.lastUsedAt = new Date();
+        await this.apiKeyRepo.save(apiKey);
+
+        return apiKey;
+      }
     }
 
-    // Check if key is expired
-    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
-      return null;
-    }
-
-    // Check if user is active
-    if (!apiKey.user.isActive) {
-      return null;
-    }
-
-    // Update last used timestamp
-    apiKey.lastUsedAt = new Date();
-    await this.apiKeyRepo.save(apiKey);
-
-    return apiKey;
+    // No matching key found
+    return null;
   }
 
   /**
