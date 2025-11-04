@@ -6,8 +6,9 @@ export class ApiKey {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column({ unique: true, length: 255 })
-  keyHash: string; // bcrypt hash for secure storage
+  @Index()
+  @Column({ unique: true, length: 64 })
+  keyHash: string; // SHA-256 hash for secure storage and fast DB lookup
 
   @Column({ length: 100 })
   name: string;

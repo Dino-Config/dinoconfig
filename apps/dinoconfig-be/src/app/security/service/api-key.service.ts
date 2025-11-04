@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApiKey } from '../entities/api-key.entity';
 import * as crypto from 'crypto';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ApiKeyService {
@@ -22,18 +21,10 @@ export class ApiKeyService {
   }
 
   /**
-   * Hash an API key using bcrypt
+   * Hash an API key using SHA-256
    */
-  private async hashApiKey(apiKey: string): Promise<string> {
-    const saltRounds = 10;
-    return bcrypt.hash(apiKey, saltRounds);
-  }
-
-  /**
-   * Compare an API key with a bcrypt hash
-   */
-  private async compareApiKey(apiKey: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(apiKey, hash);
+  private hashApiKey(apiKey: string): string {
+    return crypto.createHash('sha256').update(apiKey).digest('hex');
   }
 
   /**
@@ -55,7 +46,7 @@ export class ApiKeyService {
     }
 
     const key = this.generateApiKeyString();
-    const keyHash = await this.hashApiKey(key); // bcrypt hash for secure storage
+    const keyHash = this.hashApiKey(key); // SHA-256 hash for secure storage and fast DB lookup
 
     const apiKey = this.apiKeyRepo.create({
       keyHash,
@@ -77,40 +68,37 @@ export class ApiKeyService {
 
   /**
    * Find API key by key string and validate
-   * Receives plain text API key from SDK, hashes it and compares with stored bcrypt hash
+   * Receives plain text API key from SDK, hashes it with SHA-256 and looks it up in DB
    */
   async validateApiKey(keyString: string): Promise<ApiKey | null> {
-    // Load all active API keys to compare against
-    // Note: bcrypt uses salt, so we can't do direct DB lookup - we must compare each hash
-    const allActiveKeys = await this.apiKeyRepo.find({
-      where: { isActive: true },
+    // Hash the plain text key with SHA-256 for fast DB lookup
+    const keyHash = this.hashApiKey(keyString);
+
+    // Lookup by SHA-256 hash (fast indexed lookup)
+    const apiKey = await this.apiKeyRepo.findOne({
+      where: { keyHash, isActive: true },
       relations: ['user'],
     });
 
-    // Compare plain text key against each stored bcrypt hash
-    for (const apiKey of allActiveKeys) {
-      const isValid = await this.compareApiKey(keyString, apiKey.keyHash);
-      if (isValid) {
-        // Check if key is expired
-        if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
-          return null;
-        }
-
-        // Check if user is active
-        if (!apiKey.user.isActive) {
-          return null;
-        }
-
-        // Update last used timestamp
-        apiKey.lastUsedAt = new Date();
-        await this.apiKeyRepo.save(apiKey);
-
-        return apiKey;
-      }
+    if (!apiKey) {
+      return null;
     }
 
-    // No matching key found
-    return null;
+    // Check if key is expired
+    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
+      return null;
+    }
+
+    // Check if user is active
+    if (!apiKey.user.isActive) {
+      return null;
+    }
+
+    // Update last used timestamp
+    apiKey.lastUsedAt = new Date();
+    await this.apiKeyRepo.save(apiKey);
+
+    return apiKey;
   }
 
   /**
