@@ -22,18 +22,27 @@ export class ApiKeyService {
   }
 
   /**
-   * Hash an API key using bcrypt
+   * Hash an API key using SHA-256 first, then bcrypt
    */
   private async hashApiKey(apiKey: string): Promise<string> {
-    const saltRounds = 10;
-    return bcrypt.hash(apiKey, saltRounds);
+    // First hash with SHA-256 to normalize the key
+    const sha = crypto.createHash('sha256').update(apiKey).digest('hex');
+    
+    // Then hash the SHA-256 result with bcrypt for secure storage
+    const saltRounds = 12;
+    return bcrypt.hash(sha, saltRounds);
   }
 
   /**
    * Compare an API key with a bcrypt hash
+   * First hashes the key with SHA-256, then compares with stored bcrypt hash
    */
   private async compareApiKey(apiKey: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(apiKey, hash);
+    // First hash with SHA-256 to match the storage format
+    const sha = crypto.createHash('sha256').update(apiKey).digest('hex');
+    
+    // Then compare the SHA-256 hash with the stored bcrypt hash
+    return bcrypt.compare(sha, hash);
   }
 
   /**
