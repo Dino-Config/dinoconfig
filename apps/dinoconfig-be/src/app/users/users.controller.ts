@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, ParseIntPipe, Req, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, ParseIntPipe, Req, UseGuards, NotFoundException, Header } from '@nestjs/common';
 import { UsersService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
@@ -9,6 +9,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
+  @Header('Cache-Control', 'public, max-age=300, must-revalidate, immutable')
   async getUser(@Req() req) {
     const { auth0Id, email, name, company } = req.user;
     let user = await this.usersService.findByAuth0Id(auth0Id);

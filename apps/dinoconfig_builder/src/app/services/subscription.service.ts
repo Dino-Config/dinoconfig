@@ -49,15 +49,6 @@ export interface LimitViolationsResult {
 class SubscriptionService {
   private baseUrl = environment.apiUrl;
 
-  async getSubscriptionStatus(): Promise<SubscriptionStatus> {
-    const response = await axios.get<SubscriptionStatus>(
-      `${this.baseUrl}/subscriptions/status`, {
-        withCredentials: true 
-      }
-    );
-    return response.data;
-  }
-
   async createCheckoutSession(priceId: string): Promise<CheckoutSessionResponse> {
     const response = await axios.post<CheckoutSessionResponse>(
       `${this.baseUrl}/subscriptions/checkout-session`,
