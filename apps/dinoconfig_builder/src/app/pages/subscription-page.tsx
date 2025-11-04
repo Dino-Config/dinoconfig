@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { subscriptionService, SubscriptionStatus } from '../services/subscription.service';
+import { subscriptionService } from '../services/subscription.service';
+import { useSubscription } from '../auth/subscription-context';
 import { environment } from '../../environments';
 import { Spinner, Notification, useNotification } from '../components';
 import './subscription-page.scss';
@@ -91,8 +92,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
 };
 
 export const SubscriptionPage: React.FC = () => {
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { subscription, loading, updateSubscriptionData } = useSubscription();
   const [processingTier, setProcessingTier] = useState<string | null>(null);
   const { notification, showNotification, hideNotification } = useNotification();
 
@@ -175,20 +175,6 @@ export const SubscriptionPage: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    loadSubscription();
-  }, []);
-
-  const loadSubscription = async () => {
-    try {
-      const status = await subscriptionService.getSubscriptionStatus();
-      setSubscription(status);
-    } catch (error) {
-      console.error('Failed to load subscription status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleUpgrade = async (priceId: string, tier: string) => {
     try {
@@ -219,10 +205,10 @@ export const SubscriptionPage: React.FC = () => {
       setProcessingTier(tierName);
       const result = await subscriptionService.changeSubscriptionPlan(priceId);
       showNotification(`Successfully changed to ${result.newTier} plan!`, 'success');
-      const refreshedStatus = await subscriptionService.refreshSubscriptionStatus();
-      setSubscription(refreshedStatus);
-      // Notify other components about subscription change
-      window.dispatchEvent(new CustomEvent('subscriptionChanged'));
+      
+      // Update subscription data directly from the response (no additional API calls)
+      // No need to dispatch event since we're updating the context directly
+      updateSubscriptionData(result);
     } catch (error) {
       console.error('Failed to change subscription plan:', error);
       showNotification('Failed to change subscription plan. Please try again.', 'error');
@@ -244,10 +230,10 @@ export const SubscriptionPage: React.FC = () => {
       setProcessingTier('free');
       const result = await subscriptionService.cancelSubscription();
       showNotification('Subscription cancelled successfully. You are now on the Free plan.', 'success');
-      const refreshedStatus = await subscriptionService.refreshSubscriptionStatus();
-      setSubscription(refreshedStatus);
-      // Notify other components about subscription change
-      window.dispatchEvent(new CustomEvent('subscriptionChanged'));
+      
+      // Update subscription data directly from the response (no additional API calls)
+      // No need to dispatch event since we're updating the context directly
+      updateSubscriptionData(result);
     } catch (error) {
       console.error('Failed to cancel subscription:', error);
       showNotification('Failed to cancel subscription. Please try again.', 'error');

@@ -1,32 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spinner } from '../components';
 import { useUser } from '../auth/user-context';
-import { subscriptionService, SubscriptionStatus } from '../services/subscription.service';
+import { useSubscription } from '../auth/subscription-context';
+import { subscriptionService } from '../services/subscription.service';
 import './Profile.scss';
 
 export default function Profile() {
     const navigate = useNavigate();
     const { user, loading, refreshUser } = useUser();
+    const { subscription, loading: loadingSubscription } = useSubscription();
     const [error, setError] = useState<string | null>(null);
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['personal', 'address', 'account', 'subscription', 'brands']));
-    const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-    const [loadingSubscription, setLoadingSubscription] = useState(true);
-
-    useEffect(() => {
-      loadSubscription();
-    }, []);
-
-    const loadSubscription = async () => {
-      try {
-        const status = await subscriptionService.getSubscriptionStatus();
-        setSubscription(status);
-      } catch (err) {
-        console.error('Failed to load subscription:', err);
-      } finally {
-        setLoadingSubscription(false);
-      }
-    };
 
     const toggleSection = (section: string) => {
       const newExpanded = new Set(expandedSections);

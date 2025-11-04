@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, Inject, forwardRef } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, Inject, forwardRef, Header } from '@nestjs/common';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
@@ -58,6 +58,7 @@ export class ConfigsController {
   }
 
   @Get(':brandId/configs')
+  @Header('Cache-Control', 'public, max-age=120, must-revalidate, immutable')
   async findAllConfigsForBrand(
     @Request() req,
     @Param('brandId') brandId: string,

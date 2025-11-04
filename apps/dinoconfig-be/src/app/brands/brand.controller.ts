@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req, Get, UnauthorizedException, Inject, forwardRef } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get, UnauthorizedException, Inject, forwardRef, Header } from '@nestjs/common';
 import { BrandsService } from './brand.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { JwtAuthGuard } from '../security/guard/jwt.guard';
@@ -17,6 +17,7 @@ export class BrandsController {
   ) {}
 
   @Get()
+  @Header('Cache-Control', 'public, max-age=120, must-revalidate, immutable')
   async findAll(@Req() req) {
     const company = brandHeaderExtractor(req);
     if (!company) {

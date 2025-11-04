@@ -1,25 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { subscriptionService, SubscriptionStatus } from '../services/subscription.service';
+import React from 'react';
+import { subscriptionService } from '../services/subscription.service';
+import { useSubscription } from '../auth/subscription-context';
 import './subscription-badge.scss';
 
 export const SubscriptionBadge: React.FC = () => {
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadSubscription();
-  }, []);
-
-  const loadSubscription = async () => {
-    try {
-      const status = await subscriptionService.getSubscriptionStatus();
-      setSubscription(status);
-    } catch (error) {
-      console.error('Failed to load subscription status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { subscription, loading } = useSubscription();
 
   if (loading || !subscription) {
     return null;

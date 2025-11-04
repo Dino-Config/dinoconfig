@@ -31,26 +31,23 @@ export interface LimitViolation {
 }
 
 export interface LimitViolationsResult {
-  hasViolations: boolean;
-  violations: LimitViolation[];
-  currentTier: string;
+  // Full subscription status (combined from status endpoint)
+  tier: 'free' | 'starter' | 'pro' | 'custom';
+  status: 'active' | 'cancelled' | 'past_due' | 'trialing';
   limits: {
     maxBrands: number;
     maxConfigsPerBrand: number;
   };
+  features: FeatureMap;
+  currentPeriodEnd?: string;
+  isActive: boolean;
+  // Limit violations
+  hasViolations: boolean;
+  violations: LimitViolation[];
 }
 
 class SubscriptionService {
   private baseUrl = environment.apiUrl;
-
-  async getSubscriptionStatus(): Promise<SubscriptionStatus> {
-    const response = await axios.get<SubscriptionStatus>(
-      `${this.baseUrl}/subscriptions/status`, {
-        withCredentials: true 
-      }
-    );
-    return response.data;
-  }
 
   async createCheckoutSession(priceId: string): Promise<CheckoutSessionResponse> {
     const response = await axios.post<CheckoutSessionResponse>(
@@ -96,8 +93,8 @@ class SubscriptionService {
     return response.data;
   }
 
-  async changeSubscriptionPlan(priceId: string): Promise<any> {
-    const response = await axios.post(
+  async changeSubscriptionPlan(priceId: string): Promise<LimitViolationsResult & { message: string; newTier: string; subscriptionId: string }> {
+    const response = await axios.post<LimitViolationsResult & { message: string; newTier: string; subscriptionId: string }>(
       `${this.baseUrl}/subscriptions/change-plan`,
       { priceId },
       {
@@ -107,8 +104,8 @@ class SubscriptionService {
     return response.data;
   }
 
-  async cancelSubscription(): Promise<any> {
-    const response = await axios.post(
+  async cancelSubscription(): Promise<LimitViolationsResult & { message: string; newTier: string; subscriptionId: string }> {
+    const response = await axios.post<LimitViolationsResult & { message: string; newTier: string; subscriptionId: string }>(
       `${this.baseUrl}/subscriptions/cancel-subscription`,
       {},
       {
@@ -126,6 +123,14 @@ class SubscriptionService {
       }
     );
     return response.data;
+  }
+
+  /**
+   * Get subscription status and limit violations in a single call
+   * This is the preferred method to avoid redundant API calls
+   */
+  async getSubscriptionWithViolations(): Promise<LimitViolationsResult> {
+    return this.checkLimitViolations();
   }
 
 

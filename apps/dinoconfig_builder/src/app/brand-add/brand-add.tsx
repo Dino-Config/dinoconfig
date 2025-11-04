@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../auth/axios-interceptor";
 import { environment } from "../../environments";
 import { Spinner } from "../components";
 import { SubscriptionLimitWarning } from "../components/subscription-limit-warning";
-import { subscriptionService, SubscriptionStatus } from "../services/subscription.service";
+import { useSubscription } from "../auth/subscription-context";
 import "./brand-add.scss";
 
 interface BrandFormData {
@@ -24,21 +24,8 @@ export default function BrandAdd() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const { subscription } = useSubscription();
   const [limitReached, setLimitReached] = useState(false);
-
-  useEffect(() => {
-    loadSubscription();
-  }, []);
-
-  const loadSubscription = async () => {
-    try {
-      const status = await subscriptionService.getSubscriptionStatus();
-      setSubscription(status);
-    } catch (err) {
-      console.error('Failed to load subscription:', err);
-    }
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
