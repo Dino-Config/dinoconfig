@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApiKey } from '../entities/api-key.entity';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ApiKeyService {
@@ -21,6 +22,30 @@ export class ApiKeyService {
   }
 
   /**
+   * Hash an API key using SHA-256 first, then bcrypt
+   */
+  private async hashApiKey(apiKey: string): Promise<string> {
+    // First hash with SHA-256 to normalize the key
+    const sha = crypto.createHash('sha256').update(apiKey).digest('hex');
+    
+    // Then hash the SHA-256 result with bcrypt for secure storage
+    const saltRounds = 12;
+    return bcrypt.hash(sha, saltRounds);
+  }
+
+  /**
+   * Compare an API key with a bcrypt hash
+   * First hashes the key with SHA-256, then compares with stored bcrypt hash
+   */
+  private async compareApiKey(apiKey: string, hash: string): Promise<boolean> {
+    // First hash with SHA-256 to match the storage format
+    const sha = crypto.createHash('sha256').update(apiKey).digest('hex');
+    
+    // Then compare the SHA-256 hash with the stored bcrypt hash
+    return bcrypt.compare(sha, hash);
+  }
+
+  /**
    * Create a new API key for a user
    */
   async createApiKey(
@@ -28,7 +53,7 @@ export class ApiKeyService {
     name: string,
     description?: string,
     expiresAt?: Date,
-  ): Promise<ApiKey> {
+  ): Promise<ApiKey & { key: string }> {
     // Check if a key with the same name exists for this user
     const existingKey = await this.apiKeyRepo.findOne({
       where: { auth0Id, name },
@@ -39,9 +64,10 @@ export class ApiKeyService {
     }
 
     const key = this.generateApiKeyString();
+    const keyHash = await this.hashApiKey(key); // bcrypt hash for secure storage
 
     const apiKey = this.apiKeyRepo.create({
-      key,
+      keyHash,
       name,
       description,
       auth0Id,
@@ -49,37 +75,51 @@ export class ApiKeyService {
       isActive: true,
     });
 
-    return this.apiKeyRepo.save(apiKey);
+    const savedApiKey = await this.apiKeyRepo.save(apiKey);
+
+    // Return with plain text key (only time it's exposed)
+    return {
+      ...savedApiKey,
+      key, // Return plain text key for display to user
+    };
   }
 
   /**
    * Find API key by key string and validate
+   * Receives plain text API key from SDK, hashes it and compares with stored bcrypt hash
    */
   async validateApiKey(keyString: string): Promise<ApiKey | null> {
-    const apiKey = await this.apiKeyRepo.findOne({
-      where: { key: keyString, isActive: true },
+    // Load all active API keys to compare against
+    // Note: bcrypt uses salt, so we can't do direct DB lookup - we must compare each hash
+    const allActiveKeys = await this.apiKeyRepo.find({
+      where: { isActive: true },
       relations: ['user'],
     });
 
-    if (!apiKey) {
-      return null;
+    // Compare plain text key against each stored bcrypt hash
+    for (const apiKey of allActiveKeys) {
+      const isValid = await this.compareApiKey(keyString, apiKey.keyHash);
+      if (isValid) {
+        // Check if key is expired
+        if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
+          return null;
+        }
+
+        // Check if user is active
+        if (!apiKey.user.isActive) {
+          return null;
+        }
+
+        // Update last used timestamp
+        apiKey.lastUsedAt = new Date();
+        await this.apiKeyRepo.save(apiKey);
+
+        return apiKey;
+      }
     }
 
-    // Check if key is expired
-    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
-      return null;
-    }
-
-    // Check if user is active
-    if (!apiKey.user.isActive) {
-      return null;
-    }
-
-    // Update last used timestamp
-    apiKey.lastUsedAt = new Date();
-    await this.apiKeyRepo.save(apiKey);
-
-    return apiKey;
+    // No matching key found
+    return null;
   }
 
   /**

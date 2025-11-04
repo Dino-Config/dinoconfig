@@ -62,7 +62,8 @@ public class HttpClient {
     
     /**
      * Exchange API key for access token
-     * @param apiKey The API key to exchange
+     * Sends plain text API key to server (HTTPS encrypts it in transit)
+     * @param apiKey The plain text API key to exchange
      * @return The access token
      * @throws IOException if the exchange fails
      */

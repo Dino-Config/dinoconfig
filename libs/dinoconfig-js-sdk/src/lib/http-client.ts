@@ -14,7 +14,8 @@ export class HttpClient {
   }
 
   public async configureAuthorizationHeader(headers: Record<string, string>): Promise<void> {
-    const token = await this.exchangeApiKeyForToken(headers['X-API-Key']);
+    const apiKey = headers['X-API-Key'];
+    const token = await this.exchangeApiKeyForToken(apiKey);
 
     this.defaultHeaders = { 
       'Content-Type': 'application/json',
@@ -23,9 +24,9 @@ export class HttpClient {
     };
   }
 
-
   /**
    * Exchange API key for access token
+   * Sends plain text API key to server (HTTPS encrypts it in transit)
    */
   private async exchangeApiKeyForToken(apiKey: string): Promise<string> {
     try {
