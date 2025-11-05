@@ -1,17 +1,15 @@
 import { Controller, Post, Patch, Get, Delete, Param, Body, Request, UseGuards, Inject, forwardRef, Header } from '@nestjs/common';
-import { JwtAuthGuard } from '../security/guard/jwt.guard';
+import { UserAuthGuard } from '../security/guard/user-auth.guard';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { ConfigsService } from './config.service';
 import { SubscriptionService } from '../subscriptions/subscription.service';
-import { Scopes } from '../security/decorators/scope.decorator';
-import { ScopesGuard } from '../security/guard/scope.guard';
 import { Feature } from '../features/enums/feature.enum';
 import { RequireFeature } from '../subscriptions/decorators/require-feature.decorator';
 import { FeatureGuard } from '../subscriptions/guards/feature.guard';
 
 @Controller('brands')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 export class ConfigsController {
   constructor(
     private readonly configsService: ConfigsService,
@@ -106,15 +104,4 @@ export class ConfigsController {
     return this.configsService.setActiveVersionByName(req.user.auth0Id, parseInt(brandId), configName, body.version, req.user.company);
   }
 
-  @Get(':brandName/configs/:name/:valueKey')
-  @UseGuards(ScopesGuard)
-  @Scopes('read:configs')
-  findConfigByNameAndValue(
-    @Request() req,
-    @Param('brandName') brandName: string,
-    @Param('name') name: string,
-    @Param('valueKey') valueKey: string,
-  ) {
-    return this.configsService.findConfigByNameAndValue(req.user.auth0Id, brandName, name, valueKey, req.user?.company);
-  }
 }

@@ -32,7 +32,7 @@ public class ConfigAPI {
      */
     public ApiResponse<Object> getConfigValue(String brandName, String configName, String configValueKey, RequestOptions options) throws IOException {
         try {
-            String endpoint = String.format("/api/brands/%s/configs/%s/%s", brandName, configName, configValueKey);
+            String endpoint = String.format("/api/sdk/brands/%s/configs/%s/%s", brandName, configName, configValueKey);
             return httpClient.get(endpoint, options);
         } catch (IOException e) {
             throw e;

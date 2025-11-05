@@ -231,6 +231,18 @@ export class ConfigsService {
     return { value };
   }
 
+  async findConfigByNameAndValueForSDK(brandName: string, name: string, valueKey: string, company: string): Promise<{value: any}> {
+    const config = await this.getActiveConfigForSDK(brandName, name, company);
+
+    if (!config) {
+      throw new NotFoundException(`Config with name "${name}" not found for brand "${brandName}"`);
+    }
+
+    const value = config?.formData[valueKey];
+
+    return { value };
+  }
+
   async getConfigVersions(userId: string, brandId: number, configName: string, company: string): Promise<Config[]> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
     const hasVersioning = await this.userHasVersioning(userId);

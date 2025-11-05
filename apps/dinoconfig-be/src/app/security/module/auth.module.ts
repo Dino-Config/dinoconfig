@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
-import { BlacklistJwtStrategy } from '../strategy/blacklist-jwt.strategy';
+import { UserJwtStrategy } from '../strategy/user-jwt.strategy';
+import { MachineJwtStrategy } from '../strategy/machine-jwt.strategy';
 import { ConfigModule } from '@nestjs/config';
 import { AuthService } from '../service/auth.service';
 import { TokenBlacklistService } from '../service/token-blacklist.service';
@@ -18,13 +19,14 @@ import { ApiKeyController } from '../controller/api-key.controller';
 imports: [
     UsersModule,
     ConfigModule.forRoot({ isGlobal: true }),
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule.register({ defaultStrategy: 'user-jwt' }),
     TypeOrmModule.forFeature([TokenBlacklist, ApiKey]),
     ScheduleModule.forRoot()
 ],
 controllers: [ApiKeyController],
 providers: [
-  BlacklistJwtStrategy, 
+  UserJwtStrategy,
+  MachineJwtStrategy,
   AuthService, 
   TokenBlacklistService, 
   TokenCleanupService,
