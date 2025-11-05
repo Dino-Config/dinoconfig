@@ -7,7 +7,7 @@ import { cookieExtractor } from '../jwt-extractor';
 import { TokenBlacklistService } from '../service/token-blacklist.service';
 
 @Injectable()
-export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
   constructor(
     private readonly configService: ConfigService,
     private readonly tokenBlacklistService: TokenBlacklistService,
@@ -25,7 +25,6 @@ export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       }),
       jwtFromRequest: ExtractJwt.fromExtractors([
         cookieExtractor, // user sessions (admins)
-        ExtractJwt.fromAuthHeaderAsBearerToken(), // SDK tokens
       ]),
       audience,
       issuer: issuerUrl,
@@ -37,24 +36,14 @@ export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(req: any, payload: any) {
     const token = req.cookies?.access_token;
   
-    // If a token is present, validate against blacklist
+    // Validate against blacklist
     if (token) {
       const tokenId = this.tokenBlacklistService.extractJtiFromToken(token);
       if (tokenId && await this.tokenBlacklistService.isTokenBlacklisted(tokenId)) {
         throw new UnauthorizedException('Token has been invalidated');
       }
-    } else if (payload.gty !== 'client-credentials') {
-      // If no token and not client-credentials flow → unauthorized
+    } else {
       throw new UnauthorizedException('No token provided');
-    }
-  
-    // Handle client credentials flow
-    if (payload.gty === 'client-credentials') {
-      return { 
-        clientId: payload.sub,
-        scopes: payload.scope?.split(' ') ?? [],
-        company: payload['https://dinoconfig.com/company'] ?? null,
-      };
     }
   
     // Handle standard user flow
@@ -65,5 +54,6 @@ export class BlacklistJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       company: payload['X-INTERNAL-COMPANY'] ?? null,
       scopes: payload.scope?.split(' ') ?? [],
     };
-  }  
+  }
 }
+

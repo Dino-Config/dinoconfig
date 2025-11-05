@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Body, Req, UseGuards, HttpCode, HttpStatus, Header } from '@nestjs/common';
-import { JwtAuthGuard } from '../security/guard/jwt.guard';
+import { UserAuthGuard } from '../security/guard/user-auth.guard';
 import { SubscriptionService } from './subscription.service';
 import { UsersService } from '../users/user.service';
 import { StripeService } from './stripe.service';
 
 @Controller('subscriptions')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 export class SubscriptionController {
   constructor(
     private subscriptionService: SubscriptionService,

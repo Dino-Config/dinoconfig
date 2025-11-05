@@ -3,7 +3,7 @@ import { Response, Request } from 'express';
 import { AuthService } from '../service/auth.service';
 import { TokenBlacklistService } from '../service/token-blacklist.service';
 import { SdkAuthService } from '../service/sdk-auth.service';
-import { JwtAuthGuard } from '../guard/jwt.guard';
+import { UserAuthGuard } from '../guard/user-auth.guard';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
@@ -125,7 +125,7 @@ export class AuthController {
   }
 
   @Get('validate')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   async validate(@Res() res: Response) {
     return res.status(204).send();
   }
@@ -177,7 +177,7 @@ export class AuthController {
    * Get SDK token (deprecated - kept for backward compatibility)
    */
   @Post('sdk-token')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   async sdkToken(@Req() req: Request) {
     return this.sdkAuthService.getSDKTokenFromRequest(req);
   }

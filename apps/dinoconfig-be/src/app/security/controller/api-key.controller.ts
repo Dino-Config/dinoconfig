@@ -13,14 +13,14 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../guard/jwt.guard';
+import { UserAuthGuard } from '../guard/user-auth.guard';
 import { ApiKeyService } from '../service/api-key.service';
 import { CreateApiKeyDto } from '../dto/create-api-key.dto';
 import { UpdateApiKeyDto } from '../dto/update-api-key.dto';
 import { ApiKeyResponseDto, ApiKeyWithSecretResponseDto, ApiKeyListResponseDto } from '../dto/api-key-response.dto';
 
 @Controller('api-keys')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 

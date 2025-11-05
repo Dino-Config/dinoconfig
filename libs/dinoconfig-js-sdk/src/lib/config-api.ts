@@ -11,7 +11,7 @@ export class ConfigAPI {
     options?: RequestOptions
   ): Promise<ApiResponse<any>> {
     try {
-      const response = await this.httpClient.get<any>(`/api/brands/${brandName}/configs/${configName}/${configValueKey}`, options);
+      const response = await this.httpClient.get<any>(`/api/sdk/brands/${brandName}/configs/${configName}/${configValueKey}`, options);
       return response;      
     } catch (error) {
       throw error;
