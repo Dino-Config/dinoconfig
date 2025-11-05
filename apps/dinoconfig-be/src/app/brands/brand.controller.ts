@@ -1,13 +1,13 @@
 import { Controller, Post, Body, UseGuards, Req, Get, UnauthorizedException, Inject, forwardRef, Header } from '@nestjs/common';
 import { BrandsService } from './brand.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
-import { JwtAuthGuard } from '../security/guard/jwt.guard';
+import { UserAuthGuard } from '../security/guard/user-auth.guard';
 import { brandHeaderExtractor } from '../security/jwt-extractor';
 import { UsersService } from '../users/user.service';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 
 @Controller('brands')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 export class BrandsController {
   constructor(
     private brandsService: BrandsService,

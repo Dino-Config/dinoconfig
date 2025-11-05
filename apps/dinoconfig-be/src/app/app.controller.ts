@@ -1,6 +1,6 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { JwtAuthGuard } from './security/guard/jwt.guard';
+import { UserAuthGuard } from './security/guard/user-auth.guard';
 
 @Controller()
 export class AppController {
@@ -12,11 +12,9 @@ export class AppController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   getMe(@Req() req) {
-    if (req.user.clientId) {
-      return { message: 'This is a machine token', clientId: req.user.clientId };
-    }
+    // UserAuthGuard ensures user.auth0Id exists, so this is a user token
     return req.user;
   }
 }
