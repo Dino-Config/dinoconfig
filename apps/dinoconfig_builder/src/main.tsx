@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './app/app';
 import { AuthProvider } from './app/auth/auth-provider';
 import { UserProvider } from './app/auth/user-context';
+import { SubscriptionProvider } from './app/auth/subscription-context';
 import { ProtectedRoute } from './app/route/protected-route';
 
 const root = ReactDOM.createRoot(
@@ -15,7 +16,9 @@ root.render(
     <AuthProvider>
       <UserProvider>
         <ProtectedRoute>
-          <App />
+          <SubscriptionProvider>
+            <App />
+          </SubscriptionProvider>
         </ProtectedRoute>
       </UserProvider>
     </AuthProvider>

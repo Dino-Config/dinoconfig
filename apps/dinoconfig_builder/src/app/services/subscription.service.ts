@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../auth/axios-interceptor';
 import { environment } from '../../environments';
 import { Feature, FeatureMap } from '../types/features';
 

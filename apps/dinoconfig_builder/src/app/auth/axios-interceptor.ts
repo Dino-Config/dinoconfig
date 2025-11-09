@@ -2,6 +2,8 @@ import axios, { AxiosError, AxiosResponse } from 'axios';
 import { tokenRenewalService } from './token-renewal.service';
 import { environment } from '../../environments';
 
+axios.defaults.withCredentials = true;
+
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: any) => void;
@@ -36,6 +38,9 @@ axios.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(() => {
+          if (originalRequest) {
+            originalRequest.withCredentials = true;
+          }
           return axios(originalRequest);
         }).catch(err => {
           return Promise.reject(err);
@@ -49,6 +54,9 @@ axios.interceptors.response.use(
         const renewed = await tokenRenewalService.forceRenewal();
         if (renewed) {
           processQueue(null, 'token renewed');
+          if (originalRequest) {
+            originalRequest.withCredentials = true;
+          }
           return axios(originalRequest);
         } else {
           processQueue(new Error('Token renewal failed'), null);
