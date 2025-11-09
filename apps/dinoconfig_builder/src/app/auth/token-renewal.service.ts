@@ -11,9 +11,111 @@ export class TokenRenewalService {
   private renewalTimer: NodeJS.Timeout | null = null;
   private isRenewing = false;
   private renewalCallbacks: Array<(success: boolean) => void> = [];
+  private lastActivityTime: number = Date.now();
+  private readonly IDLE_TIMEOUT = 13 * 60 * 1000; // 13 minutes (show warning before 15 min token expiry)
+  private readonly WARNING_DURATION = 2 * 60; // 2 minutes warning countdown
+  private activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+  private idleWarningCallback: ((remainingSeconds: number) => void) | null = null;
+  private idleWarningTimer: NodeJS.Timeout | null = null;
+  private warningDismissed = false;
 
   constructor() {
+    this.setupActivityTracking();
     this.startTokenRenewalTimer();
+  }
+
+  /**
+   * Setup activity tracking to detect user interaction
+   */
+  private setupActivityTracking(): void {
+    const updateActivity = () => {
+      this.lastActivityTime = Date.now();
+      this.warningDismissed = false;
+      this.clearIdleWarning();
+    };
+
+    // Track user activity
+    this.activityEvents.forEach(event => {
+      window.addEventListener(event, updateActivity, { passive: true });
+    });
+
+    // Also track visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        this.lastActivityTime = Date.now();
+        this.warningDismissed = false;
+        this.clearIdleWarning();
+      }
+    });
+  }
+
+  /**
+   * Register callback for idle warning
+   */
+  setIdleWarningCallback(callback: (remainingSeconds: number) => void): void {
+    this.idleWarningCallback = callback;
+  }
+
+  /**
+   * Clear idle warning
+   */
+  private clearIdleWarning(): void {
+    if (this.idleWarningTimer) {
+      clearInterval(this.idleWarningTimer);
+      this.idleWarningTimer = null;
+    }
+    if (this.idleWarningCallback) {
+      this.idleWarningCallback(0); // Signal to hide warning
+    }
+  }
+
+  /**
+   * Check if user has been idle and show warning if needed
+   */
+  private checkIdleAndWarn(): void {
+    const idleTime = Date.now() - this.lastActivityTime;
+    
+    // If user has been idle for IDLE_TIMEOUT, show warning
+    if (idleTime >= this.IDLE_TIMEOUT && !this.warningDismissed && !this.idleWarningTimer) {
+      this.showIdleWarning();
+    }
+  }
+
+  /**
+   * Show idle warning with countdown
+   */
+  private showIdleWarning(): void {
+    if (!this.idleWarningCallback) return;
+
+    let remainingSeconds = this.WARNING_DURATION;
+    this.idleWarningCallback(remainingSeconds);
+
+    this.idleWarningTimer = setInterval(() => {
+      remainingSeconds--;
+      
+      if (remainingSeconds <= 0) {
+        this.clearIdleWarning();
+        // Redirect to home (logout)
+        window.location.href = environment.homeUrl;
+        return;
+      }
+
+      if (this.idleWarningCallback) {
+        this.idleWarningCallback(remainingSeconds);
+      }
+    }, 1000);
+  }
+
+  /**
+   * User clicked "Keep Session" - renew token and reset activity
+   */
+  async keepSessionActive(): Promise<void> {
+    this.warningDismissed = true;
+    this.clearIdleWarning();
+    this.lastActivityTime = Date.now();
+    
+    // Force token renewal
+    await this.forceRenewal();
   }
 
   /**
@@ -62,23 +164,28 @@ export class TokenRenewalService {
    * Start a timer to periodically check and renew tokens
    */
   private startTokenRenewalTimer(): void {
-    // Check every 10 minutes (600000ms)
+    // Check every 10 minutes for idle status and token validity
     this.renewalTimer = setInterval(async () => {
-      try {
-        // Test if current token is still valid
-        await axios.get(`${environment.apiUrl}/auth/validate`, { 
-          withCredentials: true,
-          timeout: 5000 // 5 second timeout
-        });
-      } catch (error) {
-        // If validation fails, try to renew the token
-        const renewed = await this.renewToken();
-        if (!renewed) {
-          console.error('Token renewal failed, user may need to re-authenticate');
-          // Could dispatch an event or callback here to handle re-authentication
+      // Check if user is idle and should see warning
+      this.checkIdleAndWarn();
+
+      // Only validate/renew if not showing warning
+      if (!this.idleWarningTimer) {
+        try {
+          // Test if current token is still valid
+          await axios.get(`${environment.apiUrl}/auth/validate`, { 
+            withCredentials: true,
+            timeout: 5000 // 5 second timeout
+          });
+        } catch (error) {
+          // If validation fails, try to renew the token
+          const renewed = await this.renewToken();
+          if (!renewed) {
+            console.error('Token renewal failed, user may need to re-authenticate');
+          }
         }
       }
-    }, 10 * 60 * 1000); // 10 minutes
+    }, 10 * 60 * 1000); // Check every 10 minutes
   }
 
   /**

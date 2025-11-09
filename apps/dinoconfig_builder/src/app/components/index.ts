@@ -12,3 +12,5 @@ export { SubscriptionViolationModal } from './subscription-violation-modal';
 export { LimitViolationGuard } from './limit-violation-guard';
 export { FeatureGate, FeatureTooltip } from './FeatureGate';
 export { FeatureBadge } from './FeatureBadge';
+export { IdleWarningModal } from './idle-warning-modal';
+export { IdleWarningProvider } from './idle-warning-provider';
