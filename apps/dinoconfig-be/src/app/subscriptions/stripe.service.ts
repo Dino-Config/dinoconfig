@@ -51,8 +51,8 @@ export class StripeService {
         },
       ],
       mode: 'subscription',
-      success_url: `${this.configService.get('FRONTEND_URL')}subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${this.configService.get('FRONTEND_URL')}subscription/cancel`,
+      success_url: `${this.configService.get('FRONTEND_URL')}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${this.configService.get('FRONTEND_URL')}/subscription/cancel`,
       metadata: {
         userId: user.id.toString(),
       },

@@ -49,7 +49,7 @@ export class AuthController {
       sameSite: 'none',
       domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
       path: '/',
-      maxAge: 15 * 60 * 1000
+      maxAge: 15 * 60 * 1000 // 15 minutes
     });
 
     res.cookie('id_token', id_token, {
@@ -58,7 +58,7 @@ export class AuthController {
       sameSite: 'none',
       domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
       path: '/',
-      maxAge: 15 * 60 * 1000
+      maxAge: 15 * 60 * 1000 // 15 minutes
     });
 
     // Set refresh token with longer expiration (7 days)
@@ -163,9 +163,22 @@ export class AuthController {
         });
       }
 
+      // Rotate refresh token if Auth0 provides a new one
+      if (newTokens.refresh_token) {
+        res.cookie('refresh_token', newTokens.refresh_token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none',
+          domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
+          path: '/',
+          maxAge: 1 * 24 * 60 * 60 * 1000
+        });
+      }
+
       return {
         access_token: newTokens.access_token,
         id_token: newTokens.id_token,
+        refresh_token: newTokens.refresh_token,
         expires_in: 900 // 15 minutes in seconds
       };
     } catch (error) {
