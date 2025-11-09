@@ -147,6 +147,7 @@ export default function ConfigBuilderPanel({
           required: Array.from(new Set([...(schema.required as string[] || []), fName]))
         });
       }
+
       if (typeof field.min === "number") newField.minimum = field.min;
       if (typeof field.max === "number") newField.maximum = field.max;
       if (typeof field.maxLength === "number") newField.maxLength = field.maxLength;
@@ -157,6 +158,7 @@ export default function ConfigBuilderPanel({
       ...schema,
       properties: { ...(schema.properties || {}), [fName]: newField }
     });
+
 
     const widget = getWidget(field.type);
     ensureUiEntry(fName, field.type, widget);
@@ -184,7 +186,7 @@ export default function ConfigBuilderPanel({
     });
 
     onNotification?.('success', `Field "${fName}" added successfully!`);
-    setField({ name: "", type: "text", label: "", options: "", required: false });
+    setField({ name: "", type: "text", label: "", options: "", required: false, pattern: "" });
     
     // Expand and scroll to Live Preview
     setShowPreview(true);
@@ -213,6 +215,11 @@ export default function ConfigBuilderPanel({
       </div>
     );
   }
+
+  const handleSubmit = (event: IChangeEvent) => {
+    onFormDataChange(event.formData);
+    onSave();
+  };
 
   return (
     <div className="config-builder-panel">
@@ -419,18 +426,16 @@ export default function ConfigBuilderPanel({
                 uiSchema={uiSchema}
                 formData={formData}
                 validator={validator}
-                onSubmit={onSave}
-                showErrorList='top'
+                onSubmit={handleSubmit}
+                onError={() => {
+                  onNotification?.('error', 'Please resolve validation errors before saving.');
+                }}
                 onChange={(e: IChangeEvent) => onFormDataChange(e.formData)}
               >
                 <div className="save-config-actions">
                   <button
                     className="btn btn-success"
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onSave();
-                    }}
+                    type="submit"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
