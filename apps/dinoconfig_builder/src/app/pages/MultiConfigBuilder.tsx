@@ -4,7 +4,6 @@ import { JSONSchema7 } from "json-schema";
 import { BrandHeader, ConfigSidebar, ConfigBuilderPanel, NotificationSystem, Spinner, VersionSelector, FeatureGate } from "../components";
 import { SubscriptionLimitWarning } from "../components/subscription-limit-warning";
 import { ConfigService } from "../services/configService";
-import { subscriptionService } from "../services/subscription.service";
 import { useSubscription } from "../auth/subscription-context";
 import { Config, Brand, Notification, ConfirmDialog, PromptDialog, Feature } from "../types";
 import axios from "../auth/axios-interceptor";

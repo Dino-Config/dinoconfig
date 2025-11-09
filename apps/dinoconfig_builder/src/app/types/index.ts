@@ -8,14 +8,13 @@ export type FieldType =
   | "textarea"
   | "email"
   | "range"
-  | "search"
-  | "tel"
   | "url"
+  | "tel"
+  | "search"
   | "time"
-  | "datetime"
   | "datetime-local"
-  | "week"
-  | "month";
+  | "month"
+  | "week";
 
 export interface FieldConfig {
   name: string;
