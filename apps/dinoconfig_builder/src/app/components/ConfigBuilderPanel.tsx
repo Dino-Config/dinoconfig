@@ -3,6 +3,8 @@ import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
 import { IChangeEvent } from "@rjsf/core";
+import Grid from "@mui/material/Grid";
+import { ObjectFieldTemplateProps, canExpand, descriptionId, getTemplate, getUiOptions, titleId } from "@rjsf/utils";
 import { Config, FieldConfig, FieldType } from '../types';
 import FieldTypeSelector from './FieldTypeSelector';
 import './ConfigBuilderPanel.scss';
@@ -456,6 +458,120 @@ export default function ConfigBuilderPanel({
   const properties = (schema.properties ?? {}) as Record<string, any>;
   const fieldEntries = Object.entries(properties);
   const hasFields = fieldEntries.length > 0;
+  const rootFieldNames = fieldEntries.map(([name]) => name);
+
+  interface FieldActionContext {
+    onEditField: (name: string) => void;
+    onDeleteField: (name: string) => void;
+    rootFieldNames: string[];
+    editingFieldName: string | null;
+    isSavingField: boolean;
+  }
+
+  const FieldActionsObjectTemplate = ({
+    description,
+    title,
+    properties: templateProperties,
+    required,
+    disabled,
+    readonly,
+    uiSchema,
+    idSchema,
+    schema: templateSchema,
+    formData,
+    onAddClick,
+    registry,
+  }: ObjectFieldTemplateProps<any>) => {
+    const uiOptions = getUiOptions(uiSchema);
+    const TitleFieldTemplate = getTemplate<'TitleFieldTemplate', any, any>('TitleFieldTemplate', registry, uiOptions);
+    const DescriptionFieldTemplate = getTemplate<'DescriptionFieldTemplate', any, any>(
+      'DescriptionFieldTemplate',
+      registry,
+      uiOptions
+    );
+    const {
+      ButtonTemplates: { AddButton },
+    } = registry.templates;
+    const formContext = registry.formContext as FieldActionContext | undefined;
+    const isRootObject = idSchema?.$id === 'root';
+
+    return (
+      <>
+        {title && (
+          <TitleFieldTemplate
+            id={titleId(idSchema)}
+            title={title}
+            required={required}
+            schema={templateSchema}
+            uiSchema={uiSchema}
+            registry={registry}
+          />
+        )}
+        {description && (
+          <DescriptionFieldTemplate
+            id={descriptionId(idSchema)}
+            description={description}
+            schema={templateSchema}
+            uiSchema={uiSchema}
+            registry={registry}
+          />
+        )}
+        <Grid container spacing={2} style={{ marginTop: '10px' }}>
+          {templateProperties.map((element, index) => {
+            if (element.hidden) {
+              return <React.Fragment key={index}>{element.content}</React.Fragment>;
+            }
+
+            const context = formContext;
+            const isRootField =
+              Boolean(isRootObject && context && context.rootFieldNames.includes(element.name));
+            const isEditing = Boolean(isRootField && context && context.editingFieldName === element.name);
+
+            return (
+              <Grid item xs={12} key={index} style={{ marginBottom: '10px' }}>
+                <div className={`preview-field${isEditing ? ' editing' : ''}`}>
+                  <div className="preview-field-content">{element.content}</div>
+                  {isRootField && context && (
+                    <div className="preview-field-actions">
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-small"
+                        onClick={() => context.onEditField(element.name)}
+                        disabled={context.isSavingField}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-small"
+                        onClick={() => context.onDeleteField(element.name)}
+                        disabled={context.isSavingField}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </Grid>
+            );
+          })}
+          {canExpand(templateSchema, uiSchema, formData) && (
+            <Grid container justifyContent="flex-end">
+              <Grid item>
+                <AddButton
+                  className="object-property-expand"
+                  onClick={onAddClick(templateSchema)}
+                  disabled={disabled || readonly}
+                  uiSchema={uiSchema}
+                  registry={registry}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </Grid>
+      </>
+    );
+  };
 
   return (
     <div className="config-builder-panel">
@@ -635,55 +751,6 @@ export default function ConfigBuilderPanel({
         </div>
       </div>
 
-      {hasFields && (
-        <div className="field-list-card">
-          <div className="card-header">
-            <div>
-              <h4>Existing Fields</h4>
-              <p>Manage current form fields in this configuration</p>
-            </div>
-          </div>
-          <div className="field-list-content">
-            <div className="field-list">
-              {fieldEntries.map(([name, property]) => {
-                const detectedType = determineFieldType(name, property);
-                const isRequired = Array.isArray(schema.required)
-                  ? (schema.required as string[]).includes(name)
-                  : false;
-                const isEditing = editingFieldName === name;
-
-                return (
-                  <div key={name} className={`field-list-item${isEditing ? ' editing' : ''}`}>
-                    <div className="field-info">
-                      <span className="field-title">{(property as any)?.title || name}</span>
-                      <span className="field-meta">
-                        Key: {name} • Type: {detectedType}{isRequired ? ' • Required' : ''}
-                      </span>
-                    </div>
-                    <div className="field-actions">
-                      <button
-                        className="btn btn-outline btn-small"
-                        onClick={() => handleEditField(name)}
-                        disabled={isSavingField}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-danger btn-small"
-                        onClick={() => handleDeleteField(name)}
-                        disabled={isSavingField}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Live preview sections */}
       <div className="preview-sections">
         {/* Form Preview */}
@@ -710,12 +777,25 @@ export default function ConfigBuilderPanel({
           </div>
           {showPreview && (
             <div className="preview-content">
+              {!hasFields && (
+                <div className="preview-empty-state">
+                  <p>No fields yet. Add a field using the form builder to see it here.</p>
+                </div>
+              )}
               <Form
                 key={selectedConfig?.id || 'no-config'}
                 schema={schema}
                 uiSchema={uiSchema}
                 formData={formData}
                 validator={validator}
+                templates={{ ObjectFieldTemplate: FieldActionsObjectTemplate }}
+                formContext={{
+                  onEditField: handleEditField,
+                  onDeleteField: handleDeleteField,
+                  rootFieldNames,
+                  editingFieldName,
+                  isSavingField,
+                }}
                 onSubmit={handleSubmit}
                 onError={() => {
                   onNotification?.('error', 'Please resolve validation errors before saving.');
