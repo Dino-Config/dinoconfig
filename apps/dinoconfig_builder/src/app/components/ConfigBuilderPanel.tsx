@@ -6,6 +6,19 @@ import { IChangeEvent } from "@rjsf/core";
 import { Config, FieldConfig, FieldType } from '../types';
 import FieldTypeSelector from './FieldTypeSelector';
 import './ConfigBuilderPanel.scss';
+import { ConfigService } from '../services/configService';
+
+const createEmptyFieldConfig = (): FieldConfig => ({
+  name: "",
+  type: "text",
+  label: "",
+  options: "",
+  required: false,
+  min: undefined,
+  max: undefined,
+  maxLength: undefined,
+  pattern: undefined,
+});
 
 interface ConfigBuilderPanelProps {
   selectedConfig: Config | null;
@@ -18,6 +31,9 @@ interface ConfigBuilderPanelProps {
   onSave: () => void;
   onExport: () => void;
   onNotification?: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
+  brandId: number | null;
+  onConfigUpdated: (config: Config, versions: Config[], previousConfigId: number) => void;
+  onConfirm: (title: string, message: string) => Promise<boolean>;
 }
 
 export default function ConfigBuilderPanel({
@@ -30,18 +46,17 @@ export default function ConfigBuilderPanel({
   onFormDataChange,
   onSave,
   onExport,
-  onNotification
+  onNotification,
+  brandId,
+  onConfigUpdated,
+  onConfirm
 }: ConfigBuilderPanelProps) {
-  const [field, setField] = useState<FieldConfig>({
-    name: "",
-    type: "text",
-    label: "",
-    options: "",
-    required: false,
-  });
+  const [field, setField] = useState<FieldConfig>(createEmptyFieldConfig());
   const [showValidations, setShowValidations] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [showJsonData, setShowJsonData] = useState(true);
+  const [editingFieldName, setEditingFieldName] = useState<string | null>(null);
+  const [isSavingField, setIsSavingField] = useState(false);
 
   // Reset preview state when config changes
   useEffect(() => {
@@ -101,94 +116,29 @@ export default function ConfigBuilderPanel({
     return unsupportedTypes.includes(t);
   };
 
-  const ensureUiEntry = (name: string, fieldType: FieldType, widget?: string) => {
-    let uiEntry: Record<string, any> = {};
-    
-    // If the field type requires inputType, use "text" widget with inputType in options
+  const createUiEntry = (fieldType: FieldType, widget?: string) => {
     if (requiresInputType(fieldType)) {
-      uiEntry = {
+      return {
         "ui:widget": "text",
         "ui:options": { inputType: fieldType }
       };
-    } else if (widget) {
-      // If there's a valid widget and no inputType needed, set the widget
-      uiEntry = {
+    }
+
+    if (widget) {
+      return {
         "ui:widget": widget
       };
-    } else {
-      // Default case - empty object (no widget needed, uses default RJSF behavior)
-      uiEntry = {};
     }
-    
-    onUiSchemaChange({
-      ...uiSchema,
-      [name]: uiEntry
-    });
+
+    return {};
   };
 
-  const addFieldToSchema = () => {
-    if (!field.name?.trim()) {
-      onNotification?.('warning', 'Please enter a field name');
-      return;
-    }
+  const resetFieldBuilder = () => {
+    setField(createEmptyFieldConfig());
+    setEditingFieldName(null);
+  };
 
-    const fName = field.name.trim();
-    const baseType = getSchemaType(field.type);
-    const newField: any = { type: baseType, title: field.label || fName };
-
-    if (["select", "radio"].includes(field.type) && field.options) {
-      newField.enum = field.options.split(",").map(o => o.trim()).filter(Boolean);
-    }
-
-    if (showValidations) {
-      if (field.required) {
-        onSchemaChange({
-          ...schema,
-          required: Array.from(new Set([...(schema.required as string[] || []), fName]))
-        });
-      }
-
-      if (typeof field.min === "number") newField.minimum = field.min;
-      if (typeof field.max === "number") newField.maximum = field.max;
-      if (typeof field.maxLength === "number") newField.maxLength = field.maxLength;
-      if (field.pattern) newField.pattern = field.pattern;
-    }
-
-    onSchemaChange({
-      ...schema,
-      properties: { ...(schema.properties || {}), [fName]: newField }
-    });
-
-
-    const widget = getWidget(field.type);
-    ensureUiEntry(fName, field.type, widget);
-
-    // Initialize formData with default value based on field type
-    let defaultValue: any = undefined;
-    if (field.type === "checkbox") {
-      // Boolean checkboxes default to false
-      defaultValue = false;
-    } else if (["number", "range"].includes(field.type)) {
-      defaultValue = 0;
-    } else if (["radio", "select"].includes(field.type) && field.options) {
-      // For radio and select with options, set the first option as default
-      const options = field.options.split(",").map(o => o.trim()).filter(Boolean);
-      defaultValue = options[0] || "";
-    } else {
-      // For text fields, default to empty string
-      defaultValue = "";
-    }
-
-    // Update formData with the default value
-    onFormDataChange({
-      ...formData,
-      [fName]: defaultValue
-    });
-
-    onNotification?.('success', `Field "${fName}" added successfully!`);
-    setField({ name: "", type: "text", label: "", options: "", required: false, pattern: "" });
-    
-    // Expand and scroll to Live Preview
+  const scrollToPreview = () => {
     setShowPreview(true);
     setTimeout(() => {
       const previewSection = document.querySelector('.preview-sections');
@@ -196,6 +146,288 @@ export default function ConfigBuilderPanel({
         previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     }, 100);
+  };
+
+  const determineFieldType = (name: string, property: any): FieldType => {
+    const uiEntry = uiSchema?.[name] || {};
+
+    if (property?.type === "boolean") {
+      return "checkbox";
+    }
+
+    if (property?.type === "number") {
+      return uiEntry["ui:widget"] === "range" ? "range" : "number";
+    }
+
+    if (Array.isArray(property?.enum)) {
+      return uiEntry["ui:widget"] === "radio" ? "radio" : "select";
+    }
+
+    const inputType = uiEntry?.["ui:options"]?.inputType as FieldType | undefined;
+    if (inputType && requiresInputType(inputType)) {
+      return inputType;
+    }
+
+    switch (uiEntry["ui:widget"]) {
+      case "textarea":
+        return "textarea";
+      case "password":
+        return "password";
+      case "email":
+        return "email";
+      case "uri":
+        return "url";
+      case "radio":
+        return "radio";
+      case "range":
+        return "range";
+      default:
+        break;
+    }
+
+    if (property?.format === "email") return "email";
+    if (property?.format === "uri") return "url";
+
+    return "text";
+  };
+
+  const getDefaultValueForField = (fieldType: FieldType, options?: string) => {
+    if (fieldType === "checkbox") {
+      return false;
+    }
+
+    if (["number", "range"].includes(fieldType)) {
+      return 0;
+    }
+
+    if (["radio", "select"].includes(fieldType) && options) {
+      const parsedOptions = options.split(",").map(o => o.trim()).filter(Boolean);
+      return parsedOptions[0] || "";
+    }
+
+    return "";
+  };
+
+  const saveFieldToSchema = async () => {
+    if (!field.name?.trim()) {
+      onNotification?.('warning', 'Please enter a field name');
+      return;
+    }
+
+    const fName = field.name.trim();
+    const previousName = editingFieldName;
+    const previousValue = previousName ? formData[previousName] : formData[fName];
+
+    if (editingFieldName) {
+      if (!brandId || !selectedConfig) {
+        onNotification?.('error', 'Select a configuration before editing fields.');
+        return;
+      }
+
+      try {
+        setIsSavingField(true);
+        const response = await ConfigService.updateField(
+          brandId,
+          selectedConfig.id,
+          editingFieldName,
+          {
+            name: fName,
+            label: field.label?.trim() || undefined,
+            type: field.type,
+            options: field.options ? field.options : undefined,
+            required: field.required,
+            min: field.min,
+            max: field.max,
+            maxLength: field.maxLength,
+            pattern: field.pattern,
+          }
+        );
+
+        onConfigUpdated(response.config, response.versions, selectedConfig.id);
+        onNotification?.('success', `Field "${fName}" updated successfully!`);
+        resetFieldBuilder();
+        scrollToPreview();
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to update field. Please try again.';
+        onNotification?.('error', message);
+      } finally {
+        setIsSavingField(false);
+      }
+
+      return;
+    }
+
+    const baseType = getSchemaType(field.type);
+    const newField: any = { type: baseType, title: field.label || fName };
+
+    if (["select", "radio"].includes(field.type) && field.options) {
+      newField.enum = field.options.split(",").map(o => o.trim()).filter(Boolean);
+    }
+
+    if (typeof field.min === "number") newField.minimum = field.min;
+    if (typeof field.max === "number") newField.maximum = field.max;
+    if (typeof field.maxLength === "number") newField.maxLength = field.maxLength;
+    if (field.pattern) newField.pattern = field.pattern;
+
+    const updatedProperties = { ...(schema.properties || {}) };
+    if (previousName && previousName !== fName) {
+      delete updatedProperties[previousName];
+    }
+    updatedProperties[fName] = newField;
+
+    const requiredSet = new Set<string>(Array.isArray(schema.required) ? schema.required as string[] : []);
+    if (previousName && previousName !== fName) {
+      requiredSet.delete(previousName);
+    }
+    if (field.required) {
+      requiredSet.add(fName);
+    } else {
+      requiredSet.delete(fName);
+    }
+
+    const updatedSchema: JSONSchema7 = {
+      ...schema,
+      properties: updatedProperties,
+      required: Array.from(requiredSet)
+    };
+
+    if (updatedSchema.required && updatedSchema.required.length === 0) {
+      delete updatedSchema.required;
+    }
+
+    onSchemaChange(updatedSchema);
+
+    const widget = getWidget(field.type);
+    const uiEntry = createUiEntry(field.type, widget);
+    const updatedUiSchema = { ...uiSchema };
+
+    if (previousName && previousName !== fName) {
+      delete updatedUiSchema[previousName];
+    }
+
+    // Remove empty UI entries to keep schema clean
+    if (uiEntry && Object.keys(uiEntry).length > 0) {
+      updatedUiSchema[fName] = uiEntry;
+    } else {
+      delete updatedUiSchema[fName];
+    }
+    onUiSchemaChange(updatedUiSchema);
+
+    const defaultValue = getDefaultValueForField(field.type, field.options);
+    const shouldResetValue = () => {
+      if (previousValue === undefined) return true;
+      switch (field.type) {
+        case "checkbox":
+          return typeof previousValue !== "boolean";
+        case "number":
+        case "range":
+          return typeof previousValue !== "number";
+        case "radio":
+        case "select":
+          return typeof previousValue !== "string" || (
+            field.options
+              ? !field.options.split(",").map(o => o.trim()).filter(Boolean).includes(previousValue)
+              : false
+          );
+        default:
+          return typeof previousValue !== "string";
+      }
+    };
+
+    const updatedFormData = { ...formData };
+    if (previousName && previousName !== fName) {
+      delete updatedFormData[previousName];
+    }
+
+    if (editingFieldName) {
+      updatedFormData[fName] = shouldResetValue() ? defaultValue : previousValue;
+    } else if (!(fName in updatedFormData)) {
+      updatedFormData[fName] = defaultValue;
+    }
+
+    onFormDataChange(updatedFormData);
+
+    onNotification?.('success', `Field "${fName}" added successfully!`);
+    resetFieldBuilder();
+    scrollToPreview();
+  };
+
+  const handleEditField = (name: string) => {
+    const properties = schema.properties as Record<string, any> | undefined;
+    if (!properties || !properties[name]) return;
+
+    const property = properties[name];
+    const detectedType = determineFieldType(name, property);
+    const isRequired = Array.isArray(schema.required) ? (schema.required as string[]).includes(name) : false;
+    const optionsValue = Array.isArray(property.enum) ? property.enum.join(", ") : "";
+    const hasValidations = isRequired ||
+      typeof property.minimum === "number" ||
+      typeof property.maximum === "number" ||
+      typeof property.maxLength === "number" ||
+      typeof property.pattern === "string";
+
+    setField({
+      name,
+      type: detectedType,
+      label: property.title || "",
+      options: optionsValue,
+      required: isRequired,
+      min: typeof property.minimum === "number" ? property.minimum : undefined,
+      max: typeof property.maximum === "number" ? property.maximum : undefined,
+      maxLength: typeof property.maxLength === "number" ? property.maxLength : undefined,
+      pattern: typeof property.pattern === "string" ? property.pattern : undefined,
+    });
+
+    setEditingFieldName(name);
+    setShowValidations(hasValidations);
+    setShowPreview(true);
+
+    setTimeout(() => {
+      const builderTop = document.querySelector('.field-builder-card');
+      if (builderTop) {
+        builderTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
+  };
+
+  const handleDeleteField = async (name: string) => {
+    if (!schema.properties || !(schema.properties as Record<string, any>)[name]) {
+      return;
+    }
+
+    const confirmDelete = await onConfirm(
+      "Delete Field",
+      `Are you sure you want to delete the field "${name}"? This action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    if (!brandId || !selectedConfig) {
+      onNotification?.('error', 'Select a configuration before deleting fields.');
+      return;
+    }
+
+    try {
+      setIsSavingField(true);
+      const response = await ConfigService.deleteField(brandId, selectedConfig.id, name);
+      onConfigUpdated(response.config, response.versions, selectedConfig.id);
+      if (editingFieldName === name) {
+        resetFieldBuilder();
+      }
+      onNotification?.('success', `Field "${name}" deleted successfully.`);
+      scrollToPreview();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to delete field. Please try again.';
+      onNotification?.('error', message);
+    } finally {
+      setIsSavingField(false);
+    }
   };
 
   if (!selectedConfig) {
@@ -221,6 +453,10 @@ export default function ConfigBuilderPanel({
     onSave();
   };
 
+  const properties = (schema.properties ?? {}) as Record<string, any>;
+  const fieldEntries = Object.entries(properties);
+  const hasFields = fieldEntries.length > 0;
+
   return (
     <div className="config-builder-panel">
       <div className="panel-header">
@@ -244,8 +480,12 @@ export default function ConfigBuilderPanel({
         <div className="card-header">
           {/* <div className="header-icon">➕</div> */}
           <div>
-            <h4>Add New Field</h4>
-            <p>Configure a new form field to add to your configuration</p>
+            <h4>{editingFieldName ? 'Edit Field' : 'Add New Field'}</h4>
+            <p>
+              {editingFieldName
+                ? `Updating field "${editingFieldName}".`
+                : 'Configure a new form field to add to your configuration'}
+            </p>
           </div>
         </div>
 
@@ -376,23 +616,73 @@ export default function ConfigBuilderPanel({
           <div className="form-actions">
             <button 
               className="btn btn-primary"
-              onClick={addFieldToSchema}
-              disabled={!field.name.trim()}
+              onClick={saveFieldToSchema}
+              disabled={!field.name.trim() || isSavingField}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 3.333v9.334M3.333 8h9.334" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              Add Field to Schema
+              {editingFieldName ? 'Save Field Changes' : 'Add Field to Schema'}
             </button>
             <button
               className="btn btn-ghost"
-              onClick={() => setField({ name: "", type: "text", label: "", options: "", required: false })}
+              onClick={resetFieldBuilder}
+              disabled={isSavingField}
             >
-              Clear Form
+              {editingFieldName ? 'Cancel Editing' : 'Clear Form'}
             </button>
           </div>
         </div>
       </div>
+
+      {hasFields && (
+        <div className="field-list-card">
+          <div className="card-header">
+            <div>
+              <h4>Existing Fields</h4>
+              <p>Manage current form fields in this configuration</p>
+            </div>
+          </div>
+          <div className="field-list-content">
+            <div className="field-list">
+              {fieldEntries.map(([name, property]) => {
+                const detectedType = determineFieldType(name, property);
+                const isRequired = Array.isArray(schema.required)
+                  ? (schema.required as string[]).includes(name)
+                  : false;
+                const isEditing = editingFieldName === name;
+
+                return (
+                  <div key={name} className={`field-list-item${isEditing ? ' editing' : ''}`}>
+                    <div className="field-info">
+                      <span className="field-title">{(property as any)?.title || name}</span>
+                      <span className="field-meta">
+                        Key: {name} • Type: {detectedType}{isRequired ? ' • Required' : ''}
+                      </span>
+                    </div>
+                    <div className="field-actions">
+                      <button
+                        className="btn btn-outline btn-small"
+                        onClick={() => handleEditField(name)}
+                        disabled={isSavingField}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-danger btn-small"
+                        onClick={() => handleDeleteField(name)}
+                        disabled={isSavingField}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live preview sections */}
       <div className="preview-sections">
