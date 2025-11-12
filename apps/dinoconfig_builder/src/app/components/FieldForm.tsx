@@ -67,8 +67,8 @@ const FieldFormView: React.FC<FieldFormProps> = ({
     'week',
   ].includes(field.type);
 
-  const primaryLabel = mode === 'edit' ? 'Save Field Changes' : 'Add Field to Schema';
-  const secondaryLabel = mode === 'edit' ? 'Cancel Editing' : 'Clear Form';
+  const primaryLabel = mode === 'edit' ? 'Save Field Changes' : 'Add Field';
+  const secondaryLabel = mode === 'edit' ? 'Cancel Editing' : 'Cancel';
 
   return (
     <div className="field-builder-form">

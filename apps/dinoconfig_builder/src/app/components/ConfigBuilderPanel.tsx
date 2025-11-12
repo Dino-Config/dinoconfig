@@ -60,6 +60,7 @@ export default function ConfigBuilderPanel({
   const [showJsonData, setShowJsonData] = useState(true);
   const [editingFieldName, setEditingFieldName] = useState<string | null>(null);
   const [isSavingField, setIsSavingField] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editField, setEditField] = useState<FieldConfig>(createEmptyFieldConfig());
   const [showEditValidations, setShowEditValidations] = useState(false);
@@ -137,6 +138,16 @@ export default function ConfigBuilderPanel({
   const resetAddFieldForm = () => {
     setField(createEmptyFieldConfig());
     setShowValidations(false);
+  };
+
+  const openAddModal = () => {
+    resetAddFieldForm();
+    setIsAddModalOpen(true);
+  };
+
+  const closeAddModal = () => {
+    setIsAddModalOpen(false);
+    resetAddFieldForm();
   };
 
   const closeEditModal = () => {
@@ -323,7 +334,7 @@ export default function ConfigBuilderPanel({
     onFormDataChange(updatedFormData);
 
     onNotification?.('success', `Field "${trimmedName}" added successfully!`);
-    resetAddFieldForm();
+    closeAddModal();
     scrollToPreview();
   };
 
@@ -595,6 +606,12 @@ export default function ConfigBuilderPanel({
           <p className="section-subtitle">Add and configure form fields</p>
         </div>
         <div className="header-actions">
+          <button className="btn btn-primary" onClick={openAddModal}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3.333v9.334M3.333 8h9.334" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Add Field
+          </button>
           <button className="btn btn-outline" onClick={onExport}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2m0 0L4.667 5.333M8 2v8" 
@@ -603,27 +620,6 @@ export default function ConfigBuilderPanel({
             Export
           </button>
         </div>
-      </div>
-
-      {/* Field Builder */}
-      <div className="field-builder-card">
-        <div className="card-header">
-          <div>
-            <h4>Add New Field</h4>
-            <p>Configure a new form field to add to your configuration</p>
-          </div>
-        </div>
-
-        <FieldFormView
-          mode="add"
-          field={field}
-          setField={setField}
-          showValidations={showValidations}
-          setShowValidations={setShowValidations}
-          onSave={() => saveField(field, { mode: 'add' })}
-          onCancel={resetAddFieldForm}
-          isSaving={isSavingField}
-        />
       </div>
 
       {/* Live preview sections */}
@@ -696,6 +692,25 @@ export default function ConfigBuilderPanel({
         {/* JSON Data Display */}
 
       </div>
+
+      <FieldEditModal
+        isOpen={isAddModalOpen}
+        title="Add New Field"
+        onClose={closeAddModal}
+      >
+        <div className="field-builder-style-scope field-edit-modal-content">
+          <FieldFormView
+            mode="add"
+            field={field}
+            setField={setField}
+            showValidations={showValidations}
+            setShowValidations={setShowValidations}
+            onSave={() => saveField(field, { mode: 'add' })}
+            onCancel={closeAddModal}
+            isSaving={isSavingField}
+          />
+        </div>
+      </FieldEditModal>
 
       <FieldEditModal
         isOpen={isEditModalOpen}
