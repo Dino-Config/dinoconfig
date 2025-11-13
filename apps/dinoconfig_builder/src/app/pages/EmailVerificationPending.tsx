@@ -13,10 +13,52 @@ export default function EmailVerificationPending() {
   const [resendError, setResendError] = useState<string | null>(null);
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const [autoCheckCount, setAutoCheckCount] = useState(0);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(() => {
+    const cooldownEndTime = localStorage.getItem('verificationEmailCooldown');
+    if (cooldownEndTime) {
+      const remainingMs = parseInt(cooldownEndTime) - Date.now();
+      if (remainingMs > 0) {
+        return Math.ceil(remainingMs / 1000);
+      } else {
+        localStorage.removeItem('verificationEmailCooldown');
+        return 0;
+      }
+    }
+    return 0;
+  });
+
+  // Continuously check cooldown from localStorage
+  useEffect(() => {
+    const checkCooldown = () => {
+      const cooldownEndTime = localStorage.getItem('verificationEmailCooldown');
+      if (cooldownEndTime) {
+        const remainingMs = parseInt(cooldownEndTime) - Date.now();
+        if (remainingMs > 0) {
+          setCooldownSeconds(Math.ceil(remainingMs / 1000));
+        } else {
+          localStorage.removeItem('verificationEmailCooldown');
+          setCooldownSeconds(0);
+        }
+      } else {
+        setCooldownSeconds(0);
+      }
+    };
+
+    const interval = setInterval(checkCooldown, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleResendEmail = async () => {
     if (!user?.auth0Id) return;
+    const cooldownEndTime = localStorage.getItem('verificationEmailCooldown');
+    if (cooldownEndTime) {
+      const remainingMs = parseInt(cooldownEndTime) - Date.now();
+      if (remainingMs > 0) {
+        setResendError(`Please wait ${Math.ceil(remainingMs / 1000)} seconds before requesting another email.`);
+        return;
+      }
+    }
     
     setIsResending(true);
     setResendError(null);
@@ -29,7 +71,11 @@ export default function EmailVerificationPending() {
         { withCredentials: true }
       );
       setResendSuccess(true);
-      setCooldownSeconds(60); // 60 second cooldown to prevent spam
+      
+      const newCooldownEndTime = Date.now() + (60 * 1000);
+      localStorage.setItem('verificationEmailCooldown', newCooldownEndTime.toString());
+      setCooldownSeconds(60);
+      
       setTimeout(() => setResendSuccess(false), 5000);
     } catch (error: any) {
       console.error('Failed to resend verification email:', error);
@@ -40,11 +86,8 @@ export default function EmailVerificationPending() {
   };
 
   useEffect(() => {
-    if (cooldownSeconds > 0) {
-      const timer = setTimeout(() => {
-        setCooldownSeconds(cooldownSeconds - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
+    if (cooldownSeconds === 0) {
+      localStorage.removeItem('verificationEmailCooldown');
     }
   }, [cooldownSeconds]);
 
@@ -171,6 +214,7 @@ export default function EmailVerificationPending() {
             className="btn-secondary"
             onClick={handleResendEmail}
             disabled={isResending || cooldownSeconds > 0}
+            key={cooldownSeconds} // Force re-render on cooldown change
           >
             {isResending ? (
               <>
