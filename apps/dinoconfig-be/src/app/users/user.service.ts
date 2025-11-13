@@ -65,4 +65,8 @@ export class UsersService {
       throw new NotFoundException(`User not found`);
     }
   }
+
+  async updateEmailVerificationStatus(auth0Id: string, emailVerified: boolean): Promise<void> {
+    await this.userRepo.update({ auth0Id }, { emailVerified });
+  }
 }

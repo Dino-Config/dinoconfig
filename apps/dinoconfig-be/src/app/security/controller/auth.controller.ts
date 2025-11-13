@@ -61,7 +61,7 @@ export class AuthController {
       maxAge: 15 * 60 * 1000 // 15 minutes
     });
 
-    // Set refresh token with longer expiration (7 days)
+    // Set refresh token with longer expiration (1 day)
     if (refresh_token) {
       res.cookie('refresh_token', refresh_token, {
         httpOnly: true,
@@ -69,7 +69,7 @@ export class AuthController {
         sameSite: 'none',
         domain: this.configService.get<string>('AUTH_COOKIE_DOMAIN'),
         path: '/',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
       });
     }
 
@@ -120,8 +120,20 @@ export class AuthController {
   }
 
   @Post('send-verification')
-  async sendVerification(@Body() body: { userId: string }) {
+  @UseGuards(UserAuthGuard)
+  async sendVerification(@Req() req: Request, @Body() body: { userId: string }) {
     return this.authService.sendEmailVerification(body.userId);
+  }
+
+  @Get('check-verification')
+  @UseGuards(UserAuthGuard)
+  async checkVerification(@Req() req: Request) {
+    const { auth0Id } = req.user as any;
+    const auth0User = await this.authService.getUserById(auth0Id);
+    return { 
+      emailVerified: auth0User.email_verified || false,
+      email: auth0User.email 
+    };
   }
 
   @Get('validate')

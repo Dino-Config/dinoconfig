@@ -6,3 +6,4 @@ export { default as SdkApiKeys } from './SdkApiKeys';
 export { SubscriptionPage } from './subscription-page';
 export { SubscriptionSuccess } from './subscription-success';
 export { SubscriptionCancel } from './subscription-cancel';
+export { default as EmailVerificationPending } from './EmailVerificationPending';

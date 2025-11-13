@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -17,7 +17,7 @@ import { ApiKeyController } from '../controller/api-key.controller';
 
 @Module({
 imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     ConfigModule.forRoot({ isGlobal: true }),
     PassportModule.register({ defaultStrategy: 'user-jwt' }),
     TypeOrmModule.forFeature([TokenBlacklist, ApiKey]),

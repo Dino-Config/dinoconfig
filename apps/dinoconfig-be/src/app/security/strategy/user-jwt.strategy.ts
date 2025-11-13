@@ -50,6 +50,7 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
     return {
       auth0Id: payload.sub,
       email: payload.email,
+      emailVerified: payload.email_verified ?? false,
       name: payload.name,
       company: payload['X-INTERNAL-COMPANY'] ?? null,
       scopes: payload.scope?.split(' ') ?? [],

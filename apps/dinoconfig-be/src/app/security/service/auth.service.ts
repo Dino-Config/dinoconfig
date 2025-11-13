@@ -30,7 +30,7 @@ export class AuthService {
 
   constructor(
     private configService: ConfigService,
-    private usersService: UsersService) {
+    public usersService: UsersService) {
     this.AUTH0_DOMAIN = this.configService.get<string>('AUTH0_DOMAIN');
     this.CLIENT_ID = this.configService.get<string>('AUTH0_M2M_CLIENT_ID');
     this.CLIENT_SECRET = this.configService.get<string>('AUTH0_M2M_CLIENT_SECRET');
@@ -171,6 +171,23 @@ export class AuthService {
 
     const users = await response.json();
     return users.length > 0 ? users[0] : null;
+  }
+
+  async getUserById(userId: string): Promise<any> {
+    const token = await this.getManagementToken();
+    
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new HttpException(error || 'Failed to fetch user', response.status);
+    }
+
+    return response.json();
   }
 
   async login(email: string, password: string): Promise<Auth0LoginResponse> {

@@ -14,3 +14,4 @@ export { FeatureGate, FeatureTooltip } from './FeatureGate';
 export { FeatureBadge } from './FeatureBadge';
 export { IdleWarningModal } from './idle-warning-modal';
 export { IdleWarningProvider } from './idle-warning-provider';
+export { EmailVerificationGuard } from './email-verification-guard';
