@@ -1,4 +1,38 @@
 /* You can add global styles to this file, and also import other style files */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
-    margin: 0 auto;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Mobile-friendly defaults
+@media (max-width: 768px) {
+  body {
+    font-size: 16px; // Prevent zoom on input focus in iOS
+  }
+
+  // Make images responsive
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  // Improve button touch targets
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

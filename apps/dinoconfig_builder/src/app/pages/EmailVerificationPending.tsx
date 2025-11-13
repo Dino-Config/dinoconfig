@@ -51,6 +51,12 @@ export default function EmailVerificationPending() {
 
   const handleResendEmail = async () => {
     if (!user?.auth0Id) return;
+    
+    if (user.verificationEmailResendCount >= 3) {
+      setResendError('You have reached the maximum number of verification email attempts (3). Please contact support for assistance.');
+      return;
+    }
+    
     const cooldownEndTime = localStorage.getItem('verificationEmailCooldown');
     if (cooldownEndTime) {
       const remainingMs = parseInt(cooldownEndTime) - Date.now();
@@ -71,6 +77,8 @@ export default function EmailVerificationPending() {
         { withCredentials: true }
       );
       setResendSuccess(true);
+      
+      await refreshUser();
       
       const newCooldownEndTime = Date.now() + (60 * 1000);
       localStorage.setItem('verificationEmailCooldown', newCooldownEndTime.toString());
@@ -185,6 +193,12 @@ export default function EmailVerificationPending() {
           </p>
         )}
 
+        {user && user.verificationEmailResendCount >= 3 && !user.emailVerified && (
+          <div className="alert alert-error">
+            ⚠️ You have reached the maximum number of verification email attempts. Please contact support for assistance.
+          </div>
+        )}
+
         <div className="verification-tips">
           <h3>Didn't receive the email?</h3>
           <ul>
@@ -213,8 +227,8 @@ export default function EmailVerificationPending() {
           <button 
             className="btn-secondary"
             onClick={handleResendEmail}
-            disabled={isResending || cooldownSeconds > 0}
-            key={cooldownSeconds} // Force re-render on cooldown change
+            disabled={isResending || cooldownSeconds > 0 || (user?.verificationEmailResendCount ?? 0) >= 3}
+            key={cooldownSeconds}
           >
             {isResending ? (
               <>
@@ -223,8 +237,10 @@ export default function EmailVerificationPending() {
               </>
             ) : cooldownSeconds > 0 ? (
               <span>Wait {cooldownSeconds}s to resend</span>
+            ) : (user?.verificationEmailResendCount ?? 0) >= 3 ? (
+              <span>Resend Limit Reached</span>
             ) : (
-              <span>Resend Verification Email</span>
+              <span>Resend Verification Email ({3 - (user?.verificationEmailResendCount ?? 0)} left)</span>
             )}
           </button>
 

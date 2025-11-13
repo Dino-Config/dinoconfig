@@ -69,4 +69,8 @@ export class UsersService {
   async updateEmailVerificationStatus(auth0Id: string, emailVerified: boolean): Promise<void> {
     await this.userRepo.update({ auth0Id }, { emailVerified });
   }
+
+  async incrementVerificationResendCount(auth0Id: string): Promise<void> {
+    await this.userRepo.increment({ auth0Id }, 'verificationEmailResendCount', 1);
+  }
 }

@@ -61,6 +61,7 @@ export interface User {
   country?: string;
   isActive: boolean;
   emailVerified: boolean;
+  verificationEmailResendCount: number;
   companyName?: string;
   createdAt: Date;
   brands: Brand[];

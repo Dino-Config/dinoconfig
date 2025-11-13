@@ -47,6 +47,9 @@ export class User {
   @Column({ default: false })
   emailVerified: boolean;
 
+  @Column({ default: 0 })
+  verificationEmailResendCount: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
