@@ -1,27 +1,67 @@
 <mat-toolbar color="primary" class="toolbar">
-    <div class="logo">
-        <img src="assets/logo.svg" alt="DinoConfig Icon" class="logo-icon" />
-        <div>
-            <span class="logo-text-dino">Dino</span>
-            <span class="logo-text">Config</span>
-        </div>
+  <div class="logo">
+    <img src="assets/logo.svg" alt="DinoConfig Icon" class="logo-icon" />
+    <div>
+      <span class="logo-text-dino">Dino</span>
+      <span class="logo-text">Config</span>
     </div>
-    <span class="spacer"></span>
-    <nav class="nav-links">
-        <a href="#features">Features</a>
-        <a (click)="openBuilder()">Builder</a>
-        <a href="#how-it-works">How it works</a>
-        <a href="#pricing">Pricing</a>
-        <!-- <a href="#docs">Docs</a> -->
-    </nav>
-    <div class="auth-buttons" *ngIf="isAuthenticated() && currentUser() as user; else loggedOut">
-        <span class="welcome">Welcome, {{ user.firstName }} {{ user.lastName }}</span>
-        <button mat-raised-button color="accent" class="logout-btn" (click)="logout()">Logout</button>
+  </div>
+  <span class="spacer"></span>
+  <nav class="nav-links desktop-only">
+    <a href="#features">Features</a>
+    <a (click)="openBuilder()">Builder</a>
+    <a href="#how-it-works">How it works</a>
+    <a href="#pricing">Pricing</a>
+  </nav>
+  <div class="auth-buttons desktop-only" *ngIf="isAuthenticated() && currentUser() as user; else loggedOut">
+    <span class="welcome">Welcome, {{ user.firstName }} {{ user.lastName }}</span>
+    <button mat-raised-button color="accent" class="logout-btn" (click)="logout()">Logout</button>
+  </div>
+  <ng-template #loggedOut>
+    <div class="auth-buttons desktop-only">
+      <button mat-button class="login-btn" (click)="openLoginDialog()">Log in</button>
+      <button mat-raised-button color="accent" class="signup-btn" (click)="openSignupDialog()">Sign up</button>
     </div>
-    <ng-template #loggedOut>
-        <div class="auth-buttons">
-            <button mat-button class="login-btn" (click)="openLoginDialog()">Log in</button>
-            <button mat-raised-button color="accent" class="signup-btn" (click)="openSignupDialog()">Sign up</button>
-        </div>
+  </ng-template>
+  
+  <!-- Mobile Menu Button -->
+  <button mat-icon-button class="mobile-menu-button" [matMenuTriggerFor]="mobileMenu">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+
+  <!-- Mobile Menu -->
+  <mat-menu #mobileMenu="matMenu" class="mobile-menu" xPosition="before">
+    <button mat-menu-item (click)="navigateToSection('features')">
+      <span>Features</span>
+    </button>
+    <button mat-menu-item (click)="openBuilder()">
+      <span>Builder</span>
+    </button>
+    <button mat-menu-item (click)="navigateToSection('how-it-works')">
+      <span>How it works</span>
+    </button>
+    <button mat-menu-item (click)="navigateToSection('pricing')">
+      <span>Pricing</span>
+    </button>
+    <mat-divider></mat-divider>
+    <div *ngIf="isAuthenticated() && currentUser() as user; else mobileLoggedOut">
+      <div class="mobile-user-info">
+        <span>Welcome, {{ user.firstName }} {{ user.lastName }}</span>
+      </div>
+      <button mat-menu-item class="logout-menu-item" (click)="logout()">
+        <span>Logout</span>
+      </button>
+    </div>
+    <ng-template #mobileLoggedOut>
+      <button mat-menu-item class="demo-menu-item" (click)="openCalendlyDialog()">
+        <span>Book a Demo</span>
+      </button>
+      <button mat-menu-item class="login-menu-item" (click)="openLoginDialog()">
+        <span>Log in</span>
+      </button>
+      <button mat-menu-item class="signup-menu-item" (click)="openSignupDialog()">
+        <span>Sign up</span>
+      </button>
     </ng-template>
+  </mat-menu>
 </mat-toolbar>

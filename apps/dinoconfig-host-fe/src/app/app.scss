@@ -6,10 +6,22 @@
   color: #1a1a1a;
   background-color: #ffffff;
 
-
   // Main content styles
   .main-content {
     min-height: calc(100vh - 64px - 200px); // Account for header and footer
-    padding-top: 64px; // Account for fixed header
+    padding-top: 70px; // Account for fixed header
+    width: 100%;
+    overflow-x: hidden; // Prevent horizontal scroll
+  }
+}
+
+// Mobile Responsive Styles
+@media (max-width: 768px) {
+  :host {
+    .main-content {
+      padding-top: 64px; // Adjust for smaller mobile header
+      padding-left: 0;
+      padding-right: 0;
+    }
   }
 }
