@@ -1,11 +1,27 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
 import { IChangeEvent } from "@rjsf/core";
+import Grid from "@mui/material/Grid";
+import { ObjectFieldTemplateProps, canExpand, descriptionId, getTemplate, getUiOptions, titleId } from "@rjsf/utils";
 import { Config, FieldConfig, FieldType } from '../types';
-import FieldTypeSelector from './FieldTypeSelector';
+import FieldFormView, { FieldFormMode } from './FieldForm';
+import FieldEditModal from './FieldEditModal';
 import './ConfigBuilderPanel.scss';
+import { ConfigService } from '../services/configService';
+
+const createEmptyFieldConfig = (): FieldConfig => ({
+  name: "",
+  type: "text",
+  label: "",
+  options: "",
+  required: false,
+  min: undefined,
+  max: undefined,
+  maxLength: undefined,
+  pattern: undefined,
+});
 
 interface ConfigBuilderPanelProps {
   selectedConfig: Config | null;
@@ -18,6 +34,9 @@ interface ConfigBuilderPanelProps {
   onSave: () => void;
   onExport: () => void;
   onNotification?: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
+  brandId: number | null;
+  onConfigUpdated: (config: Config, versions: Config[], previousConfigId: number) => void;
+  onConfirm: (title: string, message: string) => Promise<boolean>;
 }
 
 export default function ConfigBuilderPanel({
@@ -30,29 +49,27 @@ export default function ConfigBuilderPanel({
   onFormDataChange,
   onSave,
   onExport,
-  onNotification
+  onNotification,
+  brandId,
+  onConfigUpdated,
+  onConfirm
 }: ConfigBuilderPanelProps) {
-  const [field, setField] = useState<FieldConfig>({
-    name: "",
-    type: "text",
-    label: "",
-    options: "",
-    required: false,
-  });
+  const [field, setField] = useState<FieldConfig>(createEmptyFieldConfig());
   const [showValidations, setShowValidations] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [showJsonData, setShowJsonData] = useState(true);
+  const [editingFieldName, setEditingFieldName] = useState<string | null>(null);
+  const [isSavingField, setIsSavingField] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editField, setEditField] = useState<FieldConfig>(createEmptyFieldConfig());
+  const [showEditValidations, setShowEditValidations] = useState(false);
 
   // Reset preview state when config changes
   useEffect(() => {
     setShowPreview(true);
     setShowJsonData(true);
   }, [selectedConfig?.id]);
-
-  const handleFieldChange = (key: keyof FieldConfig) => (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value;
-    setField({ ...field, [key]: value as any });
-  };
 
   const getSchemaType = (t: FieldType): JSONSchema7["type"] => {
     if (["number", "range"].includes(t)) return "number";
@@ -101,94 +118,46 @@ export default function ConfigBuilderPanel({
     return unsupportedTypes.includes(t);
   };
 
-  const ensureUiEntry = (name: string, fieldType: FieldType, widget?: string) => {
-    let uiEntry: Record<string, any> = {};
-    
-    // If the field type requires inputType, use "text" widget with inputType in options
+  const createUiEntry = (fieldType: FieldType, widget?: string) => {
     if (requiresInputType(fieldType)) {
-      uiEntry = {
+      return {
         "ui:widget": "text",
         "ui:options": { inputType: fieldType }
       };
-    } else if (widget) {
-      // If there's a valid widget and no inputType needed, set the widget
-      uiEntry = {
+    }
+
+    if (widget) {
+      return {
         "ui:widget": widget
       };
-    } else {
-      // Default case - empty object (no widget needed, uses default RJSF behavior)
-      uiEntry = {};
     }
-    
-    onUiSchemaChange({
-      ...uiSchema,
-      [name]: uiEntry
-    });
+
+    return {};
   };
 
-  const addFieldToSchema = () => {
-    if (!field.name?.trim()) {
-      onNotification?.('warning', 'Please enter a field name');
-      return;
-    }
+  const resetAddFieldForm = () => {
+    setField(createEmptyFieldConfig());
+    setShowValidations(false);
+  };
 
-    const fName = field.name.trim();
-    const baseType = getSchemaType(field.type);
-    const newField: any = { type: baseType, title: field.label || fName };
+  const openAddModal = () => {
+    resetAddFieldForm();
+    setIsAddModalOpen(true);
+  };
 
-    if (["select", "radio"].includes(field.type) && field.options) {
-      newField.enum = field.options.split(",").map(o => o.trim()).filter(Boolean);
-    }
+  const closeAddModal = () => {
+    setIsAddModalOpen(false);
+    resetAddFieldForm();
+  };
 
-    if (showValidations) {
-      if (field.required) {
-        onSchemaChange({
-          ...schema,
-          required: Array.from(new Set([...(schema.required as string[] || []), fName]))
-        });
-      }
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingFieldName(null);
+    setEditField(createEmptyFieldConfig());
+    setShowEditValidations(false);
+  };
 
-      if (typeof field.min === "number") newField.minimum = field.min;
-      if (typeof field.max === "number") newField.maximum = field.max;
-      if (typeof field.maxLength === "number") newField.maxLength = field.maxLength;
-      if (field.pattern) newField.pattern = field.pattern;
-    }
-
-    onSchemaChange({
-      ...schema,
-      properties: { ...(schema.properties || {}), [fName]: newField }
-    });
-
-
-    const widget = getWidget(field.type);
-    ensureUiEntry(fName, field.type, widget);
-
-    // Initialize formData with default value based on field type
-    let defaultValue: any = undefined;
-    if (field.type === "checkbox") {
-      // Boolean checkboxes default to false
-      defaultValue = false;
-    } else if (["number", "range"].includes(field.type)) {
-      defaultValue = 0;
-    } else if (["radio", "select"].includes(field.type) && field.options) {
-      // For radio and select with options, set the first option as default
-      const options = field.options.split(",").map(o => o.trim()).filter(Boolean);
-      defaultValue = options[0] || "";
-    } else {
-      // For text fields, default to empty string
-      defaultValue = "";
-    }
-
-    // Update formData with the default value
-    onFormDataChange({
-      ...formData,
-      [fName]: defaultValue
-    });
-
-    onNotification?.('success', `Field "${fName}" added successfully!`);
-    setField({ name: "", type: "text", label: "", options: "", required: false, pattern: "" });
-    
-    // Expand and scroll to Live Preview
+  const scrollToPreview = () => {
     setShowPreview(true);
     setTimeout(() => {
       const previewSection = document.querySelector('.preview-sections');
@@ -196,6 +165,246 @@ export default function ConfigBuilderPanel({
         previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     }, 100);
+  };
+
+  const determineFieldType = (name: string, property: any): FieldType => {
+    const uiEntry = uiSchema?.[name] || {};
+
+    if (property?.type === "boolean") {
+      return "checkbox";
+    }
+
+    if (property?.type === "number") {
+      return uiEntry["ui:widget"] === "range" ? "range" : "number";
+    }
+
+    if (Array.isArray(property?.enum)) {
+      return uiEntry["ui:widget"] === "radio" ? "radio" : "select";
+    }
+
+    const inputType = uiEntry?.["ui:options"]?.inputType as FieldType | undefined;
+    if (inputType && requiresInputType(inputType)) {
+      return inputType;
+    }
+
+    switch (uiEntry["ui:widget"]) {
+      case "textarea":
+        return "textarea";
+      case "password":
+        return "password";
+      case "email":
+        return "email";
+      case "uri":
+        return "url";
+      case "radio":
+        return "radio";
+      case "range":
+        return "range";
+      default:
+        break;
+    }
+
+    if (property?.format === "email") return "email";
+    if (property?.format === "uri") return "url";
+
+    return "text";
+  };
+
+  const getDefaultValueForField = (fieldType: FieldType, options?: string) => {
+    if (fieldType === "checkbox") {
+      return false;
+    }
+
+    if (["number", "range"].includes(fieldType)) {
+      return 0;
+    }
+
+    if (["radio", "select"].includes(fieldType) && options) {
+      const parsedOptions = options.split(",").map(o => o.trim()).filter(Boolean);
+      return parsedOptions[0] || "";
+    }
+
+    return "";
+  };
+
+  const saveField = async (
+    fieldDraft: FieldConfig,
+    options: { mode: FieldFormMode; originalName?: string }
+  ) => {
+    if (!fieldDraft.name?.trim()) {
+      onNotification?.('warning', 'Please enter a field name');
+      return;
+    }
+
+    const trimmedName = fieldDraft.name.trim();
+
+    if (options.mode === 'edit') {
+      if (!brandId || !selectedConfig) {
+        onNotification?.('error', 'Select a configuration before editing fields.');
+        return;
+      }
+
+      try {
+        setIsSavingField(true);
+        const response = await ConfigService.updateField(
+          brandId,
+          selectedConfig.id,
+          options.originalName ?? trimmedName,
+          {
+            name: trimmedName,
+            label: fieldDraft.label?.trim() || undefined,
+            type: fieldDraft.type,
+            options: fieldDraft.options ? fieldDraft.options : undefined,
+            required: fieldDraft.required,
+            min: fieldDraft.min,
+            max: fieldDraft.max,
+            maxLength: fieldDraft.maxLength,
+            pattern: fieldDraft.pattern,
+          }
+        );
+
+        onConfigUpdated(response.config, response.versions, selectedConfig.id);
+        onNotification?.('success', `Field "${trimmedName}" updated successfully!`);
+        closeEditModal();
+        scrollToPreview();
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to update field. Please try again.';
+        onNotification?.('error', message);
+      } finally {
+        setIsSavingField(false);
+      }
+
+      return;
+    }
+
+    const baseType = getSchemaType(fieldDraft.type);
+    const newField: any = { type: baseType, title: fieldDraft.label || trimmedName };
+
+    if (["select", "radio"].includes(fieldDraft.type) && fieldDraft.options) {
+      newField.enum = fieldDraft.options.split(",").map(o => o.trim()).filter(Boolean);
+    }
+
+    if (typeof fieldDraft.min === "number") newField.minimum = fieldDraft.min;
+    if (typeof fieldDraft.max === "number") newField.maximum = fieldDraft.max;
+    if (typeof fieldDraft.maxLength === "number") newField.maxLength = fieldDraft.maxLength;
+    if (fieldDraft.pattern) newField.pattern = fieldDraft.pattern;
+
+    const updatedProperties = { ...(schema.properties || {}) };
+    updatedProperties[trimmedName] = newField;
+
+    const requiredSet = new Set<string>(Array.isArray(schema.required) ? schema.required as string[] : []);
+    if (fieldDraft.required) {
+      requiredSet.add(trimmedName);
+    } else {
+      requiredSet.delete(trimmedName);
+    }
+
+    const updatedSchema: JSONSchema7 = {
+      ...schema,
+      properties: updatedProperties,
+      required: Array.from(requiredSet)
+    };
+
+    if (updatedSchema.required && updatedSchema.required.length === 0) {
+      delete updatedSchema.required;
+    }
+
+    onSchemaChange(updatedSchema);
+
+    const widget = getWidget(fieldDraft.type);
+    const uiEntry = createUiEntry(fieldDraft.type, widget);
+    const updatedUiSchema = { ...uiSchema };
+
+    // Remove empty UI entries to keep schema clean
+    if (uiEntry && Object.keys(uiEntry).length > 0) {
+      updatedUiSchema[trimmedName] = uiEntry;
+    } else {
+      delete updatedUiSchema[trimmedName];
+    }
+    onUiSchemaChange(updatedUiSchema);
+
+    const updatedFormData = { ...formData };
+    if (!(trimmedName in updatedFormData)) {
+      updatedFormData[trimmedName] = getDefaultValueForField(fieldDraft.type, fieldDraft.options);
+    }
+
+    onFormDataChange(updatedFormData);
+
+    onNotification?.('success', `Field "${trimmedName}" added successfully!`);
+    closeAddModal();
+    scrollToPreview();
+  };
+
+  const handleEditField = (name: string) => {
+    const properties = schema.properties as Record<string, any> | undefined;
+    if (!properties || !properties[name]) return;
+
+    const property = properties[name];
+    const detectedType = determineFieldType(name, property);
+    const isRequired = Array.isArray(schema.required) ? (schema.required as string[]).includes(name) : false;
+    const optionsValue = Array.isArray(property.enum) ? property.enum.join(", ") : "";
+    const hasValidations = isRequired ||
+      typeof property.minimum === "number" ||
+      typeof property.maximum === "number" ||
+      typeof property.maxLength === "number" ||
+      typeof property.pattern === "string";
+
+    setEditField({
+      name,
+      type: detectedType,
+      label: property.title || "",
+      options: optionsValue,
+      required: isRequired,
+      min: typeof property.minimum === "number" ? property.minimum : undefined,
+      max: typeof property.maximum === "number" ? property.maximum : undefined,
+      maxLength: typeof property.maxLength === "number" ? property.maxLength : undefined,
+      pattern: typeof property.pattern === "string" ? property.pattern : undefined,
+    });
+
+    setEditingFieldName(name);
+    setShowEditValidations(hasValidations);
+    setIsEditModalOpen(true);
+    setShowPreview(true);
+  };
+
+  const handleDeleteField = async (name: string) => {
+    if (!schema.properties || !(schema.properties as Record<string, any>)[name]) {
+      return;
+    }
+
+    const confirmDelete = await onConfirm(
+      "Delete Field",
+      `Are you sure you want to delete the field "${name}"? This action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    if (!brandId || !selectedConfig) {
+      onNotification?.('error', 'Select a configuration before deleting fields.');
+      return;
+    }
+
+    try {
+      setIsSavingField(true);
+      const response = await ConfigService.deleteField(brandId, selectedConfig.id, name);
+      onConfigUpdated(response.config, response.versions, selectedConfig.id);
+      if (editingFieldName === name) {
+        closeEditModal();
+      }
+      onNotification?.('success', `Field "${name}" deleted successfully.`);
+      scrollToPreview();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to delete field. Please try again.';
+      onNotification?.('error', message);
+    } finally {
+      setIsSavingField(false);
+    }
   };
 
   if (!selectedConfig) {
@@ -221,6 +430,174 @@ export default function ConfigBuilderPanel({
     onSave();
   };
 
+  const properties = (schema.properties ?? {}) as Record<string, any>;
+  const fieldEntries = Object.entries(properties);
+  const hasFields = fieldEntries.length > 0;
+  const rootFieldNames = fieldEntries.map(([name]) => name);
+
+  interface FieldActionContext {
+    onEditField: (name: string) => void;
+    onDeleteField: (name: string) => void;
+    rootFieldNames: string[];
+    editingFieldName: string | null;
+    isSavingField: boolean;
+  }
+
+  const FieldActionsObjectTemplate = ({
+    description,
+    title,
+    properties: templateProperties,
+    required,
+    disabled,
+    readonly,
+    uiSchema,
+    idSchema,
+    schema: templateSchema,
+    formData,
+    onAddClick,
+    registry,
+  }: ObjectFieldTemplateProps<any>) => {
+    const uiOptions = getUiOptions(uiSchema);
+    const TitleFieldTemplate = getTemplate<'TitleFieldTemplate', any, any>('TitleFieldTemplate', registry, uiOptions);
+    const DescriptionFieldTemplate = getTemplate<'DescriptionFieldTemplate', any, any>(
+      'DescriptionFieldTemplate',
+      registry,
+      uiOptions
+    );
+    const {
+      ButtonTemplates: { AddButton },
+    } = registry.templates;
+    const formContext = registry.formContext as FieldActionContext | undefined;
+    const [expandedFieldName, setExpandedFieldName] = useState<string | null>(null);
+    const isRootObject = idSchema?.$id === 'root';
+
+    useEffect(() => {
+      if (formContext?.isSavingField) {
+        setExpandedFieldName(null);
+      }
+    }, [formContext?.isSavingField]);
+
+    return (
+      <>
+        {title && (
+          <TitleFieldTemplate
+            id={titleId(idSchema)}
+            title={title}
+            required={required}
+            schema={templateSchema}
+            uiSchema={uiSchema}
+            registry={registry}
+          />
+        )}
+        {description && (
+          <DescriptionFieldTemplate
+            id={descriptionId(idSchema)}
+            description={description}
+            schema={templateSchema}
+            uiSchema={uiSchema}
+            registry={registry}
+          />
+        )}
+        <Grid container spacing={2} style={{ marginTop: '10px' }}>
+          {templateProperties.map((element, index) => {
+            if (element.hidden) {
+              return <React.Fragment key={index}>{element.content}</React.Fragment>;
+            }
+
+            const context = formContext;
+            const isRootField =
+              Boolean(isRootObject && context && context.rootFieldNames.includes(element.name));
+            const isEditing = Boolean(isRootField && context && context.editingFieldName === element.name);
+
+            return (
+              <Grid item xs={12} key={index} style={{ marginBottom: '10px' }}>
+                <div className={`preview-field${isEditing ? ' editing' : ''}`}>
+                  <div className="preview-field-content">{element.content}</div>
+                  {isRootField && context && (
+                    <div className="preview-field-actions">
+                      <button
+                        type="button"
+                        className="menu-btn"
+                        onClick={() =>
+                          setExpandedFieldName(expandedFieldName === element.name ? null : element.name)
+                        }
+                        disabled={context.isSavingField}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                          <path
+                            d="M8 8.833a.833.833 0 100-1.666.833.833 0 000 1.666zM8 4.167a.833.833 0 100-1.667.833.833 0 000 1.667zM8 13.5a.833.833 0 100-1.667A.833.833 0 008 13.5z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </button>
+                      {expandedFieldName === element.name && (
+                        <div className="field-action-menu">
+                          <button
+                            type="button"
+                            className="action-btn edit"
+                            onClick={() => {
+                              setExpandedFieldName(null);
+                              context.onEditField(element.name);
+                            }}
+                            disabled={context.isSavingField}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path
+                                d="M6.417 2.333H2.333A1.167 1.167 0 001.167 3.5v8.167a1.167 1.167 0 001.166 1.166h8.167a1.167 1.167 0 001.167-1.166V7.583M10.792 1.458a1.237 1.237 0 011.75 1.75l-5.834 5.834H4.667V7l6.125-5.542z"
+                                stroke="currentColor"
+                                strokeWidth="1.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="action-btn delete"
+                            onClick={() => {
+                              setExpandedFieldName(null);
+                              context.onDeleteField(element.name);
+                            }}
+                            disabled={context.isSavingField}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path
+                                d="M1.75 3.5h10.5M11.083 3.5v8.167a1.167 1.167 0 01-1.166 1.166H4.083a1.167 1.167 0 01-1.166-1.166V3.5m1.75 0V2.333a1.167 1.167 0 011.166-1.166h2.334a1.167 1.167 0 011.166 1.166V3.5"
+                                stroke="currentColor"
+                                strokeWidth="1.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Grid>
+            );
+          })}
+          {canExpand(templateSchema, uiSchema, formData) && (
+            <Grid container justifyContent="flex-end">
+              <Grid item>
+                <AddButton
+                  className="object-property-expand"
+                  onClick={onAddClick(templateSchema)}
+                  disabled={disabled || readonly}
+                  uiSchema={uiSchema}
+                  registry={registry}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </Grid>
+      </>
+    );
+  };
+
   return (
     <div className="config-builder-panel">
       <div className="panel-header">
@@ -229,6 +606,12 @@ export default function ConfigBuilderPanel({
           <p className="section-subtitle">Add and configure form fields</p>
         </div>
         <div className="header-actions">
+          <button className="btn btn-primary" onClick={openAddModal}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3.333v9.334M3.333 8h9.334" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Add Field
+          </button>
           <button className="btn btn-outline" onClick={onExport}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2m0 0L4.667 5.333M8 2v8" 
@@ -236,161 +619,6 @@ export default function ConfigBuilderPanel({
             </svg>
             Export
           </button>
-        </div>
-      </div>
-
-      {/* Field Builder */}
-      <div className="field-builder-card">
-        <div className="card-header">
-          {/* <div className="header-icon">➕</div> */}
-          <div>
-            <h4>Add New Field</h4>
-            <p>Configure a new form field to add to your configuration</p>
-          </div>
-        </div>
-
-        <div className="field-builder-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="field-name">
-                Field Name *
-                <span className="label-hint">The unique identifier for this field</span>
-              </label>
-              <input 
-                id="field-name"
-                placeholder="e.g., username, apiKey, maxRetries" 
-                value={field.name} 
-                onChange={handleFieldChange("name")} 
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="field-label">
-                Display Label
-                <span className="label-hint">Optional label shown to users</span>
-              </label>
-              <input 
-                id="field-label"
-                placeholder="e.g., Username, API Key, Max Retries" 
-                value={field.label} 
-                onChange={handleFieldChange("label")} 
-              />
-            </div>
-          </div>
-
-          <FieldTypeSelector 
-            value={field.type} 
-            onChange={(type) => setField({ ...field, type })}
-          />
-
-          {(field.type === "select" || field.type === "radio") && (
-            <div className="form-group options-group">
-              <label htmlFor="field-options">
-                Options *
-                <span className="label-hint">Comma-separated list of choices</span>
-              </label>
-              <input 
-                id="field-options"
-                placeholder="e.g., Option 1, Option 2, Option 3" 
-                value={field.options} 
-                onChange={handleFieldChange("options")} 
-              />
-            </div>
-          )}
-
-          <div className="validation-section">
-            <button 
-              type="button"
-              className="validation-toggle"
-              onClick={() => setShowValidations(s => !s)}
-            >
-              <svg className={`chevron ${showValidations ? 'open' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Advanced Validation Settings
-              {showValidations ? ' (Hide)' : ' (Show)'}
-            </button>
-
-            {showValidations && (
-              <div className="validation-fields">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={!!field.required}
-                    onChange={e => setField({ ...field, required: e.target.checked })}
-                  />
-                  <span>Required field</span>
-                </label>
-
-                {["number", "range"].includes(field.type) && (
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="field-min">Minimum Value</label>
-                      <input
-                        id="field-min"
-                        type="number"
-                        placeholder="Min"
-                        value={field.min ?? ""}
-                        onChange={e => setField({ ...field, min: e.target.value ? Number(e.target.value) : undefined })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="field-max">Maximum Value</label>
-                      <input
-                        id="field-max"
-                        type="number"
-                        placeholder="Max"
-                        value={field.max ?? ""}
-                        onChange={e => setField({ ...field, max: e.target.value ? Number(e.target.value) : undefined })}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {["text", "textarea", "email", "search", "url", "tel", "time", "datetime", "datetime-local", "month", "week"].includes(field.type) && (
-                  <>
-                    <div className="form-group">
-                      <label htmlFor="field-maxlength">Maximum Length</label>
-                      <input
-                        id="field-maxlength"
-                        type="number"
-                        placeholder="Maximum character length"
-                        value={field.maxLength ?? ""}
-                        onChange={e => setField({ ...field, maxLength: e.target.value ? Number(e.target.value) : undefined })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="field-pattern">Pattern (Regular Expression)</label>
-                      <input
-                        id="field-pattern"
-                        placeholder="e.g., ^[a-zA-Z0-9]*$"
-                        value={field.pattern ?? ""}
-                        onChange={e => setField({ ...field, pattern: e.target.value || undefined })}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="form-actions">
-            <button 
-              className="btn btn-primary"
-              onClick={addFieldToSchema}
-              disabled={!field.name.trim()}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 3.333v9.334M3.333 8h9.334" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Add Field to Schema
-            </button>
-            <button
-              className="btn btn-ghost"
-              onClick={() => setField({ name: "", type: "text", label: "", options: "", required: false })}
-            >
-              Clear Form
-            </button>
-          </div>
         </div>
       </div>
 
@@ -402,7 +630,7 @@ export default function ConfigBuilderPanel({
             <div className="preview-header-content">
               {/* <div className="preview-icon">👁️</div> */}
               <div>
-                <h4>Live Preview</h4>
+                <h4>Configurations</h4>
                 <p>See how your configuration form will look to users</p>
               </div>
             </div>
@@ -420,12 +648,25 @@ export default function ConfigBuilderPanel({
           </div>
           {showPreview && (
             <div className="preview-content">
+              {!hasFields && (
+                <div className="preview-empty-state">
+                  <p>No fields yet. Add a field using the form builder to see it here.</p>
+                </div>
+              )}
               <Form
                 key={selectedConfig?.id || 'no-config'}
                 schema={schema}
                 uiSchema={uiSchema}
                 formData={formData}
                 validator={validator}
+                templates={{ ObjectFieldTemplate: FieldActionsObjectTemplate }}
+                formContext={{
+                  onEditField: handleEditField,
+                  onDeleteField: handleDeleteField,
+                  rootFieldNames,
+                  editingFieldName,
+                  isSavingField,
+                }}
                 onSubmit={handleSubmit}
                 onError={() => {
                   onNotification?.('error', 'Please resolve validation errors before saving.');
@@ -449,41 +690,51 @@ export default function ConfigBuilderPanel({
         </div>
 
         {/* JSON Data Display */}
-        <div className="preview-card">
-          <div className="preview-header" onClick={() => setShowJsonData(!showJsonData)}>
-            <div className="preview-header-content">
-              {/* <div className="preview-icon">📊</div> */}
-              <div>
-                <h4>Configuration Data</h4>
-                <p>JSON representation of the current form data</p>
-              </div>
-            </div>
-            <button className="toggle-btn" type="button">
-              <svg 
-                className={`chevron ${showJsonData ? 'open' : ''}`}
-                width="20" 
-                height="20" 
-                viewBox="0 0 20 20" 
-                fill="none"
-              >
-                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-          {showJsonData && (
-            <div className="preview-content">
-              <div className="json-display">
-                <pre>{JSON.stringify(formData, null, 2)}</pre>
-              </div>
-              {Object.keys(formData).length === 0 && (
-                <div className="json-empty">
-                  <p>No data yet. Fill out the form above to see the JSON output.</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+
       </div>
+
+      <FieldEditModal
+        isOpen={isAddModalOpen}
+        title="Add New Field"
+        onClose={closeAddModal}
+      >
+        <div className="field-builder-style-scope field-edit-modal-content">
+          <FieldFormView
+            mode="add"
+            field={field}
+            setField={setField}
+            showValidations={showValidations}
+            setShowValidations={setShowValidations}
+            onSave={() => saveField(field, { mode: 'add' })}
+            onCancel={closeAddModal}
+            isSaving={isSavingField}
+          />
+        </div>
+      </FieldEditModal>
+
+      <FieldEditModal
+        isOpen={isEditModalOpen}
+        title={editingFieldName ? `Edit Field: ${editingFieldName}` : 'Edit Field'}
+        onClose={closeEditModal}
+      >
+        <div className="field-builder-style-scope field-edit-modal-content">
+          <FieldFormView
+            mode="edit"
+            field={editField}
+            setField={setEditField}
+            showValidations={showEditValidations}
+            setShowValidations={setShowEditValidations}
+            onSave={() => {
+              if (!editingFieldName) {
+                return;
+              }
+              return saveField(editField, { mode: 'edit', originalName: editingFieldName });
+            }}
+            onCancel={closeEditModal}
+            isSaving={isSavingField}
+          />
+        </div>
+      </FieldEditModal>
     </div>
   );
 }

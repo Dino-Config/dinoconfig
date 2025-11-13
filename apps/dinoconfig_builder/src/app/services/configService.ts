@@ -90,5 +90,45 @@ export class ConfigService {
       withCredentials: true
     });
   }
+
+  static async updateField(
+    brandId: number,
+    configId: number,
+    fieldName: string,
+    payload: {
+      name: string;
+      label?: string;
+      type: string;
+      options?: string;
+      required?: boolean;
+      min?: number;
+      max?: number;
+      maxLength?: number;
+      pattern?: string;
+    }
+  ): Promise<{ config: Config; versions: Config[] }> {
+    const response = await axios.patch(
+      `${environment.apiUrl}/brands/${brandId}/configs/${configId}/fields/${encodeURIComponent(fieldName)}`,
+      payload,
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  }
+
+  static async deleteField(
+    brandId: number,
+    configId: number,
+    fieldName: string
+  ): Promise<{ config: Config; versions: Config[] }> {
+    const response = await axios.delete(
+      `${environment.apiUrl}/brands/${brandId}/configs/${configId}/fields/${encodeURIComponent(fieldName)}`,
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  }
 }
 

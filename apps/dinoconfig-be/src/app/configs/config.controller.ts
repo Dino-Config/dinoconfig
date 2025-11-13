@@ -7,6 +7,7 @@ import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Feature } from '../features/enums/feature.enum';
 import { RequireFeature } from '../subscriptions/decorators/require-feature.decorator';
 import { FeatureGuard } from '../subscriptions/guards/feature.guard';
+import { UpdateFieldDto } from './dto/update-field.dto';
 
 @Controller('brands')
 @UseGuards(UserAuthGuard)
@@ -102,6 +103,40 @@ export class ConfigsController {
     @Body() body: { version: number },
   ) {
     return this.configsService.setActiveVersionByName(req.user.auth0Id, parseInt(brandId), configName, body.version, req.user.company);
+  }
+
+  @Patch(':brandId/configs/:configId/fields/:fieldName')
+  updateField(
+    @Request() req,
+    @Param('brandId') brandId: string,
+    @Param('configId') configId: string,
+    @Param('fieldName') fieldName: string,
+    @Body() dto: UpdateFieldDto,
+  ) {
+    return this.configsService.updateField(
+      req.user.auth0Id,
+      parseInt(brandId),
+      parseInt(configId),
+      fieldName,
+      dto,
+      req.user.company,
+    );
+  }
+
+  @Delete(':brandId/configs/:configId/fields/:fieldName')
+  removeField(
+    @Request() req,
+    @Param('brandId') brandId: string,
+    @Param('configId') configId: string,
+    @Param('fieldName') fieldName: string,
+  ) {
+    return this.configsService.removeField(
+      req.user.auth0Id,
+      parseInt(brandId),
+      parseInt(configId),
+      fieldName,
+      req.user.company,
+    );
   }
 
 }
