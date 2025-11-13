@@ -13,6 +13,7 @@ export default function EmailVerificationPending() {
   const [resendError, setResendError] = useState<string | null>(null);
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const [autoCheckCount, setAutoCheckCount] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const handleResendEmail = async () => {
     if (!user?.auth0Id) return;
@@ -28,6 +29,7 @@ export default function EmailVerificationPending() {
         { withCredentials: true }
       );
       setResendSuccess(true);
+      setCooldownSeconds(60); // 60 second cooldown to prevent spam
       setTimeout(() => setResendSuccess(false), 5000);
     } catch (error: any) {
       console.error('Failed to resend verification email:', error);
@@ -36,6 +38,15 @@ export default function EmailVerificationPending() {
       setIsResending(false);
     }
   };
+
+  useEffect(() => {
+    if (cooldownSeconds > 0) {
+      const timer = setTimeout(() => {
+        setCooldownSeconds(cooldownSeconds - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldownSeconds]);
 
   // Redirect if user becomes verified
   useEffect(() => {
@@ -159,13 +170,15 @@ export default function EmailVerificationPending() {
           <button 
             className="btn-secondary"
             onClick={handleResendEmail}
-            disabled={isResending}
+            disabled={isResending || cooldownSeconds > 0}
           >
             {isResending ? (
               <>
                 <span className="spinner-small"></span>
                 <span>Sending...</span>
               </>
+            ) : cooldownSeconds > 0 ? (
+              <span>Wait {cooldownSeconds}s to resend</span>
             ) : (
               <span>Resend Verification Email</span>
             )}

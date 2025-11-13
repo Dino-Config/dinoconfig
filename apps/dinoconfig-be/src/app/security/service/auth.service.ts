@@ -30,7 +30,7 @@ export class AuthService {
 
   constructor(
     private configService: ConfigService,
-    private usersService: UsersService) {
+    public usersService: UsersService) {
     this.AUTH0_DOMAIN = this.configService.get<string>('AUTH0_DOMAIN');
     this.CLIENT_ID = this.configService.get<string>('AUTH0_M2M_CLIENT_ID');
     this.CLIENT_SECRET = this.configService.get<string>('AUTH0_M2M_CLIENT_SECRET');

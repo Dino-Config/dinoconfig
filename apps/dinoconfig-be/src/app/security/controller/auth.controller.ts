@@ -120,7 +120,8 @@ export class AuthController {
   }
 
   @Post('send-verification')
-  async sendVerification(@Body() body: { userId: string }) {
+  @UseGuards(UserAuthGuard)
+  async sendVerification(@Req() req: Request, @Body() body: { userId: string }) {
     return this.authService.sendEmailVerification(body.userId);
   }
 

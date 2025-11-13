@@ -11,25 +11,25 @@ export function App() {
       <Routes>
         <Route path="/verify-email" element={<EmailVerificationPending />} />
         <Route path="/" element={
-          <LimitViolationGuard>
+      <LimitViolationGuard>
             <EmailVerificationGuard>
               <Layout />
             </EmailVerificationGuard>
           </LimitViolationGuard>
         }>
-          <Route index element={<Navigate to="/brands" replace />} />
-          <Route path="/brands" element={<BrandSelection />} />
-          <Route path="/brands/add" element={<BrandAdd />} />
-          <Route path="/brands/:brandId/builder" element={<MultiConfigBuilder />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="settings/sdk" element={<SdkApiKeys />} />
-          <Route path="settings/features" element={<Features />} />
-          <Route path="subscription" element={<SubscriptionPage />} />
-          <Route path="subscription/success" element={<SubscriptionSuccess />} />
-          <Route path="subscription/cancel" element={<SubscriptionCancel />} />
-        </Route>
-      </Routes>
+            <Route index element={<Navigate to="/brands" replace />} />
+            <Route path="/brands" element={<BrandSelection />} />
+            <Route path="/brands/add" element={<BrandAdd />} />
+            <Route path="/brands/:brandId/builder" element={<MultiConfigBuilder />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="settings/sdk" element={<SdkApiKeys />} />
+            <Route path="settings/features" element={<Features />} />
+            <Route path="subscription" element={<SubscriptionPage />} />
+            <Route path="subscription/success" element={<SubscriptionSuccess />} />
+            <Route path="subscription/cancel" element={<SubscriptionCancel />} />
+          </Route>
+        </Routes>
     </Router>
   );
 }
