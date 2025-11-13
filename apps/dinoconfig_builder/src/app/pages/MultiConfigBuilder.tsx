@@ -23,6 +23,7 @@ export default function MultiConfigBuilder() {
   const { subscription } = useSubscription();
   const [limitReached, setLimitReached] = useState(false);
   const [limitErrorMessage, setLimitErrorMessage] = useState<string>('');
+  const brandIdNumber = brandId ? parseInt(brandId) : null;
 
   // Notification system
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -275,6 +276,30 @@ export default function MultiConfigBuilder() {
     setFormData(initializedFormData);
   };
 
+  const applyConfigUpdate = (updatedConfig: Config, versions: Config[], previousConfigId: number | null) => {
+    setConfigs(prev => {
+      const filtered = prev.filter(c => c.id !== previousConfigId && c.id !== updatedConfig.id);
+      const next = [...filtered, updatedConfig];
+      return next.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    });
+
+    setActiveVersions(prev => ({
+      ...prev,
+      [updatedConfig.name]: updatedConfig.version
+    }));
+
+    setSelectedId(updatedConfig.id);
+    setSelectedVersion(updatedConfig.version);
+    setConfigVersions(versions);
+    lastLoadedVersionRef.current = updatedConfig.version;
+    isLoadingVersionsRef.current = false;
+    loadConfigData(updatedConfig);
+  };
+
+  const handleConfigUpdated = (updatedConfig: Config, versions: Config[], previousConfigId: number) => {
+    applyConfigUpdate(updatedConfig, versions, previousConfigId);
+  };
+
   // create a new config skeleton and open it for editing
   const handleCreateConfig = async (name: string) => {
     if (!name.trim() || !brandId) return;
@@ -301,42 +326,20 @@ export default function MultiConfigBuilder() {
 
   // save current schema/ui/formData into the selected config and submit
   const handleSaveConfig = async () => {
-    if (!selectedId || !brandId) {
+    if (!selectedId || !brandIdNumber) {
       showNotification('warning', "Select or create a config first.");
       return;
     }
     
     try {
-      const response = await ConfigService.updateConfig(parseInt(brandId), selectedId, {
+      const response = await ConfigService.updateConfig(brandIdNumber, selectedId, {
         formData,
         schema,
         uiSchema
       });
       
       const { config: updatedConfig, versions } = response;
-      
-      // Update local state with the new config version instead of reloading everything
-      setConfigs(prev => {
-        // Remove the old version of this config and add the new one
-        const filteredConfigs = prev.filter(c => c.id !== selectedId);
-        return [...filteredConfigs, updatedConfig];
-      });
-      
-      // Update active versions to reflect the new version
-      setActiveVersions(prev => ({
-        ...prev,
-        [updatedConfig.name]: updatedConfig.version
-      }));
-      
-      // Update the selected version to the new version
-      setSelectedVersion(updatedConfig.version);
-      
-      // Update the selectedId to point to the new config version
-      setSelectedId(updatedConfig.id);
-      
-      // Update versions from the response (no additional API call needed!)
-      setConfigVersions(versions);
-      
+      applyConfigUpdate(updatedConfig, versions, selectedId);
       showNotification('success', "Config saved and submitted successfully!");
     } catch (err: any) {
       showNotification('error', err.message || 'Failed to save config');
@@ -522,6 +525,9 @@ export default function MultiConfigBuilder() {
               onSave={handleSaveConfig}
               onExport={exportSelected}
               onNotification={showNotification}
+              brandId={brandIdNumber}
+              onConfigUpdated={handleConfigUpdated}
+              onConfirm={showConfirm}
             />
           </div>
         </div>
