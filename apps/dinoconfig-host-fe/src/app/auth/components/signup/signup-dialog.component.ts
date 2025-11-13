@@ -94,8 +94,8 @@ export class SignupDialogComponent implements OnInit {
       this.authService.signup(userData).subscribe({
         next: () => {
           this.isLoading = false;
-          this.snackBar.open('Account created successfully! Welcome to DinoConfig!', 'Close', {
-            duration: 5000,
+          this.snackBar.open('Account created successfully! Please check your email to verify your account.', 'Close', {
+            duration: 6000,
             horizontalPosition: 'center',
             verticalPosition: 'top'
           });

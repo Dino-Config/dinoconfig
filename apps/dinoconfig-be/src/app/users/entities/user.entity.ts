@@ -44,6 +44,9 @@ export class User {
   @Column({ length: 255, nullable: true })
   companyName?: string;
 
+  @Column({ default: false })
+  emailVerified: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

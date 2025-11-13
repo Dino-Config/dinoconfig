@@ -60,6 +60,7 @@ export interface User {
   zip?: string;
   country?: string;
   isActive: boolean;
+  emailVerified: boolean;
   companyName?: string;
   createdAt: Date;
   brands: Brand[];
