@@ -122,7 +122,22 @@ export class AuthController {
   @Post('send-verification')
   @UseGuards(UserAuthGuard)
   async sendVerification(@Req() req: Request, @Body() body: { userId: string }) {
-    return this.authService.sendEmailVerification(body.userId);
+    const { auth0Id } = req.user as any;
+    
+    const user = await this.authService['usersService'].findByAuth0Id(auth0Id);
+    
+    if (user.verificationEmailResendCount >= 3) {
+      throw new HttpException(
+        'You have reached the maximum number of verification email attempts (3). Please contact support for assistance.',
+        HttpStatus.FORBIDDEN
+      );
+    }
+    
+    const result = await this.authService.sendEmailVerification(body.userId);
+    
+    await this.authService['usersService'].incrementVerificationResendCount(auth0Id);
+    
+    return result;
   }
 
   @Get('check-verification')
