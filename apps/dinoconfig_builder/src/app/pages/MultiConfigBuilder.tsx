@@ -136,13 +136,16 @@ export default function MultiConfigBuilder() {
       const brandData = await ConfigService.getBrand(brandId);
       setBrand(brandData);
 
-      const configsData = await ConfigService.getConfigs(brandId);
+      // Load config definitions (used for sidebar) instead of all configs
+      const configsData = await ConfigService.getConfigDefinitions(brandId);
       setConfigs(configsData);
 
-      // Since the backend now returns only active versions, we can set the active versions directly
+      // Set active versions from the definitions (each definition has its active config)
       const activeVersionsData: Record<string, number> = {};
       for (const config of configsData) {
-        activeVersionsData[config.name] = config.version;
+        if (config.name && config.version) {
+          activeVersionsData[config.name] = config.version;
+        }
       }
       setActiveVersions(activeVersionsData);
     } catch (err: any) {
@@ -373,29 +376,30 @@ export default function MultiConfigBuilder() {
     if (!newName || newName.trim() === '') return;
     
     try {
-      const response = await ConfigService.updateConfig(parseInt(brandId!), id, {
-        name: newName.trim()
-      });
+      // Use the new API endpoint that updates name without creating a new version
+      const updatedConfig = await ConfigService.updateConfigName(parseInt(brandId!), id, newName.trim());
       
-      const { config: updatedConfig, versions } = response;
-      
-      // Update local state with the new config version from response
+      // Update local state with the renamed config (same version, just name changed)
       setConfigs(prev => {
-        // Remove the old version of this config and add the new one
-        const filteredConfigs = prev.filter(c => c.id !== id);
-        return [...filteredConfigs, updatedConfig];
+        return prev.map(c => c.id === id ? updatedConfig : c);
       });
       
-      // Update active versions to reflect the new version
-      setActiveVersions(prev => ({
-        ...prev,
-        [updatedConfig.name]: updatedConfig.version
-      }));
+      // Update active versions if the name changed
+      if (currentConfig?.name && currentConfig.name !== updatedConfig.name) {
+        setActiveVersions(prev => {
+          const newVersions = { ...prev };
+          // Remove old name entry and add new one
+          delete newVersions[currentConfig.name];
+          newVersions[updatedConfig.name] = updatedConfig.version;
+          return newVersions;
+        });
+      }
       
-      // If this was the selected config, update the selected version and versions
+      // If this was the selected config, update it
       if (selectedId === id) {
-        setSelectedVersion(updatedConfig.version);
         setSelectedId(updatedConfig.id);
+        // Reload versions to get updated list
+        const versions = await ConfigService.getConfigVersions(parseInt(brandId!), id);
         setConfigVersions(versions);
       }
       

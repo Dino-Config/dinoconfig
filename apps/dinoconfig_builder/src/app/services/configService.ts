@@ -27,6 +27,20 @@ export class ConfigService {
     return brand;
   }
 
+  /**
+   * Get all config definitions for the sidebar
+   * Returns definitions with their active config info
+   */
+  static async getConfigDefinitions(brandId: number): Promise<Config[]> {
+    const response = await axios.get(`${environment.apiUrl}/brands/${brandId}/config-definitions`, {
+      withCredentials: true
+    });
+    return Array.isArray(response.data) ? response.data : [];
+  }
+
+  /**
+   * @deprecated Use getConfigDefinitions instead. This endpoint still works but returns configs, not definitions.
+   */
   static async getConfigs(brandId: number): Promise<Config[]> {
     const response = await axios.get(`${environment.apiUrl}/brands/${brandId}/configs`, {
       withCredentials: true
@@ -55,15 +69,48 @@ export class ConfigService {
     return response.data;
   }
 
+  /**
+   * Updates config content (description, formData, schema, uiSchema)
+   * Note: Use updateConfigName() to rename a config without creating a new version
+   */
   static async updateConfig(brandId: number, configId: number, configData: Partial<Config>): Promise<{config: Config, versions: Config[]}> {
-    const response = await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${configId}`, configData, {
+    // Remove name from configData if present - name updates should use updateConfigName()
+    const { name, ...contentData } = configData;
+    
+    const response = await axios.patch(`${environment.apiUrl}/brands/${brandId}/configs/${configId}`, contentData, {
       withCredentials: true
     });
     return response.data;
   }
 
+  /**
+   * Updates the name of a config definition without creating a new version
+   */
+  static async updateConfigName(brandId: number, configId: number, newName: string): Promise<Config> {
+    const response = await axios.patch(
+      `${environment.apiUrl}/brands/${brandId}/configs/${configId}/name`,
+      { name: newName.trim() },
+      {
+        withCredentials: true
+      }
+    );
+    return response.data;
+  }
+
+  /**
+   * Delete a config definition and all its configs via config ID
+   */
   static async deleteConfig(brandId: number, configId: number): Promise<void> {
-    await axios.delete(`${environment.apiUrl}/brands/${brandId}/configs/${configId}`, {
+    await axios.delete(`${environment.apiUrl}/brands/${brandId}/configs/${configId}/definition`, {
+      withCredentials: true
+    });
+  }
+
+  /**
+   * Delete a config definition and all its configs via definition ID
+   */
+  static async deleteConfigDefinition(brandId: number, definitionId: number): Promise<void> {
+    await axios.delete(`${environment.apiUrl}/brands/${brandId}/config-definitions/${definitionId}`, {
       withCredentials: true
     });
   }
