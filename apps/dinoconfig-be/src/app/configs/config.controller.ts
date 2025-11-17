@@ -57,7 +57,7 @@ export class ConfigsController {
   }
 
   @Get(':brandId/configs')
-  @Header('Cache-Control', 'public, max-age=120, must-revalidate, immutable')
+  // @Header('Cache-Control', 'public, max-age=120, must-revalidate, immutable')
   async findAllConfigsForBrand(
     @Request() req,
     @Param('brandId') brandId: string,

@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, forwardRef, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Config } from './entities/config.entity';
 import { ActiveVersion } from './entities/active-version.entity';
 import { Brand } from '../brands/entities/brand.entity';
+import { ConfigDefinition } from './entities/config-definition.entity';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { UpdateConfigResponseDto } from './dto/update-config-response.dto';
@@ -11,19 +12,49 @@ import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Feature } from '../features/enums/feature.enum';
 import { UpdateFieldDto, FieldType } from './dto/update-field.dto';
 import { JSONSchema7 } from 'json-schema';
+import { ConfigDefinitionService } from './config-definition.service';
 
 @Injectable()
 export class ConfigsService {
   constructor(
     @InjectRepository(Config) private readonly configRepo: Repository<Config>,
     @InjectRepository(ActiveVersion) private readonly activeVersionRepo: Repository<ActiveVersion>,
+    @InjectRepository(ConfigDefinition) private readonly configDefinitionRepo: Repository<ConfigDefinition>,
     @InjectRepository(Brand) private readonly brandRepo: Repository<Brand>,
     private readonly subscriptionService: SubscriptionService,
+    @Inject(forwardRef(() => ConfigDefinitionService))
+    private readonly configDefinitionService: ConfigDefinitionService,
   ) {}
+
+  /**
+   * Adds virtual properties (name, company) from definition to config entity
+   * Since definition is eager, it should always be loaded
+   */
+  private withVirtualProperties(config: Config | null): Config | null {
+    if (!config?.definition) return config;
+    
+    (config as Config & { name: string }).name = config.definition.name;
+    (config as Config & { company?: string }).company = config.definition.company;
+    return config;
+  }
+
+  private withVirtualPropertiesList(configs: Config[]): Config[] {
+    return configs.map(c => this.withVirtualProperties(c) as Config);
+  }
 
   private async userHasVersioning(userId: string): Promise<boolean> {
     const sub = await this.subscriptionService.getOrCreateDefaultSubscription(userId);
     return this.subscriptionService.hasFeature(sub.tier, sub.status, Feature.CONFIG_VERSIONING);
+  }
+
+
+  private async resolveDefinitionForConfig(config: Config, brand: Brand, company: string): Promise<ConfigDefinition> {
+    if (config.definition) {
+      await this.configDefinitionService.syncDefinitionAssociations(config.definition, brand, company);
+      return config.definition;
+    }
+
+    throw new NotFoundException(`Config definition missing for config "${config.id}"`);
   }
 
   private getSchemaType(fieldType: FieldType): JSONSchema7['type'] {
@@ -159,39 +190,47 @@ export class ConfigsService {
 
   async create(userId: string, brandId: number, dto: CreateConfigDto, company: string): Promise<Config> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
-  
-    // Get the latest version for this specific config name
+    const definition = await this.configDefinitionService.getOrCreateDefinition(brand, dto.name, company);
+
     const latestConfig = await this.configRepo.findOne({
-      where: { 
-        brand: { id: brand.id }, 
-        name: dto.name,
-        company: company 
+      where: {
+        brand: { id: brand.id },
+        definition: { id: definition.id },
       },
-      order: { version: 'DESC' }
+      order: { version: 'DESC' },
     });
-    
+
     const nextVersion = latestConfig ? latestConfig.version + 1 : 1;
-  
+
     const config = this.configRepo.create({
-      ...dto,
+      description: dto.description,
       formData: dto.formData ?? {},
       schema: dto.schema ?? { type: 'object', properties: {} },
       uiSchema: dto.uiSchema ?? {},
-      brand: { id: brand.id } as Brand, // Use brand ID directly to avoid lazy loading issues
+      brand: { id: brand.id } as Brand,
+      definition: { id: definition.id } as ConfigDefinition,
       version: nextVersion,
-      company: company,
     });
-  
+
     const savedConfig = await this.configRepo.save(config);
-    
-    // Set this as the active version for this config name if it's the first version
+
     if (nextVersion === 1) {
-      await this.setActiveVersionForConfig(brand.id, dto.name, savedConfig.version, company);
+      await this.setActiveVersionForConfig(brand.id, definition.name, savedConfig.version, company);
     }
-    
-    return savedConfig;
+
+    // Reload with definition relation to ensure it's properly loaded
+    const reloadedConfig = await this.configRepo.findOne({
+      where: { id: savedConfig.id },
+      relations: ['definition'],
+    });
+
+    return this.withVirtualProperties(reloadedConfig) as Config;
   }
 
+  /**
+   * Updates config content (description, formData, schema, uiSchema)
+   * Always creates a new version. Use updateDefinitionName for renaming.
+   */
   async update(
     userId: string,
     brandId: number,
@@ -201,63 +240,76 @@ export class ConfigsService {
   ): Promise<UpdateConfigResponseDto> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
 
-    const existing = await this.configRepo.findOne({
-      where: { id: configId, brand: { id: brand.id }, company: company },
-    });
+    const existing = await this.configRepo
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.definition', 'definition')
+      .where('config.id = :configId', { configId })
+      .andWhere('config.brandId = :brandId', { brandId: brand.id })
+      .andWhere('definition.company = :company', { company })
+      .getOne();
 
     if (!existing) {
       throw new NotFoundException(`Config with ID "${configId}" not found`);
     }
 
-    // Get the latest version for this specific config name
+    const definition = await this.resolveDefinitionForConfig(existing, brand, company);
+
+    // Get next version number
     const latestConfig = await this.configRepo.findOne({
-      where: { 
-        brand: { id: brand.id }, 
-        name: existing.name,
-        company: company 
+      where: {
+        brand: { id: brand.id },
+        definition: { id: definition.id },
       },
-      order: { version: 'DESC' }
+      order: { version: 'DESC' },
     });
-    
+
     const nextVersion = latestConfig ? latestConfig.version + 1 : 1;
 
-    // Create a completely new record with incremented version
+    // Create new config version with updated content
     const newConfig = this.configRepo.create({
-      name: dto.name ?? existing.name,
       description: dto.description ?? existing.description,
       formData: dto.formData ?? existing.formData,
       schema: dto.schema ?? existing.schema,
       uiSchema: dto.uiSchema ?? existing.uiSchema,
-      brand: { id: brand.id } as Brand, // Use brand ID directly to avoid lazy loading issues
+      brand: { id: brand.id } as Brand,
+      definition: { id: definition.id } as ConfigDefinition,
       version: nextVersion,
-      company: existing.company,
     });
 
     const savedConfig = await this.configRepo.save(newConfig);
-    // Update the active version for this config name
-    await this.setActiveVersionForConfig(brand.id, savedConfig.name, savedConfig.version, company);
+    await this.setActiveVersionForConfig(brand.id, definition.name, savedConfig.version, company);
     
-    // Get all versions for this config name to return in response
-    const allVersions = await this.getConfigVersions(userId, brandId, savedConfig.name, company);
+    const reloadedConfig = await this.configRepo.findOne({
+      where: { id: savedConfig.id },
+      relations: ['definition'],
+    });
+    
+    const allVersions = await this.getConfigVersions(userId, brandId, definition.name, company);
     
     return {
-      config: savedConfig,
+      config: this.withVirtualProperties(reloadedConfig) as Config,
       versions: allVersions
     };
   }
 
+  // ==================== Config CRUD Methods ====================
+
   async findOneByBrandAndCompanyId(userId: string, brandId: number, configId: number, company: string): Promise<Config> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
 
-    const config = await this.configRepo.findOne({
-      where: { id: configId, brand: { id: brand.id }, company: company },
-    });
+    const config = await this.configRepo
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.definition', 'definition')
+      .where('config.id = :configId', { configId })
+      .andWhere('config.brandId = :brandId', { brandId: brand.id })
+      .andWhere('definition.company = :company', { company })
+      .getOne();
 
     if (!config) {
       throw new NotFoundException(`Config with ID "${configId}" not found`);
     }
 
-    return config;
+    return this.withVirtualProperties(config) as Config;
   }
 
   async remove(userId: string, brandId: number, configId: number): Promise<void> {
@@ -279,14 +331,15 @@ export class ConfigsService {
     const hasVersioning = await this.userHasVersioning(userId);
     
     if (!hasVersioning) {
-      const allConfigs = await this.configRepo.find({
-        where: { 
-          brand: { id: brand.id }, 
-          company: company 
-        },
-      });
+      const allConfigs = await this.configRepo
+        .createQueryBuilder('config')
+        .leftJoinAndSelect('config.definition', 'definition')
+        .where('config.brandId = :brandId', { brandId: brand.id })
+        .andWhere('definition.company = :company', { company })
+        .getMany();
+      const hydrated = this.withVirtualPropertiesList(allConfigs);
       const latestByName = new Map<string, Config>();
-      for (const cfg of allConfigs) {
+      for (const cfg of hydrated) {
         const existing = latestByName.get(cfg.name);
         if (!existing || cfg.version > existing.version) {
           latestByName.set(cfg.name, cfg);
@@ -295,57 +348,87 @@ export class ConfigsService {
       return Array.from(latestByName.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
     
-    // Get all active versions for this brand from active_versions table
     const activeVersions = await this.activeVersionRepo.find({
-      where: { 
-        brand: { id: brand.id }, 
-        company: company 
+      where: {
+        brand: { id: brand.id },
+        company,
       },
     });
-    
-    // Get all configs that match active versions using Promise.all for parallel queries
-    const activeConfigPromises = activeVersions.map(av => 
-      this.configRepo.findOne({
-        where: { 
-          brand: { id: brand.id }, 
-          name: av.configName,
-          version: av.activeVersion,
-          company: company 
+
+    const activeConfigs: Config[] = [];
+    const activeDefinitionIds = new Set<number>();
+    const activeVersionsToUpdate: ActiveVersion[] = [];
+
+    for (const activeVersion of activeVersions) {
+      const definition =
+        activeVersion.configDefinition ??
+        (await this.configDefinitionService.getOrCreateDefinition(brand, activeVersion.configName, company));
+
+      if (
+        !activeVersion.configDefinition ||
+        activeVersion.configDefinition.id !== definition.id ||
+        activeVersion.configName !== definition.name
+      ) {
+        activeVersion.configDefinition = definition;
+        activeVersion.configName = definition.name;
+        activeVersionsToUpdate.push(activeVersion);
+      }
+
+      activeDefinitionIds.add(definition.id);
+
+      const config = await this.configRepo.findOne({
+        where: {
+          brand: { id: brand.id },
+          definition: { id: definition.id },
+          version: activeVersion.activeVersion,
         },
-      })
-    );
-    
-    let activeConfigs = (await Promise.all(activeConfigPromises)).filter(c => c !== null) as Config[];
-    
-    // Get names of configs that have active versions
-    const configsWithActiveVersions = activeVersions.map(av => av.configName);
-    
-    // Get all unique config names for this brand
-    const allConfigs = await this.configRepo.find({
-      where: { 
-        brand: { id: brand.id }, 
-        company: company 
-      },
-    });
-    
-    // Get unique config names
-    const uniqueConfigNames = [...new Set(allConfigs.map(c => c.name))];
-    
-    // For configs without active versions, get the latest version
-    for (const configName of uniqueConfigNames) {
-      if (!configsWithActiveVersions.includes(configName)) {
-        const config = allConfigs
-          .filter(c => c.name === configName)
-          .sort((a, b) => b.version - a.version)[0];
-        
-        if (config) {
-          activeConfigs.push(config);
-        }
+        relations: ['definition'],
+      });
+
+      const hydrated = this.withVirtualProperties(config);
+      if (hydrated) {
+        activeConfigs.push(hydrated as Config);
       }
     }
-    
-    // Sort by creation date
-    return activeConfigs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    if (activeVersionsToUpdate.length > 0) {
+      await this.activeVersionRepo.save(activeVersionsToUpdate);
+    }
+
+    const allConfigs = await this.configRepo
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.definition', 'definition')
+      .where('config.brandId = :brandId', { brandId: brand.id })
+      .andWhere('definition.company = :company', { company })
+      .getMany();
+
+    const hydratedConfigs = this.withVirtualPropertiesList(allConfigs);
+    const configsByDefinition = new Map<number, Config[]>();
+
+    for (const config of hydratedConfigs) {
+      const definitionId = config.definition?.id;
+      if (!definitionId) {
+        continue;
+      }
+      const list = configsByDefinition.get(definitionId) ?? [];
+      list.push(config);
+      configsByDefinition.set(definitionId, list);
+    }
+
+    for (const [definitionId, configs] of configsByDefinition.entries()) {
+      if (activeDefinitionIds.has(definitionId)) {
+        continue;
+      }
+      configs.sort((a, b) => b.version - a.version);
+      const latest = configs[0];
+      if (latest) {
+        activeConfigs.push(latest);
+      }
+    }
+
+    return activeConfigs
+      .map(config => this.withVirtualProperties(config) as Config)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async findConfigByNameAndValue(userId: string, brandName: string, name: string, valueKey: string, company: string): Promise<{value: any}> {
@@ -381,18 +464,49 @@ export class ConfigsService {
     const hasVersioning = await this.userHasVersioning(userId);
 
     if (!hasVersioning) {
-      // Return only the latest version
-      const latest = await this.configRepo.findOne({
-        where: { name: configName, brand: { id: brand.id }, company: company },
-        order: { version: 'DESC' },
+      const definition = await this.configDefinitionRepo.findOne({
+        where: {
+          brand: { id: brand.id },
+          name: configName,
+          company,
+        },
       });
-      return latest ? [latest] : [];
+
+      if (!definition) {
+        return [];
+      }
+
+      const latest = await this.configRepo.findOne({
+        where: { brand: { id: brand.id }, definition: { id: definition.id } },
+        order: { version: 'DESC' },
+        relations: ['definition'],
+      });
+      return latest ? [this.withVirtualProperties(latest) as Config] : [];
     }
 
-    return this.configRepo.find({
-      where: { name: configName, brand: { id: brand.id }, company: company },
+    let definition = await this.configDefinitionRepo.findOne({
+      where: {
+        brand: { id: brand.id },
+        name: configName,
+        company,
+      },
+    });
+
+    if (!definition) {
+      return [];
+    }
+
+    await this.configDefinitionService.syncDefinitionAssociations(definition, brand, company);
+
+    const configs = await this.configRepo.find({
+      where: {
+        brand: { id: brand.id },
+        definition: { id: definition.id },
+      },
       order: { version: 'DESC' },
     });
+
+    return this.withVirtualPropertiesList(configs);
   }
 
 
@@ -400,15 +514,20 @@ export class ConfigsService {
     const brand = await this.getBrandByIdForUser(userId, brandId);
     
     // First get the config to find its name
-    const config = await this.configRepo.findOne({
-      where: { id: configId, brand: { id: brand.id }, company: company },
-    });
+    const config = await this.configRepo
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.definition', 'definition')
+      .where('config.id = :configId', { configId })
+      .andWhere('config.brandId = :brandId', { brandId: brand.id })
+      .andWhere('definition.company = :company', { company })
+      .getOne();
     
     if (!config) {
       throw new NotFoundException(`Config with ID "${configId}" not found`);
     }
     
-    return this.getConfigVersions(userId, brandId, config.name, company);
+    const definition = await this.resolveDefinitionForConfig(config, brand, company);
+    return this.getConfigVersions(userId, brandId, definition.name, company);
   }
 
   async getActiveConfig(userId: string, brandId: number, configName: string, company: string): Promise<Config | null> {
@@ -416,79 +535,128 @@ export class ConfigsService {
     const hasVersioning = await this.userHasVersioning(userId);
     
     if (!hasVersioning) {
-      // No versioning: always return latest from configs table
-      return this.configRepo.findOne({
-        where: { brand: { id: brand.id }, name: configName, company: company },
-        order: { version: 'DESC' },
+      const definition = await this.configDefinitionRepo.findOne({
+        where: {
+          brand: { id: brand.id },
+          name: configName,
+          company,
+        },
       });
+
+      if (!definition) {
+        return null;
+      }
+
+      const latest = await this.configRepo.findOne({
+        where: { brand: { id: brand.id }, definition: { id: definition.id } },
+        order: { version: 'DESC' },
+        relations: ['definition'],
+      });
+
+      return this.withVirtualProperties(latest) as Config | null;
     }
 
-    // Get the active version for this config name
-    const activeVersion = await this.activeVersionRepo.findOne({
-      where: { brand: { id: brand.id }, configName: configName, company: company },
+    let definition = await this.configDefinitionRepo.findOne({
+      where: {
+        brand: { id: brand.id },
+        name: configName,
+        company,
+      },
     });
-    
+
+    if (!definition) {
+      return null;
+    }
+
+    await this.configDefinitionService.syncDefinitionAssociations(definition, brand, company);
+
+    const activeVersion = await this.activeVersionRepo.findOne({
+      where: { brand: { id: brand.id }, configDefinition: { id: definition.id }, company },
+    });
+
     if (!activeVersion) {
-      // Fallback to latest if active not set
-      return this.configRepo.findOne({
-        where: { brand: { id: brand.id }, name: configName, company: company },
+      const latest = await this.configRepo.findOne({
+        where: { brand: { id: brand.id }, definition: { id: definition.id } },
         order: { version: 'DESC' },
       });
+      return this.withVirtualProperties(latest) as Config | null;
     }
-    
-    return this.configRepo.findOne({
-      where: { brand: { id: brand.id }, name: configName, version: activeVersion.activeVersion, company: company },
+
+    const config = await this.configRepo.findOne({
+      where: {
+        brand: { id: brand.id },
+        definition: { id: definition.id },
+        version: activeVersion.activeVersion,
+      },
+      relations: ['definition'],
     });
+
+    return this.withVirtualProperties(config) as Config | null;
   }
 
   async setActiveVersionForConfig(brandId: number, configName: string, version: number, company: string): Promise<void> {
-    // Verify that a config with this version exists
-    const config = await this.configRepo.findOne({
-      where: { 
-        brand: { id: brandId }, 
+    const brand = await this.brandRepo.findOne({ where: { id: brandId } });
+
+    if (!brand) {
+      throw new NotFoundException(`Brand with ID "${brandId}" not found`);
+    }
+
+    const definition = await this.configDefinitionRepo.findOne({
+      where: {
+        brand: { id: brand.id },
         name: configName,
-        version: version, 
-        company: company 
+        company,
       },
     });
-    
+
+    if (!definition) {
+      throw new NotFoundException(`Config "${configName}" not found for this brand`);
+    }
+
+    await this.configDefinitionService.syncDefinitionAssociations(definition, brand, company);
+
+    const config = await this.configRepo.findOne({
+      where: {
+        brand: { id: brandId },
+        definition: { id: definition.id },
+        version,
+      },
+    });
+
     if (!config) {
-      // Debug: Let's see what configs actually exist for this name
-      const allConfigsForName = await this.configRepo.find({
-        where: { 
-          brand: { id: brandId }, 
-          name: configName,
-          company: company 
+      const allConfigs = await this.configRepo.find({
+        where: {
+          brand: { id: brandId },
+          definition: { id: definition.id },
         },
-        order: { version: 'DESC' }
+        order: { version: 'DESC' },
       });
-      
-      const existingVersions = allConfigsForName.map(c => c.version).join(', ');
+
+      const existingVersions = allConfigs.map(c => c.version).join(', ');
       throw new NotFoundException(
-        `Config "${configName}" version "${version}" not found for this brand. ` +
-        `Available versions: ${existingVersions || 'none'}`
+        `Config "${definition.name}" version "${version}" not found for this brand. ` +
+        `Available versions: ${existingVersions || 'none'}`,
       );
     }
-    
-    // Check if active version record already exists
+
     const existingActiveVersion = await this.activeVersionRepo.findOne({
-      where: { 
-        brand: { id: brandId }, 
-        configName: configName,
-        company: company 
+      where: {
+        brand: { id: brandId },
+        configDefinition: { id: definition.id },
+        company,
       },
     });
-    
+
     if (existingActiveVersion) {
-      // Update existing record
       existingActiveVersion.activeVersion = version;
+      existingActiveVersion.configName = definition.name;
+      existingActiveVersion.configDefinition = definition;
       await this.activeVersionRepo.save(existingActiveVersion);
     } else {
-      // Create new record
-      const brand = await this.brandRepo.findOne({ where: { id: brandId } });
       const activeVersion = this.activeVersionRepo.create({
         brand,
-        configName,
+        configName: definition.name,
+        configDefinition: definition,
         company,
         activeVersion: version,
       });
@@ -511,9 +679,13 @@ export class ConfigsService {
   ): Promise<UpdateConfigResponseDto> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
 
-    const existing = await this.configRepo.findOne({
-      where: { id: configId, brand: { id: brand.id }, company },
-    });
+    const existing = await this.configRepo
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.definition', 'definition')
+      .where('config.id = :configId', { configId })
+      .andWhere('config.brandId = :brandId', { brandId: brand.id })
+      .andWhere('definition.company = :company', { company })
+      .getOne();
 
     if (!existing) {
       throw new NotFoundException(`Config with ID "${configId}" not found`);
@@ -607,9 +779,13 @@ export class ConfigsService {
   ): Promise<UpdateConfigResponseDto> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
 
-    const existing = await this.configRepo.findOne({
-      where: { id: configId, brand: { id: brand.id }, company },
-    });
+    const existing = await this.configRepo
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.definition', 'definition')
+      .where('config.id = :configId', { configId })
+      .andWhere('config.brandId = :brandId', { brandId: brand.id })
+      .andWhere('definition.company = :company', { company })
+      .getOne();
 
     if (!existing) {
       throw new NotFoundException(`Config with ID "${configId}" not found`);
@@ -672,31 +848,45 @@ export class ConfigsService {
       throw new NotFoundException(`Brand with name "${brandName}" not found`);
     }
     
-    // Get the active version for this config name
+    const definition = await this.configDefinitionRepo.findOne({
+      where: {
+        brand: { id: brand.id },
+        name: configName,
+        company,
+      },
+    });
+
+    if (!definition) {
+      return null;
+    }
+
+    await this.configDefinitionService.syncDefinitionAssociations(definition, brand, company);
+
     const activeVersion = await this.activeVersionRepo.findOne({
-      where: { 
-        brand: { id: brand.id }, 
-        configName: configName,
-        company: company 
+      where: {
+        brand: { id: brand.id },
+        configDefinition: { id: definition.id },
+        company,
       },
     });
     
     if (!activeVersion) {
-      // If no active version is set, return the latest version
-      return this.configRepo.findOne({
-        where: { brand: { id: brand.id }, name: configName, company: company },
+      const latest = await this.configRepo.findOne({
+        where: { brand: { id: brand.id }, definition: { id: definition.id } },
         order: { version: 'DESC' },
       });
+      return this.withVirtualProperties(latest) as Config | null;
     }
     
-    return this.configRepo.findOne({
+    const config = await this.configRepo.findOne({
       where: { 
         brand: { id: brand.id }, 
-        name: configName, 
+        definition: { id: definition.id }, 
         version: activeVersion.activeVersion,
-        company: company 
       },
     });
+
+    return this.withVirtualProperties(config) as Config | null;
   }
 
   private async getBrandByIdForUser(userId: string, brandId: number): Promise<Brand> {

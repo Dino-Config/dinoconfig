@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany, Index, Unique } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Config } from '../../configs/entities/config.entity';
+import { ConfigDefinition } from '../../configs/entities/config-definition.entity';
 
 @Entity('brands')
 @Unique(['user', 'name'])
@@ -31,4 +32,7 @@ export class Brand {
 
   @OneToMany(() => Config, config => config.brand)
   configs: Config[];
+
+  @OneToMany(() => ConfigDefinition, definition => definition.brand)
+  configDefinitions: ConfigDefinition[];
 }
