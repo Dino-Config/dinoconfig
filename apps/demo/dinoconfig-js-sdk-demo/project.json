@@ -1,0 +1,31 @@
+{
+  "name": "dinoconfig-js-sdk-demo",
+  "root": "apps/demo/dinoconfig-js-sdk-demo",
+  "sourceRoot": "apps/demo/dinoconfig-js-sdk-demo/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run build",
+        "cwd": "apps/demo/dinoconfig-js-sdk-demo"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run dev",
+        "cwd": "apps/demo/dinoconfig-js-sdk-demo"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm start",
+        "cwd": "apps/demo/dinoconfig-js-sdk-demo"
+      }
+    }
+  },
+  "tags": ["type:node", "scope:demo"]
+}
+
