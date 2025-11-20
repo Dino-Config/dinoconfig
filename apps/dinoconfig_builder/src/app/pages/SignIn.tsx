@@ -22,7 +22,8 @@ export default function SignIn() {
 
     try {
       await authService.login(email, password);
-      await refreshAuth();
+      // Force auth check even though we're on a public route (after successful login)
+      await refreshAuth(true);
       // User will be loaded automatically by UserProvider when isAuthenticated becomes true
       navigate('/brands');
     } catch (err: any) {

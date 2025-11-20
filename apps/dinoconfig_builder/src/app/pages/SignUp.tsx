@@ -77,7 +77,8 @@ export default function SignUp() {
         email: formData.email,
         password: formData.password,
       });
-      await refreshAuth();
+      // Force auth check even though we're on a public route (after successful signup)
+      await refreshAuth(true);
       // User will be loaded automatically by UserProvider when isAuthenticated becomes true
       navigate('/brands');
     } catch (err: any) {

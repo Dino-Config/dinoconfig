@@ -63,53 +63,8 @@ export class AuthService {
   public isLoading = this._isLoading.asReadonly();
 
   constructor() {
-    this.checkAuthStatus();
-  }
-
-  private checkAuthStatus(): void {
-    this._isLoading.set(true);
-    
-    // Check if user is authenticated by making an API call
-    this.getCurrentUserFromAPI().subscribe({
-      next: (user) => {
-        this._currentUser.set(user);
-        this._isAuthenticated.set(true);
-        this._isLoading.set(false);
-      },
-      error: (error) => {
-        // If getting user fails, try to refresh token first
-        if (error.status === 401) {
-          this.refreshToken().subscribe({
-            next: () => {
-              // After successful refresh, try to get user again
-              this.getCurrentUserFromAPI().subscribe({
-                next: (user) => {
-                  this._currentUser.set(user);
-                  this._isAuthenticated.set(true);
-                  this._isLoading.set(false);
-                },
-                error: (refreshError) => {
-                  this._currentUser.set(null);
-                  this._isAuthenticated.set(false);
-                  this._isLoading.set(false);
-                }
-              });
-            },
-            error: (refreshError) => {
-              // If refresh also fails, user is not authenticated
-              this._currentUser.set(null);
-              this._isAuthenticated.set(false);
-              this._isLoading.set(false);
-            }
-          });
-        } else {
-          // For other errors, just set as not authenticated
-          this._currentUser.set(null);
-          this._isAuthenticated.set(false);
-          this._isLoading.set(false);
-        }
-      }
-    });
+    // Don't check auth status on initialization - signin/signup are now in React app
+    this._isLoading.set(false);
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
@@ -118,19 +73,10 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`,
        { email, password },
        { withCredentials: true }).pipe(
-      switchMap((loginResponse) => {
-        // After successful login, get user data from API
-        return this.getCurrentUserFromAPI().pipe(
-          tap((user) => {
-            this._currentUser.set(user);
-            this._isAuthenticated.set(true);
-            this._isLoading.set(false);
-          }),
-          switchMap(() => {
-            // Return the original login response
-            return [loginResponse];
-          })
-        );
+      tap((loginResponse) => {
+        // Set authenticated state without fetching user data
+        this._isAuthenticated.set(true);
+        this._isLoading.set(false);
       }),
       catchError(error => {
         this._isLoading.set(false);
@@ -170,19 +116,10 @@ export class AuthService {
           password: userData.password,
         }, { withCredentials: true });
       }),
-      switchMap((loginResponse) => {
-        // After successful signup and login, get user data from API
-        return this.getCurrentUserFromAPI().pipe(
-          tap((user) => {
-            this._currentUser.set(user);
-            this._isAuthenticated.set(true);
-            this._isLoading.set(false);
-          }),
-          switchMap(() => {
-            // Return the original login response
-            return [loginResponse];
-          })
-        );
+      tap((loginResponse) => {
+        // Set authenticated state without fetching user data
+        this._isAuthenticated.set(true);
+        this._isLoading.set(false);
       }),
       catchError(error => {
         this._isLoading.set(false);
@@ -215,18 +152,9 @@ export class AuthService {
   refreshToken(): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/refresh`, {}, { withCredentials: true })
       .pipe(
-        switchMap((refreshResponse) => {
-          // After successful refresh, get updated user data
-          return this.getCurrentUserFromAPI().pipe(
-            tap((user) => {
-              this._currentUser.set(user);
-              this._isAuthenticated.set(true);
-            }),
-            switchMap(() => {
-              // Return the original refresh response
-              return [refreshResponse];
-            })
-          );
+        tap((refreshResponse) => {
+          // Set authenticated state without fetching user data
+          this._isAuthenticated.set(true);
         }),
         catchError(error => {
           this.logout();
@@ -246,10 +174,5 @@ export class AuthService {
 
   getUser(): User | null {
     return this._currentUser();
-  }
-
-  // New method to get user data from API
-  private getCurrentUserFromAPI(): Observable<User> {
-    return this.http.get<User>(`${environment.apiUrl}/users`, { withCredentials: true });
   }
 }
