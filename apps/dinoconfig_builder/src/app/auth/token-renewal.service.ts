@@ -164,7 +164,6 @@ export class TokenRenewalService {
    * Start a timer to periodically check and renew tokens
    */
   private startTokenRenewalTimer(): void {
-    // Check every 10 minutes for idle status and token validity
     this.renewalTimer = setInterval(async () => {
       // Check if user is idle and should see warning
       this.checkIdleAndWarn();
@@ -185,7 +184,7 @@ export class TokenRenewalService {
           }
         }
       }
-    }, 10 * 60 * 1000); // Check every 10 minutes
+    }, 2 * 60 * 1000);
   }
 
   /**
