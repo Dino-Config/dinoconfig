@@ -38,18 +38,18 @@ export class HeaderComponent {
   }
 
   openLoginDialog() {
-    this.dialogService.openLoginDialog();
+    window.location.href = `${environment.builderUrl}/signin`;
   }
 
   openSignupDialog() {
-    this.dialogService.openSignupDialog();
+    window.location.href = `${environment.builderUrl}/signup`;
   }
 
   openBuilder() {
     if (this.authService.isAuthenticated()) {
       window.open(environment.builderUrl, '_blank');
     } else {
-      this.dialogService.openSignupDialog();
+      window.location.href = `${environment.builderUrl}/signup`;
     }
   }
 

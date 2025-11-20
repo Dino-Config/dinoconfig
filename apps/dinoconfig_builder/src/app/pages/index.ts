@@ -7,3 +7,6 @@ export { SubscriptionPage } from './subscription-page';
 export { SubscriptionSuccess } from './subscription-success';
 export { SubscriptionCancel } from './subscription-cancel';
 export { default as EmailVerificationPending } from './EmailVerificationPending';
+export { default as SignIn } from './SignIn';
+export { default as SignUp } from './SignUp';
+export { default as ForgotPassword } from './ForgotPassword';

@@ -1,6 +1,6 @@
 import axios from "../auth/axios-interceptor";
 import { useNavigate, useLocation } from "react-router-dom";
-import { IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
+import { IoHammerOutline, IoPersonOutline, IoSettingsOutline, IoLogOutOutline, IoChevronForwardOutline } from "react-icons/io5";
 import { useUser } from "../auth/user-context";
 import { useSubscription } from "../auth/subscription-context";
 import { environment } from "../../environments";
@@ -118,6 +118,9 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
               >
                 <IoSettingsOutline className="nav-icon" />
                 <span className={isCollapsed ? 'hidden' : ''}>Settings</span>
+                {!isCollapsed && (
+                  <IoChevronForwardOutline className="nav-arrow" />
+                )}
               </button>
             </li>
             {/* Settings child: Features (visible as nested under Settings) */}
@@ -128,7 +131,6 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
                   onClick={goSettingsSdk}
                   title={isCollapsed ? 'SDK & API Keys' : ''}
                 >
-                  <span className="nav-sub-bullet" />
                   <span className={isCollapsed ? 'hidden' : ''}>SDK & API Keys</span>
                 </button>
               </li>
@@ -140,7 +142,6 @@ export default function LeftNavigation({ isCollapsed, onToggle, activeItem }: Le
                   onClick={goSettingsFeatures}
                   title={isCollapsed ? 'Features' : ''}
                 >
-                  <span className="nav-sub-bullet" />
                   <span className={isCollapsed ? 'hidden' : ''}>Features</span>
                 </button>
               </li>

@@ -238,15 +238,7 @@
             .nav-link {
               padding-left: 44px;
               font-size: 13px;
-            }
-
-            .nav-sub-bullet {
-              width: 6px;
-              height: 6px;
-              border-radius: 50%;
-              background: #9ca3af;
-              margin-right: 12px;
-              flex-shrink: 0;
+              text-align: left;
             }
           }
 
@@ -273,9 +265,20 @@
               flex-shrink: 0;
             }
 
+            .nav-arrow {
+              width: 16px;
+              height: 16px;
+              margin-left: auto;
+              transition: color 0.2s, transform 0.2s;
+              flex-shrink: 0;
+              color: #9ca3af;
+            }
+
             span {
               transition: color 0.2s;
               white-space: nowrap;
+              flex: 1;
+              text-align: left;
             }
 
             &:hover, &.active {
@@ -285,6 +288,15 @@
               .nav-icon {
                 color: #2563eb;
               }
+
+              .nav-arrow {
+                color: #6b7280;
+              }
+            }
+
+            &.active .nav-arrow {
+              transform: rotate(90deg);
+              color: #2563eb;
             }
           }
         }

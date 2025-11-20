@@ -1,6 +1,6 @@
 import { JSX, useContext, useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import { AuthContext } from "../auth/auth-provider";
-import { environment } from "../../environments";
 import { Spinner } from "../components";
 
 export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -10,10 +10,7 @@ export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     if (!loading && !isAuthenticated) {
       // Try to refresh auth before redirecting
       refreshAuth().then(() => {
-        // If still not authenticated after refresh, redirect
-        if (!isAuthenticated) {
-          window.location.href = environment.homeUrl;
-        }
+        // If still not authenticated after refresh, redirect will happen via Navigate
       });
     }
   }, [loading, isAuthenticated, refreshAuth]);
@@ -23,7 +20,7 @@ export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   }
 
   if (!isAuthenticated) {
-    return null;
+    return <Navigate to="/signin" replace />;
   }
 
   return children;

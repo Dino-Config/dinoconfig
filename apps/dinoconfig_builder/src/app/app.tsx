@@ -1,21 +1,27 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Profile, Settings, Features, SdkApiKeys, MultiConfigBuilder, SubscriptionPage, SubscriptionSuccess, SubscriptionCancel, EmailVerificationPending } from "./pages";
+import { Profile, Settings, Features, SdkApiKeys, MultiConfigBuilder, SubscriptionPage, SubscriptionSuccess, SubscriptionCancel, EmailVerificationPending, SignIn, SignUp, ForgotPassword } from "./pages";
 import BrandAdd from "./brand-add/brand-add";
 import Layout from "./layout/layout";
 import BrandSelection from "./brand-selection/brand-selection";
 import { LimitViolationGuard, EmailVerificationGuard } from "./components";
+import { ProtectedRoute } from "./route/protected-route";
 
 export function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-email" element={<EmailVerificationPending />} />
         <Route path="/" element={
+          <ProtectedRoute>
       <LimitViolationGuard>
             <EmailVerificationGuard>
               <Layout />
             </EmailVerificationGuard>
           </LimitViolationGuard>
+          </ProtectedRoute>
         }>
             <Route index element={<Navigate to="/brands" replace />} />
             <Route path="/brands" element={<BrandSelection />} />

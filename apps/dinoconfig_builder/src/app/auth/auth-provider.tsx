@@ -20,10 +20,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const checkAuthStatus = async () => {
+    // Check if we're on a public route
+    const publicRoutes = ['/signin', '/signup', '/verify-email'];
+    const isPublicRoute = typeof window !== 'undefined' && publicRoutes.some(route => window.location.pathname.includes(route));
+    
     try {
       await axios.get(`${environment.apiUrl}/auth/validate`, { withCredentials: true, timeout: 10000 });
       setIsAuthenticated(true);
     } catch (error: any) {
+      // Don't try to refresh tokens on public routes - just set as not authenticated
+      if (isPublicRoute) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+
+      // Only try token refresh on protected routes
       const renewed = await tokenRenewalService.forceRenewal();
       if (renewed) {
         try {
@@ -44,13 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuthStatus();
   }, []);
 
-  if (loading || isAuthenticated === null) {
-    // Keep children unmounted until we know the auth status
-    return null; 
-  }
-
+  // Always render children, even during loading, so public pages can render
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading, refreshAuth: checkAuthStatus }}>
+    <AuthContext.Provider value={{ isAuthenticated: isAuthenticated ?? false, loading, refreshAuth: checkAuthStatus }}>
       {children}
     </AuthContext.Provider>
   );

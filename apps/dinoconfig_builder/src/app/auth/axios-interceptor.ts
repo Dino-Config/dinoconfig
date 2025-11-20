@@ -28,9 +28,24 @@ axios.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as any;
 
+    // Skip token refresh for public routes and auth endpoints
+    const publicRoutes = ['/signin', '/signup', '/verify-email'];
+    const isPublicRoute = publicRoutes.some(route => window.location.pathname.includes(route));
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                          originalRequest.url?.includes('/auth/signup') ||
+                          originalRequest.url?.includes('/auth/validate');
+
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't try to refresh tokens on public routes or auth endpoints
+      if (isPublicRoute || isAuthEndpoint) {
+        return Promise.reject(error);
+      }
+
       if (originalRequest.url?.includes('/auth/refresh')) {
-        window.location.href = environment.homeUrl;
+        // Don't redirect on public routes
+        if (!isPublicRoute) {
+          window.location.href = environment.homeUrl;
+        }
         return Promise.reject(error);
       }
 
@@ -60,12 +75,18 @@ axios.interceptors.response.use(
           return axios(originalRequest);
         } else {
           processQueue(new Error('Token renewal failed'), null);
-          window.location.href = environment.homeUrl;
+          // Don't redirect on public routes
+          if (!isPublicRoute) {
+            window.location.href = environment.homeUrl;
+          }
           return Promise.reject(error);
         }
       } catch (refreshError) {
         processQueue(refreshError, null);
-        window.location.href = environment.homeUrl;
+        // Don't redirect on public routes
+        if (!isPublicRoute) {
+          window.location.href = environment.homeUrl;
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -73,7 +94,10 @@ axios.interceptors.response.use(
     }
 
     if (error.response?.status === 401 && originalRequest._retry) {
-      window.location.href = environment.homeUrl;
+      // Don't redirect on public routes
+      if (!isPublicRoute) {
+        window.location.href = environment.homeUrl;
+      }
     }
 
     return Promise.reject(error);

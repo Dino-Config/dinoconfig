@@ -19,8 +19,8 @@
   </div>
   <ng-template #loggedOut>
     <div class="auth-buttons desktop-only">
-      <button mat-button class="login-btn" (click)="openLoginDialog()">Log in</button>
-      <button mat-raised-button color="accent" class="signup-btn" (click)="openSignupDialog()">Sign up</button>
+      <button mat-button class="login-btn" (click)="openLoginDialog()">Sign in</button>
+      <button mat-raised-button class="demo-btn" (click)="openCalendlyDialog()">Book a demo</button>
     </div>
   </ng-template>
   
@@ -57,10 +57,7 @@
         <span>Book a Demo</span>
       </button>
       <button mat-menu-item class="login-menu-item" (click)="openLoginDialog()">
-        <span>Log in</span>
-      </button>
-      <button mat-menu-item class="signup-menu-item" (click)="openSignupDialog()">
-        <span>Sign up</span>
+        <span>Sign in</span>
       </button>
     </ng-template>
   </mat-menu>

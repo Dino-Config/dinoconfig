@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import axios from "./axios-interceptor";
 import { environment } from "../../environments";
 import { User } from "../types";
+import { AuthContext } from "./auth-provider";
 
 type UserContextType = {
   user: User | null;
@@ -26,6 +27,7 @@ export const useUser = () => {
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const { isAuthenticated } = useContext(AuthContext);
 
   const loadUser = async () => {
     try {
@@ -47,8 +49,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    // Only load user if authenticated
+    if (isAuthenticated) {
     loadUser();
-  }, []);
+    } else {
+      setUser(null);
+    }
+  }, [isAuthenticated]);
 
   return (
     <UserContext.Provider value={{ user, loading, refreshUser }}>

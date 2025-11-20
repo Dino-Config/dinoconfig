@@ -214,7 +214,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.authService.isAuthenticated()) {
       window.open(environment.builderUrl, '_blank');
     } else {
-      this.dialogService.openSignupDialog();
+      window.location.href = `${environment.builderUrl}/signup`;
     }
   }
 

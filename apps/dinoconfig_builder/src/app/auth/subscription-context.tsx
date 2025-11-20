@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { subscriptionService, SubscriptionStatus, LimitViolationsResult } from "../services/subscription.service";
+import { AuthContext } from "./auth-provider";
 
 type SubscriptionContextType = {
   subscription: SubscriptionStatus | null;
@@ -30,8 +31,9 @@ export const useSubscription = () => {
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [violations, setViolations] = useState<LimitViolationsResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useContext(AuthContext);
 
   const loadSubscription = useCallback(async () => {
     try {
@@ -86,8 +88,16 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    loadSubscription();
-  }, [loadSubscription]);
+    // Only load subscription if authenticated
+    if (isAuthenticated) {
+      loadSubscription();
+    } else {
+      setSubscription(null);
+      setViolations(null);
+      setLoading(false);
+      setError(null);
+    }
+  }, [isAuthenticated, loadSubscription]);
 
   // Listen for subscription changes
   useEffect(() => {
