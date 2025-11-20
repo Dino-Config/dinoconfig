@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req, Get, UnauthorizedException, Inject, forwardRef, Header } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get, UnauthorizedException, Inject, forwardRef, Header, Param, NotFoundException } from '@nestjs/common';
 import { BrandsService } from './brand.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UserAuthGuard } from '../security/guard/user-auth.guard';
@@ -43,6 +43,26 @@ export class BrandsController {
     }
     
     return this.brandsService.findAllByCompany(company);
+  }
+
+  @Get(':id')
+  async findOne(@Req() req, @Param('id') id: string) {
+    const company = brandHeaderExtractor(req);
+    if (!company) {
+      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
+    }
+    
+    const brandId = parseInt(id);
+    if (isNaN(brandId)) {
+      throw new UnauthorizedException('Invalid brand ID');
+    }
+    
+    const brand = await this.brandsService.findByIdAndCompany(brandId, company);
+    if (!brand) {
+      throw new NotFoundException('Brand not found');
+    }
+    
+    return brand;
   }
 
   @Post()

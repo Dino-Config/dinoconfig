@@ -12,6 +12,7 @@ export type FieldType =
   | "tel"
   | "search"
   | "time"
+  | "date"
   | "datetime-local"
   | "month"
   | "week";
@@ -28,6 +29,14 @@ export interface FieldConfig {
   pattern?: string;
 }
 
+export interface GridFieldConfig extends FieldConfig {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface Config {
   id: number;
   name: string;
@@ -35,6 +44,7 @@ export interface Config {
   formData: Record<string, any>;
   schema?: Record<string, any>;
   uiSchema?: Record<string, any>;
+  layout?: GridFieldConfig[]; // Grid layout for drag-and-drop form builder
   version: number;
   createdAt: string;
 }

@@ -71,10 +71,13 @@ export default function ConfigBuilderPanel({
 
   const handleAddElement = useCallback((item: PaletteItem) => {
     console.log('handleAddElement called with:', item);
+    console.log('canvasRef.current:', canvasRef.current);
+    console.log('canvasRef.current?.addElement:', canvasRef.current?.addElement);
     if (canvasRef.current) {
+      console.log('Calling canvasRef.current.addElement...');
       canvasRef.current.addElement(item);
     } else {
-      console.error('Canvas ref is null!');
+      console.error('Canvas ref is null! GridStackCanvas may not be mounted yet.');
     }
   }, []);
 

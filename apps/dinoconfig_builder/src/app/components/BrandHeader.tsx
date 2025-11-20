@@ -11,25 +11,21 @@ interface BrandHeaderProps {
 export default function BrandHeader({ brand }: BrandHeaderProps) {
   const navigate = useNavigate();
 
-  if (!brand) {
-    navigate('/brands')
-  }
-
   return (
     <div className="brand-header">
-      <button className="btn back-button" onClick={() => navigate('/brands') }>
+      <button className="btn back-button" onClick={() => navigate('/brands')}>
         <IoChevronBack />
         {/* <span>Back to Brands</span> */}
       </button>
       <div className="brand-info">
         <div className="brand-field">
           <span className="field-label">Brand name:</span>
-          <h1 className="field-value">{brand?.name}</h1>
+          <h1 className="field-value">{brand?.name || 'Loading...'}</h1>
         </div>
         {brand?.description && (
           <div className="brand-field">
             <span className="field-label">Description:</span>
-            <p className="field-value">{brand?.description}</p>
+            <p className="field-value">{brand.description}</p>
           </div>
         )}
       </div>

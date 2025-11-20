@@ -52,4 +52,13 @@ export class BrandsService {
       relations: ['user']
     });
   }
+
+  async findByIdAndCompany(brandId: number, company: string): Promise<Brand | null> {
+    return this.brandRepo.findOne({
+      where: { 
+        id: brandId,
+        company: company
+      }
+    });
+  }
 }
