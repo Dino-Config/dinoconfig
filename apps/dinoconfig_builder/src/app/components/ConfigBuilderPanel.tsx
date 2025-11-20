@@ -610,7 +610,6 @@ export default function ConfigBuilderPanel({
       <div className="config-builder-panel">
         <div className="panel-header">
           <h3 className="section-title">Configuration Builder</h3>
-          <p className="section-subtitle">Create or select a config to get started</p>
         </div>
         <div className="builder-disabled">
           <div className="empty-state">

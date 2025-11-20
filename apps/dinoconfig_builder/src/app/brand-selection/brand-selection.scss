@@ -19,7 +19,10 @@
     margin-bottom: 40px;
 
     h1 {
-      color: #2d3748;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: 8px;
@@ -27,7 +30,7 @@
 
     p {
       color: #718096;
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
   }
 
@@ -177,7 +180,7 @@
     border-top: 1px solid #e2e8f0;
 
     .btn.secondary {
-      background: linear-gradient(135deg, #ff5f57 0%, #f64b42 100%);
+      background: linear-gradient(135deg, #667eea 0%, #4f3aa5 100%);
       color: white;
       padding: 12px 24px;
       font-size: 1rem;
@@ -186,11 +189,12 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(255, 95, 87, 0.3);
-        background: linear-gradient(135deg, #f64b42 0%, #e53e3e 100%);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, #5568d3 0%, #4f3aa5 100%);
       }
     }
   }

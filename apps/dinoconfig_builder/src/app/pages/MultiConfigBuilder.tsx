@@ -23,6 +23,7 @@ export default function MultiConfigBuilder() {
   const { subscription } = useSubscription();
   const [limitReached, setLimitReached] = useState(false);
   const [limitErrorMessage, setLimitErrorMessage] = useState<string>('');
+  const [isVersionPromptCollapsed, setIsVersionPromptCollapsed] = useState(false);
   const brandIdNumber = brandId ? parseInt(brandId) : null;
 
   // Notification system
@@ -495,12 +496,21 @@ export default function MultiConfigBuilder() {
               <FeatureGate 
                 feature={Feature.CONFIG_VERSIONING}
                 fallback={
-                  <div className="version-upgrade-prompt">
-                    <div className="upgrade-prompt-content">
+                  <div className={`version-upgrade-prompt ${isVersionPromptCollapsed ? 'collapsed' : ''}`}>
+                    <div className="upgrade-prompt-header" onClick={() => setIsVersionPromptCollapsed(!isVersionPromptCollapsed)}>
                       <h4>Version History Available on Pro Plan</h4>
-                      <p>Upgrade to Pro to access configuration version history, rollback capabilities, and track all changes to your configs.</p>
-                      <a href="/subscription" className="upgrade-link">View Plans</a>
+                      <button className="collapse-toggle" aria-label={isVersionPromptCollapsed ? 'Expand' : 'Collapse'}>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transform: isVersionPromptCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
                     </div>
+                    {!isVersionPromptCollapsed && (
+                      <div className="upgrade-prompt-content">
+                        <p>Upgrade to Pro to access configuration version history, rollback capabilities, and track all changes to your configs.</p>
+                        <a href="/subscription" className="upgrade-link">View Plans</a>
+                      </div>
+                    )}
                   </div>
                 }
               >

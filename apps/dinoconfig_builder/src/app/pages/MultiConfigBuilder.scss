@@ -146,18 +146,69 @@
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     border: 2px solid #fbbf24;
     border-radius: 16px;
-    padding: 24px;
+    padding: 0;
     margin-bottom: 24px;
     box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+    overflow: hidden;
+    transition: all 0.3s ease;
 
-    .upgrade-prompt-content {
-      text-align: center;
+    .upgrade-prompt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: rgba(251, 191, 36, 0.1);
+      }
 
       h4 {
-        margin: 0 0 12px 0;
+        margin: 0;
         font-size: 18px;
         color: #78350f;
         font-weight: 700;
+        flex: 1;
+        text-align: center;
+      }
+
+      .collapse-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #78350f;
+        transition: transform 0.2s;
+
+        &:hover {
+          opacity: 0.8;
+        }
+
+        svg {
+          display: block;
+        }
+      }
+    }
+
+    .upgrade-prompt-content {
+      text-align: center;
+      padding: 0 24px 24px 24px;
+      animation: slideDown 0.3s ease;
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          max-height: 0;
+        }
+        to {
+          opacity: 1;
+          max-height: 200px;
+        }
       }
 
       p {

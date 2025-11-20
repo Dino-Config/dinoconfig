@@ -144,7 +144,6 @@ export default function BrandSelection() {
 
             <div className="create-new-section">
               <button className="btn secondary" onClick={handleCreateNewBrand}>
-                <IoAdd />
                 Create New Brand
               </button>
             </div>
