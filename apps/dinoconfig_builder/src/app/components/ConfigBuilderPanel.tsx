@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Form } from '@rjsf/mui';
 import validator from "@rjsf/validator-ajv8";
 import { JSONSchema7 } from "json-schema";
@@ -70,6 +70,16 @@ export default function ConfigBuilderPanel({
     setShowPreview(true);
     setShowJsonData(true);
   }, [selectedConfig?.id]);
+
+  // Memoize callbacks - must be before any conditional returns
+  const handleSubmit = useCallback((event: IChangeEvent) => {
+    onFormDataChange(event.formData);
+    onSave();
+  }, [onFormDataChange, onSave]);
+
+  const handleFormChange = useCallback((e: IChangeEvent) => {
+    onFormDataChange(e.formData);
+  }, [onFormDataChange]);
 
   const getSchemaType = (t: FieldType): JSONSchema7["type"] => {
     if (["number", "range"].includes(t)) return "number";
@@ -338,7 +348,7 @@ export default function ConfigBuilderPanel({
     scrollToPreview();
   };
 
-  const handleEditField = (name: string) => {
+  const handleEditField = useCallback((name: string) => {
     const properties = schema.properties as Record<string, any> | undefined;
     if (!properties || !properties[name]) return;
 
@@ -368,9 +378,9 @@ export default function ConfigBuilderPanel({
     setShowEditValidations(hasValidations);
     setIsEditModalOpen(true);
     setShowPreview(true);
-  };
+  }, [schema]);
 
-  const handleDeleteField = async (name: string) => {
+  const handleDeleteField = useCallback(async (name: string) => {
     if (!schema.properties || !(schema.properties as Record<string, any>)[name]) {
       return;
     }
@@ -405,36 +415,25 @@ export default function ConfigBuilderPanel({
     } finally {
       setIsSavingField(false);
     }
-  };
+  }, [schema, brandId, selectedConfig, editingFieldName, onConfirm, onNotification, onConfigUpdated]);
 
-  if (!selectedConfig) {
-    return (
-      <div className="config-builder-panel">
-        <div className="panel-header">
-          <h3 className="section-title">Configuration Builder</h3>
-          <p className="section-subtitle">Create or select a config to get started</p>
-        </div>
-        <div className="builder-disabled">
-          <div className="empty-state">
-            <img src="assets/dino-sad.svg" alt="No configuration selected" className="empty-icon-svg" />
-            <h4>No Configuration Selected</h4>
-            <p>Please create or select a configuration from the sidebar to start building your form fields.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const handleSubmit = (event: IChangeEvent) => {
-    onFormDataChange(event.formData);
-    onSave();
-  };
-
+  // Memoize rootFieldNames to prevent unnecessary re-renders - must be before conditional return
   const properties = (schema.properties ?? {}) as Record<string, any>;
   const fieldEntries = Object.entries(properties);
-  const hasFields = fieldEntries.length > 0;
-  const rootFieldNames = fieldEntries.map(([name]) => name);
+  const rootFieldNames = useMemo(() => {
+    return fieldEntries.map(([name]) => name);
+  }, [schema.properties]);
+  
+  // Memoize formContext to prevent Form re-renders on every keystroke - must be before conditional return
+  const formContext = useMemo(() => ({
+    onEditField: handleEditField,
+    onDeleteField: handleDeleteField,
+    rootFieldNames,
+    editingFieldName,
+    isSavingField,
+  }), [handleEditField, handleDeleteField, rootFieldNames, editingFieldName, isSavingField]);
 
+  // Define FieldActionsObjectTemplate before conditional return so templates can reference it
   interface FieldActionContext {
     onEditField: (name: string) => void;
     onDeleteField: (name: string) => void;
@@ -501,7 +500,7 @@ export default function ConfigBuilderPanel({
         <Grid container spacing={2} style={{ marginTop: '10px' }}>
           {templateProperties.map((element, index) => {
             if (element.hidden) {
-              return <React.Fragment key={index}>{element.content}</React.Fragment>;
+              return <React.Fragment key={`hidden-${index}`}>{element.content}</React.Fragment>;
             }
 
             const context = formContext;
@@ -509,8 +508,11 @@ export default function ConfigBuilderPanel({
               Boolean(isRootObject && context && context.rootFieldNames.includes(element.name));
             const isEditing = Boolean(isRootField && context && context.editingFieldName === element.name);
 
+            // Use element.name as key for stable identity, fallback to index if name is not available
+            const elementKey = element.name || `field-${index}`;
+
             return (
-              <Grid item xs={12} key={index} style={{ marginBottom: '10px' }}>
+              <Grid item xs={12} key={elementKey} style={{ marginBottom: '10px' }}>
                 <div className={`preview-field${isEditing ? ' editing' : ''}`}>
                   <div className="preview-field-content">{element.content}</div>
                   {isRootField && context && (
@@ -598,6 +600,31 @@ export default function ConfigBuilderPanel({
     );
   };
 
+  // Memoize templates object to prevent Form re-renders - must be before conditional return
+  const templates = useMemo(() => ({
+    ObjectFieldTemplate: FieldActionsObjectTemplate
+  }), []); // FieldActionsObjectTemplate is stable
+
+  if (!selectedConfig) {
+    return (
+      <div className="config-builder-panel">
+        <div className="panel-header">
+          <h3 className="section-title">Configuration Builder</h3>
+          <p className="section-subtitle">Create or select a config to get started</p>
+        </div>
+        <div className="builder-disabled">
+          <div className="empty-state">
+            <img src="assets/dino-sad.svg" alt="No configuration selected" className="empty-icon-svg" />
+            <h4>No Configuration Selected</h4>
+            <p>Please create or select a configuration from the sidebar to start building your form fields.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const hasFields = fieldEntries.length > 0;
+
   return (
     <div className="config-builder-panel">
       <div className="panel-header">
@@ -659,19 +686,13 @@ export default function ConfigBuilderPanel({
                 uiSchema={uiSchema}
                 formData={formData}
                 validator={validator}
-                templates={{ ObjectFieldTemplate: FieldActionsObjectTemplate }}
-                formContext={{
-                  onEditField: handleEditField,
-                  onDeleteField: handleDeleteField,
-                  rootFieldNames,
-                  editingFieldName,
-                  isSavingField,
-                }}
+                templates={templates}
+                formContext={formContext}
                 onSubmit={handleSubmit}
                 onError={() => {
                   onNotification?.('error', 'Please resolve validation errors before saving.');
                 }}
-                onChange={(e: IChangeEvent) => onFormDataChange(e.formData)}
+                onChange={handleFormChange}
               >
                 <div className="save-config-actions">
                   <button

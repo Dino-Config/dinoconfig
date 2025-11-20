@@ -1,9 +1,10 @@
 // config.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { Brand } from '../../brands/entities/brand.entity';
+import { ConfigDefinition } from './config-definition.entity';
 
 @Entity('configs')
-@Index(['brand', 'name', 'version', 'company'], { unique: true })
+@Index(['brand', 'definition', 'version'], { unique: true })
 export class Config {
   @PrimaryGeneratedColumn('increment')
   id: number;
@@ -11,14 +12,16 @@ export class Config {
   @ManyToOne(() => Brand, brand => brand.configs, { onDelete: 'CASCADE' })
   brand: Brand;
 
-  @Column({ length: 255 })
-  name: string;
+  @ManyToOne(() => ConfigDefinition, definition => definition.configs, {
+    onDelete: 'CASCADE',
+    eager: true,
+    nullable: true,
+  })
+  @JoinColumn({ name: 'config_definition_id' })
+  definition?: ConfigDefinition;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
-
-  @Column({ type: 'text', nullable: true })
-  company?: string;
 
   @Column({ type: 'jsonb' })
   formData: Record<string, any>;
@@ -34,4 +37,8 @@ export class Config {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  name: string;
+
+  company?: string;
 }
