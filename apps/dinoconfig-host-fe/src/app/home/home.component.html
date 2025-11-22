@@ -26,15 +26,15 @@
             </div>
             <div class="dashboard-content">
                 <div class="config-item">
-                    <div class="config-name typing-text">{{ featureFlagsText }}<span class="cursor">|</span></div>
+                    <div class="config-name typing-text">{{ featureFlagsText$ | async }}<span class="cursor">|</span></div>
                     <div class="config-toggle" [class.active]="featureFlagsToggleActive"></div>
                 </div>
                 <div class="config-item">
-                    <div class="config-name typing-text">{{ apiSettingsText }}<span class="cursor">|</span></div>
+                    <div class="config-name typing-text">{{ apiSettingsText$ | async }}<span class="cursor">|</span></div>
                     <div class="config-toggle" [class.active]="apiSettingsToggleActive"></div>
                 </div>
                 <div class="config-item">
-                    <div class="config-name typing-text">{{ userPreferencesText }}<span class="cursor">|</span></div>
+                    <div class="config-name typing-text">{{ userPreferencesText$ | async }}<span class="cursor">|</span></div>
                     <div class="config-toggle" [class.active]="userPreferencesToggleActive"></div>
                 </div>
             </div>
