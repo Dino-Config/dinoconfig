@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { AuthVisualSidebarComponent } from '../shared/auth-visual-sidebar/auth-visual-sidebar.component';
+import { AuthLayoutComponent } from '../shared/auth-layout/auth-layout.component';
 
 @Component({
   selector: 'dc-forgot-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, AuthVisualSidebarComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, AuthLayoutComponent],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss'
 })

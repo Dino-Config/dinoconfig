@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { AuthVisualSidebarComponent } from '../shared/auth-visual-sidebar/auth-visual-sidebar.component';
+import { AuthLayoutComponent } from '../shared/auth-layout/auth-layout.component';
 
 @Component({
   selector: 'dc-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, AuthVisualSidebarComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, AuthLayoutComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
