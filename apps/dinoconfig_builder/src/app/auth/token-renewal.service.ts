@@ -12,7 +12,7 @@ export class TokenRenewalService {
   private isRenewing = false;
   private renewalCallbacks: Array<(success: boolean) => void> = [];
   private lastActivityTime: number = Date.now();
-  private readonly IDLE_TIMEOUT = 13 * 60 * 1000; // 13 minutes (show warning before 15 min token expiry)
+  private readonly IDLE_TIMEOUT = 1 * 60 * 1000; // 13 minutes (show warning before 15 min token expiry)
   private readonly WARNING_DURATION = 2 * 60; // 2 minutes warning countdown
   private activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
   private idleWarningCallback: ((remainingSeconds: number) => void) | null = null;
@@ -74,9 +74,10 @@ export class TokenRenewalService {
    */
   private checkIdleAndWarn(): void {
     const idleTime = Date.now() - this.lastActivityTime;
-    
+    console.log('checkIdleAndWarn: idleTime', idleTime);
     // If user has been idle for IDLE_TIMEOUT, show warning
     if (idleTime >= this.IDLE_TIMEOUT && !this.warningDismissed && !this.idleWarningTimer) {
+      console.log('checkIdleAndWarn: showing warning');
       this.showIdleWarning();
     }
   }
@@ -168,6 +169,7 @@ export class TokenRenewalService {
     this.renewalTimer = setInterval(async () => {
       // Check if user is idle and should see warning
       this.checkIdleAndWarn();
+      console.log('startTokenRenewalTimer: idleWarningTimer', this.idleWarningTimer);
 
       // Only validate/renew if not showing warning
       if (!this.idleWarningTimer) {
@@ -185,7 +187,7 @@ export class TokenRenewalService {
           }
         }
       }
-    }, 10 * 60 * 1000); // Check every 10 minutes
+    }, 1 * 60 * 1000); // Check every 10 minutes
   }
 
   /**

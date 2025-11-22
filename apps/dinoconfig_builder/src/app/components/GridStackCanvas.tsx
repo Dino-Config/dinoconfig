@@ -121,6 +121,10 @@ const GridStackCanvas = forwardRef<GridStackCanvasRef, GridStackCanvasProps>(({
   const gridInstanceRef = useRef<GridStack | null>(null);
   const itemRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
   const dragStopTimerRef = useRef<number | null>(null);
+  const fieldsRef = useRef<GridFieldConfig[]>(fields);
+
+  // Keep fieldsRef in sync with fields
+  fieldsRef.current = fields;
 
   // Create refs for all fields
   itemRefs.current = {};
@@ -173,10 +177,11 @@ const GridStackCanvas = forwardRef<GridStackCanvasRef, GridStackCanvasProps>(({
       if (node) {
         console.log(`Dragged node #${node.id} to ${node.x},${node.y}`);
         
-        // Update state with new position
-        const existingField = fields.find(f => f.id === node.id);
+        // Use fieldsRef to get the latest fields value
+        const currentFields = fieldsRef.current;
+        const existingField = currentFields.find(f => f.id === node.id);
         if (existingField) {
-          const updatedFields = fields.map(f => 
+          const updatedFields = currentFields.map(f => 
             f.id === node.id 
               ? { ...f, x: node.x, y: node.y }
               : f
@@ -201,7 +206,9 @@ const GridStackCanvas = forwardRef<GridStackCanvasRef, GridStackCanvasProps>(({
         return el?.getAttribute?.('gs-id') || el?.gridstackNode?.id;
       }).filter(Boolean);
 
-      const updatedFields = fields.filter(f => !deletedIds.includes(f.id));
+      // Use fieldsRef to get the latest fields value
+      const currentFields = fieldsRef.current;
+      const updatedFields = currentFields.filter(f => !deletedIds.includes(f.id));
       onFieldsChange(updatedFields);
     });
 
@@ -236,13 +243,11 @@ const GridStackCanvas = forwardRef<GridStackCanvasRef, GridStackCanvasProps>(({
     delete (grid as any)._ignoreCB;
 
     // Ensure new items are made into widgets
-    requestAnimationFrame(() => {
-      fields.forEach((field) => {
-        const ref = itemRefs.current[field.id].current;
-        if (ref && !(ref as any).gridstackNode) {
-          grid.makeWidget(ref);
-        }2
-      });
+    fields.forEach((field) => {
+      const ref = itemRefs.current[field.id].current;
+      if (ref && !(ref as any).gridstackNode) {
+        grid.makeWidget(ref);
+      }
     });
   }, [fields, onFieldsChange]);
 

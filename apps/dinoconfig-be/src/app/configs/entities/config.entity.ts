@@ -32,6 +32,9 @@ export class Config {
   @Column({ type: 'jsonb', nullable: true })
   uiSchema?: Record<string, any>;
 
+  @Column({ type: 'jsonb', nullable: true })
+  layout?: Record<string, any>[];
+
   @Column({ type: 'int' })
   version: number;
 

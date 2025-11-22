@@ -139,4 +139,21 @@ export class ConfigsController {
     );
   }
 
+  @Patch(':brandId/configs/:configId/layout')
+  updateLayout(
+    @Request() req,
+    @Param('brandId') brandId: string,
+    @Param('configId') configId: string,
+    @Body() body: { layout: Record<string, any>[]; formData: Record<string, any> },
+  ) {
+    return this.configsService.updateLayout(
+      req.user.auth0Id,
+      parseInt(brandId),
+      parseInt(configId),
+      body.layout,
+      body.formData,
+      req.user.company,
+    );
+  }
+
 }

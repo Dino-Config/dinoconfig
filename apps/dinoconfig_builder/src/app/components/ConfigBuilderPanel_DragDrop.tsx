@@ -61,13 +61,27 @@ export default function ConfigBuilderPanel({
   const [isSavingField, setIsSavingField] = useState(false);
 
   // Load grid fields from selected config's layout
+  // This ensures layout is restored exactly as saved, with backward compatibility for old configs
   useEffect(() => {
-    if (selectedConfig?.layout) {
-      setGridFields(selectedConfig.layout);
+    if (selectedConfig?.layout && Array.isArray(selectedConfig.layout) && selectedConfig.layout.length > 0) {
+      // Validate layout structure - ensure all required fields are present
+      const validatedLayout = selectedConfig.layout.map((field: any) => {
+        // Ensure all GridFieldConfig properties are present
+        return {
+          ...field,
+          id: field.id || `field-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          x: typeof field.x === 'number' ? field.x : 0,
+          y: typeof field.y === 'number' ? field.y : 0,
+          w: typeof field.w === 'number' ? field.w : 4,
+          h: typeof field.h === 'number' ? field.h : 1,
+        } as GridFieldConfig;
+      });
+      setGridFields(validatedLayout);
     } else {
+      // Backward compatibility: if no layout exists, start with empty canvas
       setGridFields([]);
     }
-  }, [selectedConfig?.id]);
+  }, [selectedConfig?.id, selectedConfig?.layout]);
 
   const handleAddElement = useCallback((item: PaletteItem) => {
     console.log('handleAddElement called with:', item);

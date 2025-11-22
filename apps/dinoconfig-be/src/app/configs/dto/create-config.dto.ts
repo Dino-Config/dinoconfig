@@ -18,4 +18,8 @@ export class CreateConfigDto {
   @IsOptional()
   @IsObject()
   uiSchema?: Record<string, any>;
+
+  @IsOptional()
+  @IsObject()
+  layout?: Record<string, any>[];
 }

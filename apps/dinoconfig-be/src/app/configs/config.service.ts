@@ -207,6 +207,7 @@ export class ConfigsService {
       formData: dto.formData ?? {},
       schema: dto.schema ?? { type: 'object', properties: {} },
       uiSchema: dto.uiSchema ?? {},
+      layout: dto.layout ?? null, // Layout is optional, defaults to null for backward compatibility
       brand: { id: brand.id } as Brand,
       definition: { id: definition.id } as ConfigDefinition,
       version: nextVersion,
@@ -271,6 +272,75 @@ export class ConfigsService {
       formData: dto.formData ?? existing.formData,
       schema: dto.schema ?? existing.schema,
       uiSchema: dto.uiSchema ?? existing.uiSchema,
+      layout: dto.layout !== undefined ? dto.layout : existing.layout,
+      brand: { id: brand.id } as Brand,
+      definition: { id: definition.id } as ConfigDefinition,
+      version: nextVersion,
+    });
+
+    const savedConfig = await this.configRepo.save(newConfig);
+    await this.setActiveVersionForConfig(brand.id, definition.name, savedConfig.version, company);
+    
+    const reloadedConfig = await this.configRepo.findOne({
+      where: { id: savedConfig.id },
+      relations: ['definition'],
+    });
+    
+    const allVersions = await this.getConfigVersions(userId, brandId, definition.name, company);
+    
+    return {
+      config: this.withVirtualProperties(reloadedConfig) as Config,
+      versions: allVersions
+    };
+  }
+
+  /**
+   * Updates config layout and formData
+   * Always creates a new version, preserving schema and uiSchema from existing config
+   */
+  async updateLayout(
+    userId: string,
+    brandId: number,
+    configId: number,
+    layout: Record<string, any>[],
+    formData: Record<string, any>,
+    company: string,
+  ): Promise<UpdateConfigResponseDto> {
+    const brand = await this.getBrandByIdForUser(userId, brandId);
+
+    const existing = await this.configRepo
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.definition', 'definition')
+      .where('config.id = :configId', { configId })
+      .andWhere('config.brandId = :brandId', { brandId: brand.id })
+      .andWhere('definition.company = :company', { company })
+      .getOne();
+
+    if (!existing) {
+      throw new NotFoundException(`Config with ID "${configId}" not found`);
+    }
+
+    const definition = await this.resolveDefinitionForConfig(existing, brand, company);
+
+    // Get next version number
+    const latestConfig = await this.configRepo.findOne({
+      where: {
+        brand: { id: brand.id },
+        definition: { id: definition.id },
+      },
+      order: { version: 'DESC' },
+    });
+
+    const nextVersion = latestConfig ? latestConfig.version + 1 : 1;
+
+    // Create new config version with updated layout and formData
+    // Preserve schema and uiSchema from existing config
+    const newConfig = this.configRepo.create({
+      description: existing.description,
+      formData: formData,
+      schema: existing.schema,
+      uiSchema: existing.uiSchema,
+      layout: layout,
       brand: { id: brand.id } as Brand,
       definition: { id: definition.id } as ConfigDefinition,
       version: nextVersion,
