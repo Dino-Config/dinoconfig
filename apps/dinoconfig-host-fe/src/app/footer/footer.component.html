@@ -21,10 +21,10 @@
 
             <div class="nav-column">
                 <h4>Company</h4>
-                <a href="#about">About</a>
-                <a href="#blog">Blog</a>
-                <a href="#careers">Careers</a>
-                <a href="#contact">Contact</a>
+                <a routerLink="/about">About</a>
+                <a routerLink="/about" [queryParams]="{tab: 'blog'}">Blog</a>
+                <a routerLink="/about" [queryParams]="{tab: 'careers'}">Careers</a>
+                <a routerLink="/about" [queryParams]="{tab: 'contact'}">Contact</a>
             </div>
 
             <div class="nav-column">
@@ -47,9 +47,10 @@
         <!-- Bottom Section -->
         <div class="footer-bottom">
             <div class="footer-legal">
-                <a href="#privacy">Privacy Policy</a>
-                <a href="#terms">Terms of Service</a>
-                <a href="#cookies">Cookie Policy</a>
+                <a routerLink="/policies">Terms & Policies</a>
+                <a routerLink="/policies/privacy-policy">Privacy Policy</a>
+                <a routerLink="/policies/terms-of-service">Terms of Service</a>
+                <a routerLink="/policies/cookie-policy">Cookie Policy</a>
             </div>
             <div class="footer-copyright">
                 © 2025 DinoConfig. All rights reserved.

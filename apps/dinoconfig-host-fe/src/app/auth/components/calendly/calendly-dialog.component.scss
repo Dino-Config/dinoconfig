@@ -5,19 +5,18 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px); // Safari support
-    z-index: 999;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: var(--z-modal);
     display: flex;
     justify-content: center;
     align-items: center;
-    animation: backdropFadeIn 0.3s ease-out;
-    cursor: pointer; // Indicates clickable backdrop
+    animation: backdropFadeIn var(--transition-base) ease-out;
+    cursor: pointer;
     
-    // Prevent backdrop from interfering with dialog content
     &:hover {
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.55);
     }
   }
   
@@ -29,8 +28,8 @@
     }
     to {
       opacity: 1;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
   }
   
@@ -46,28 +45,25 @@
   }
   
   .calendly-dialog-container {
-    padding: clamp(16px, 4vw, 24px);
+    padding: clamp(var(--spacing-md), 4vw, var(--spacing-lg));
     max-width: 420px;
     width: 100%;
     min-height: fit-content;
     box-sizing: border-box;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    margin: 0 auto; // Center the container
+    font-family: var(--font-family);
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative; // Add this for absolute positioning context
-    
-    // Ensure proper centering in parent container
+    position: relative;
     align-self: center;
-    
-    // Prevent backdrop blur from affecting dialog content
-    z-index: 1000;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: dialogSlideIn 0.3s ease-out;
+    z-index: calc(var(--z-modal) + 1);
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    animation: dialogSlideIn var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
     
     // Prevent horizontal scrolling
     * {
@@ -84,33 +80,35 @@
       position: absolute;
       top: 12px;
       right: 12px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background-color: #f3f4f6;
-      border: 1px solid #e5e7eb;
-      color: #6b7280;
-      transition: all 0.2s ease;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      transition: all var(--transition-base);
       z-index: 10;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: var(--shadow-sm);
       
       &:hover {
-        background-color: #e5e7eb;
-        border-color: #d1d5db;
-        color: #374151;
-        transform: scale(1.05);
+        background-color: var(--bg-tertiary);
+        border-color: var(--border-dark);
+        color: var(--text-primary);
+        transform: scale(1.1) rotate(90deg);
+        box-shadow: var(--shadow-md);
       }
       
       &:active {
-        transform: scale(0.95);
+        transform: scale(0.95) rotate(90deg);
       }
       
       .mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
     }
 }

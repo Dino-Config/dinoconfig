@@ -14,9 +14,6 @@
                 Book demo
             </button>
         </div>
-        <div class="hero-badges">
-            <span class="badge">Start with our Starter plan</span>
-        </div>
     </div>
     <div class="hero-visual">
         <div class="dashboard-preview">
@@ -29,15 +26,15 @@
             </div>
             <div class="dashboard-content">
                 <div class="config-item">
-                    <div class="config-name typing-text">{{ featureFlagsText }}<span class="cursor">|</span></div>
+                    <div class="config-name typing-text">{{ featureFlagsText$ | async }}<span class="cursor">|</span></div>
                     <div class="config-toggle" [class.active]="featureFlagsToggleActive"></div>
                 </div>
                 <div class="config-item">
-                    <div class="config-name typing-text">{{ apiSettingsText }}<span class="cursor">|</span></div>
+                    <div class="config-name typing-text">{{ apiSettingsText$ | async }}<span class="cursor">|</span></div>
                     <div class="config-toggle" [class.active]="apiSettingsToggleActive"></div>
                 </div>
                 <div class="config-item">
-                    <div class="config-name typing-text">{{ userPreferencesText }}<span class="cursor">|</span></div>
+                    <div class="config-name typing-text">{{ userPreferencesText$ | async }}<span class="cursor">|</span></div>
                     <div class="config-toggle" [class.active]="userPreferencesToggleActive"></div>
                 </div>
             </div>
@@ -126,19 +123,19 @@
 
         <div class="features-grid">
             <div class="feature-card">
-                <div class="feature-icon">🎛️</div>
+                <img src="assets/dino-sit-dj-flip.svg" alt="" class="feature-icon" />
                 <h3>Visual Configuration Editor</h3>
                 <p>Design complex configurations with our intuitive drag-and-drop interface. No coding required.</p>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">🔧</div>
+                <img src="assets/dino-sdk.svg" alt="" class="feature-icon" />
                 <h3>Multi-Platform SDKs</h3>
-                <p>Ready-to-use SDKs for JavaScript, TypeScript, Python, Java, Go, and more.</p>
+                <p>Ready-to-use SDKs for JavaScript, TypeScript, Java and more.</p>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">⚡</div>
+                <img src="assets/dino-sit-z.svg" alt="" class="feature-icon" />
                 <h3>Instant Updates</h3>
                 <p>Changes take effect immediately across all your applications and services.</p>
             </div>
@@ -161,11 +158,13 @@
                 <p>Use our visual editor to create your configuration schema with custom types and validation rules.</p>
                 <div class="step-visual">
                     <div class="code-preview">
-                        <div class="code-line">type: "object"</div>
-                        <div class="code-line">properties: &#123;</div>
-                        <div class="code-line indent">feature_flags: &#123;...&#125;</div>
-                        <div class="code-line indent">api_settings: &#123;...&#125;</div>
-                        <div class="code-line">&#125;</div>
+                        <div class="code-content">
+                            <div class="code-line">type: "object"</div>
+                            <div class="code-line">properties: &#123;</div>
+                            <div class="code-line indent">feature_flags: &#123;...&#125;</div>
+                            <div class="code-line indent">api_settings: &#123;...&#125;</div>
+                            <div class="code-line">&#125;</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -173,12 +172,20 @@
             <div class="step-card">
                 <div class="step-number">2</div>
                 <h3>Fetch Configurations</h3>
-                <p>Use our REST API to retrieve your app’s configuration in JSON format.</p>
+                <p>Use our SDK to retrieve your app's configuration in JSON format.</p>
                 <div class="step-visual">
                     <div class="code-preview">
-                        <div class="code-line">curl -X GET https://api.dinoconfig.com/conf \</div>
-                        <div class="code-line">-H "Authorization: Bearer &lt;YOUR_API_KEY&gt;"</div>
-                      </div>
+                        <div class="code-content">
+                            <div class="code-line">async ngOnInit() {{ '{' }}</div>
+                            <div class="code-line">&nbsp;&nbsp;const sdk = new DinoConfigSDK();</div>
+                            <div class="code-line">&nbsp;&nbsp;await sdk.configure({{ '{' }}</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;apiKey: 'your-api-key'</div>
+                            <div class="code-line">&nbsp;&nbsp;{{ '}' }});</div>
+                            <div class="code-line">&nbsp;&nbsp;const config = await sdk.getConfigAPI()</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;.getConfigValue('BrandName', 'ConfigName', 'isConfigEnabled');</div>
+                            <div class="code-line">{{ '}' }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -188,15 +195,16 @@
                 <p>Check a feature flag in your frontend or backend and enable features conditionally.</p>
                 <div class="step-visual">
                     <div class="code-preview">
-                        <div class="code-line">if (config.feature_flags.new_ui) {{ '{' }}
-                            // Enable new UI
-                            renderNewUI();</div>
-                        <div class="code-line">{{ '}' }}</div>
-                        <div class="code-line"> else </div>
-                        <div class="code-line">{{ '{' }}</div>
-                        <div class="code-line">// Fallback to old UI renderOldUI();</div>
-                        <div class="code-line">{{ '}' }}</div>
-                        
+                        <div class="code-content">
+                            <div class="code-line">if (config.BrandName.ConfigName</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;.isConfigEnabled) &#123;</div>
+                            <div class="code-line">&nbsp;&nbsp;// Enable the feature</div>
+                            <div class="code-line">&nbsp;&nbsp;enableFeature();</div>
+                            <div class="code-line">&#125; else &#123;</div>
+                            <div class="code-line">&nbsp;&nbsp;// Fallback behavior</div>
+                            <div class="code-line">&nbsp;&nbsp;disableFeature();</div>
+                            <div class="code-line">&#125;</div>
+                        </div>
                     </div>
                 </div>
             </div>

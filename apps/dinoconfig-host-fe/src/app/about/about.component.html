@@ -1,0 +1,185 @@
+<section class="about-page">
+  <!-- Hero Section -->
+  <section class="about-hero">
+    <div class="container">
+      <a routerLink="/" class="back-link">← Back to Home</a>
+      <div class="hero-content">
+        <h1 class="hero-title">We're shaping the future of configuration management.</h1>
+        <p class="hero-subtitle">
+          Configuration management powers modern software. We help teams build, deploy, and manage 
+          configurations more easily than ever.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">Est. in</div>
+          <div class="stat-label">2025</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">Free tier?</div>
+          <div class="stat-label">Yes!</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">Lines of Config</div>
+          <div class="stat-label">∞</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content Tabs -->
+  <section class="content-section" id="tabs-section">
+    <div class="container">
+      <mat-tab-group class="about-tabs" animationDuration="300ms" (selectedTabChange)="onTabChange($event)">
+        
+        <!-- About Us Tab -->
+        <mat-tab label="About Us">
+          <div class="tab-content">
+            <div class="content-block">
+              <h2>Configuration management should be simple.</h2>
+              <p>
+                After experiencing the complexities of configuration management across different platforms 
+                and teams, the founders of DinoConfig knew there had to be a better way.
+              </p>
+              <p>
+                Today, DinoConfig helps teams of all sizes take total control over their configuration 
+                management, get deeper insights into how their configurations are used, and helps 
+                revolutionize the ways technical and business teams collaborate.
+              </p>
+              <p>
+                Our vision is to create a world in which configuration management is intuitive, powerful, 
+                and accessible to everyone.
+              </p>
+            </div>
+
+            <div class="image-grid">
+              <div class="image-card">
+                <img src="assets/dino-sdk.svg" alt="DinoConfig Team" class="team-image" />
+                <div class="image-overlay">
+                  <h3>Our Team</h3>
+                  <p>Passionate developers building the future of configuration management</p>
+                </div>
+              </div>
+              <div class="image-card">
+                <img src="assets/dino-paint.svg" alt="DinoConfig Innovation" class="team-image" />
+                <div class="image-overlay">
+                  <h3>Innovation</h3>
+                  <p>Constantly pushing boundaries to improve developer experience</p>
+                </div>
+              </div>
+              <div class="image-card">
+                <img src="assets/dino-wrench.svg" alt="DinoConfig Values" class="team-image" />
+                <div class="image-overlay">
+                  <h3>Our Values</h3>
+                  <p>Simplicity, reliability, and developer-first approach</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="content-block highlight">
+              <h2>Huge impact, incredible scale.</h2>
+              <p>
+                DinoConfig is trusted by developers worldwide to manage their configuration needs. 
+                Our platform handles millions of configuration requests daily, helping teams deploy 
+                with confidence.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Contact Tab -->
+        <mat-tab label="Contact">
+          <div class="tab-content">
+            <div class="contact-section">
+              <h2>Get in Touch</h2>
+              <p class="contact-intro">
+                Have questions? We're here to help. Reach out to us through any of the channels below.
+              </p>
+
+              <div class="contact-grid">
+                <div class="contact-card">
+                  <mat-icon class="contact-icon">email</mat-icon>
+                  <h3>General Inquiries</h3>
+                  <a href="mailto:help@dinoconfig.com">help@dinoconfig.com</a>
+                  <p>For general questions and support</p>
+                </div>
+
+                <div class="contact-card">
+                  <mat-icon class="contact-icon">business</mat-icon>
+                  <h3>Sales</h3>
+                  <a href="mailto:help@dinoconfig.com">help@dinoconfig.com</a>
+                  <p>Interested in our enterprise plans?</p>
+                </div>
+
+                <div class="contact-card">
+                  <mat-icon class="contact-icon">support_agent</mat-icon>
+                  <h3>Support</h3>
+                  <a href="mailto:help@dinoconfig.com">help@dinoconfig.com</a>
+                  <p>Technical support and assistance</p>
+                </div>
+
+                <div class="contact-card">
+                  <mat-icon class="contact-icon">security</mat-icon>
+                  <h3>Security</h3>
+                  <a href="mailto:help@dinoconfig.com">help@dinoconfig.com</a>
+                  <p>Report security vulnerabilities</p>
+                </div>
+              </div>
+
+              <div class="office-hours">
+                <h3>Office Hours</h3>
+                <p>Monday – Friday: 9:00 AM – 5:00 PM (EST)</p>
+                <p>We typically respond within 24 hours during business days.</p>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Careers Tab -->
+        <mat-tab label="Careers">
+          <div class="tab-content">
+            <div class="empty-state">
+              <img src="assets/dino-sit-z.svg" alt="No Careers" class="empty-image" />
+              <h2>No Career Opportunities</h2>
+              <p>
+                We're currently not actively hiring, but we're always interested in connecting 
+                with talented individuals who share our passion for configuration management 
+                and developer tools.
+              </p>
+              <p>
+                Feel free to reach out to us at <a href="mailto:help@dinoconfig.com">help@dinoconfig.com</a> 
+                if you'd like to be considered for future opportunities.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Blog Tab -->
+        <mat-tab label="Blog">
+          <div class="tab-content">
+            <div class="empty-state">
+              <img src="assets/dino-mac.svg" alt="No Blog Posts" class="empty-image" />
+              <h2>Coming Soon</h2>
+              <p>
+                Our blog is under construction. Check back soon for articles, tutorials, and 
+                insights about configuration management, feature flags, and developer best practices.
+              </p>
+              <p>
+                In the meantime, follow us on social media or subscribe to our newsletter to stay 
+                updated with the latest news and updates.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+
+      </mat-tab-group>
+    </div>
+  </section>
+</section>
+

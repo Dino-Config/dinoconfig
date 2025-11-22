@@ -1,7 +1,13 @@
 // Mobile Menu Button
 .mobile-menu-button {
   display: none;
-  color: #667eea;
+  color: var(--primary-color);
+  transition: all var(--transition-base);
+  
+  &:hover {
+    transform: scale(1.1);
+    color: var(--primary-dark);
+  }
 }
 
 // Desktop Only
@@ -16,7 +22,7 @@
   justify-content: center;
   gap: 12px;
   padding: 12px 16px;
-  color: #667eea;
+  color: var(--primary-color);
   font-weight: 500;
   font-size: 0.95rem;
 }
@@ -26,12 +32,12 @@
   background: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(80px) saturate(180%) brightness(1.05) !important;
   -webkit-backdrop-filter: blur(80px) saturate(180%) brightness(1.05) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border-color);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: var(--z-fixed);
   padding: 0 320px;
   height: 70px;
   display: flex;
@@ -41,11 +47,35 @@
   box-sizing: border-box;
   margin: 0 auto;
   opacity: 0.95;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+  
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
 
   .logo {
     display: flex;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    
+    &:hover {
+      background: rgba(102, 126, 234, 0.05);
+      transform: scale(1.02);
+    }
+    
+    &:active {
+      transform: scale(0.98);
+    }
+    
+    &:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
     
     .logo-icon {
       width: 64px;
@@ -60,10 +90,11 @@
     .logo-text {
       font-size: 1.5rem;
       font-weight: 450;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--primary-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      transition: all var(--transition-base);
     }
 
     .logo-text-dino {
@@ -71,10 +102,11 @@
       font-weight: 1000;
       text-transform: uppercase;
       letter-spacing: 0.75px;
-      background: linear-gradient(135deg, #3448a9 0%, #49187a 100%);
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      transition: all var(--transition-base);
     }
   }
 
@@ -91,16 +123,35 @@
     
     a {
       text-decoration: none;
-      color: #525252;
+      color: var(--text-secondary);
       font-size: 1.05rem;
       font-weight: 400;
-      transition: color 0.2s ease;
-      transition: transform 0.3s ease;
+      transition: all var(--transition-base);
+      position: relative;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 8px;
+        right: 8px;
+        height: 2px;
+        background: var(--primary-gradient);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform var(--transition-base);
+      }
       
       &:hover {
-        color: #667eea;
+        color: var(--primary-color);
         cursor: pointer;
-        transform: scale(1.1);
+        background: rgba(102, 126, 234, 0.05);
+        
+        &::after {
+          transform: scaleX(1);
+        }
       }
     }
   }
@@ -111,73 +162,79 @@
     align-items: center;
     
     .login-btn {
-      color: #1e293b;
+      color: var(--text-primary);
       font-weight: 500;
-      transition: all 0.3s ease;
+      transition: all var(--transition-base);
       position: relative;
+      border-radius: var(--radius-md);
 
       ::ng-deep .mdc-button__label {
-        background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-color) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
 
       &:hover {
+        background: rgba(102, 126, 234, 0.05);
         ::ng-deep .mdc-button__label {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          background: var(--primary-gradient);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        transform: scale(1.05);
+        transform: translateY(-1px);
       }
     }
 
     .demo-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--primary-gradient);
       color: white;
       font-weight: 600;
-      border-radius: 16px;
+      border-radius: var(--radius-lg);
       padding: 8px 20px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      transition: all var(--transition-base);
+      box-shadow: var(--shadow-glow);
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        background: linear-gradient(135deg, #5568d3 0%, #65408b 100%);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
       }
     }
     
     .signup-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--primary-gradient);
       color: white;
       font-weight: 500;
-      border-radius: 16px;
+      border-radius: var(--radius-lg);
       padding: 8px 20px;
-      transition: transform 0.3s ease;
+      transition: all var(--transition-base);
+      box-shadow: var(--shadow-md);
 
       &:hover {
-        transform: scale(1.1);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
       }
     }
 
     .welcome {
-      color: #787878;
+      color: var(--text-secondary);
       font-weight: 400;
       padding: 8px 20px;
     }
 
     .logout-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--primary-gradient);
       color: white;
       font-weight: 500;
-      border-radius: 16px;
-      transition: transform 0.3s ease;
+      border-radius: var(--radius-lg);
+      transition: all var(--transition-base);
+      box-shadow: var(--shadow-md);
 
       &:hover {
-        transform: scale(1.1);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
       }
     }
   }
@@ -354,10 +411,7 @@
   margin-right: 0 !important;
   min-width: 200px !important;
   border-radius: 24px 0 0 24px !important;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  box-shadow: var(--shadow-xl), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
   overflow: hidden !important;
   border: 1px solid rgba(255, 255, 255, 0.18) !important;
   border-right: none !important;
@@ -365,6 +419,7 @@
   backdrop-filter: blur(80px) saturate(180%) brightness(1.05) !important;
   -webkit-backdrop-filter: blur(80px) saturate(180%) brightness(1.05) !important;
   transform: translateX(1px) !important;
+  transition: all var(--transition-base) !important;
 }
 
 ::ng-deep .mobile-menu {
