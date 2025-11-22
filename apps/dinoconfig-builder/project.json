@@ -19,6 +19,11 @@
           {
             "glob": "**/*",
             "input": "apps/dinoconfig-builder/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/dinoconfig-builder/src/assets",
+            "output": "assets"
           }
         ],
         "styles": ["apps/dinoconfig-builder/src/styles.scss"]

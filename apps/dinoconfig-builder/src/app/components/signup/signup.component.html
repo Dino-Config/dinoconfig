@@ -1,0 +1,215 @@
+<div class="auth-page">
+  <div class="auth-container">
+    <div class="auth-form-section">
+      <div class="auth-form-wrapper">
+        <div class="auth-header">
+          <h1 class="page-title">Create Account</h1>
+          <p>Join DinoConfig and start managing your configurations</p>
+        </div>
+
+        @if (error()) {
+          <div class="error-message">
+            {{ error() }}
+          </div>
+        }
+
+        <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="auth-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input
+                id="firstName"
+                type="text"
+                formControlName="firstName"
+                placeholder="Enter your first name"
+                required
+                autocomplete="given-name"
+              />
+              @if (getFieldError('firstName')) {
+                <span class="field-error">{{ getFieldError('firstName') }}</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input
+                id="lastName"
+                type="text"
+                formControlName="lastName"
+                placeholder="Enter your last name"
+                required
+                autocomplete="family-name"
+              />
+              @if (getFieldError('lastName')) {
+                <span class="field-error">{{ getFieldError('lastName') }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="company">Company</label>
+            <input
+              id="company"
+              type="text"
+              formControlName="company"
+              placeholder="Enter your company name"
+              required
+              autocomplete="organization"
+            />
+            @if (getFieldError('company')) {
+              <span class="field-error">{{ getFieldError('company') }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="Enter your email address"
+              required
+              autocomplete="email"
+            />
+            @if (getFieldError('email')) {
+              <span class="field-error">{{ getFieldError('email') }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="password-input-wrapper">
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Create a strong password"
+                required
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                @if (showPassword()) {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                } @else {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (getFieldError('password')) {
+              <span class="field-error">{{ getFieldError('password') }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="password-input-wrapper">
+              <input
+                id="confirmPassword"
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                placeholder="Confirm your password"
+                required
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="toggleConfirmPasswordVisibility()"
+                [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+              >
+                @if (showConfirmPassword()) {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                } @else {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (getPasswordMismatchError()) {
+              <span class="field-error">{{ getPasswordMismatchError() }}</span>
+            }
+            @if (getFieldError('confirmPassword')) {
+              <span class="field-error">{{ getFieldError('confirmPassword') }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                formControlName="agreeToTerms"
+              />
+              <span>
+                I agree to the
+                <a href="#" class="terms-link">Terms of Service</a>
+                and
+                <a href="#" class="terms-link">Privacy Policy</a>
+              </span>
+            </label>
+            @if (getFieldError('agreeToTerms')) {
+              <span class="field-error">{{ getFieldError('agreeToTerms') }}</span>
+            }
+          </div>
+
+          <button
+            type="submit"
+            class="submit-button"
+            [disabled]="isLoading() || signupForm.invalid"
+          >
+            @if (isLoading()) {
+              <span class="button-loading">
+                <span class="spinner"></span>
+                Creating account...
+              </span>
+            } @else {
+              Create Account
+            }
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p>
+            Already have an account?
+            <a routerLink="/signin" class="auth-link">
+              Sign in
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-visual-section">
+      <div class="visual-content">
+        <div class="logo-container">
+          <img src="/assets/dinoconfig-logo.svg" alt="DinoConfig" class="logo" />
+        </div>
+        <div class="visual-text">
+          <h2>Start Your Journey</h2>
+          <p>Join thousands of developers managing configurations with DinoConfig.</p>
+        </div>
+        <div class="visual-decoration">
+          <div class="decoration-circle circle-1"></div>
+          <div class="decoration-circle circle-2"></div>
+          <div class="decoration-circle circle-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
