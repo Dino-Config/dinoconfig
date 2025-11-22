@@ -1,0 +1,108 @@
+.policies-page {
+  padding: 120px 0 80px;
+  background: var(--bg-primary);
+  min-height: calc(100vh - 70px - 200px);
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+  }
+
+  .policies-header {
+    text-align: center;
+    margin-bottom: 60px;
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    p {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  }
+
+  .policies-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 48px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .policies-categories {
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: var(--text-primary);
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-color);
+    }
+  }
+
+  .policies-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      margin-bottom: 12px;
+
+      a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 1rem;
+        transition: all var(--transition-base);
+        display: block;
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        position: relative;
+
+        &::before {
+          content: '→';
+          position: absolute;
+          left: -20px;
+          opacity: 0;
+          transition: all var(--transition-base);
+        }
+
+        &:hover {
+          color: var(--primary-color);
+          background: rgba(102, 126, 234, 0.05);
+          padding-left: 24px;
+
+          &::before {
+            opacity: 1;
+            left: 12px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .policies-page {
+    padding: 100px 0 60px;
+
+    .policies-header h1 {
+      font-size: 2rem;
+    }
+
+    .policies-content {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+}
+

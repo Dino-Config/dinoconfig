@@ -5,9 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
-import { AuthService } from '../auth/services/auth.service';
 import { DialogService } from '../dialogs/dialog.service';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -27,15 +26,7 @@ import { environment } from '../../environments/environment';
 })
 export class HeaderComponent {
   private dialogService = inject(DialogService);
-  private authService = inject(AuthService);
-
-  currentUser() {
-    return this.authService.currentUser();
-  }
-
-  isAuthenticated() {
-    return this.authService.isAuthenticated();
-  }
+  private router = inject(Router);
 
   openLoginDialog() {
     window.location.href = `${environment.builderUrl}/signin`;
@@ -46,15 +37,7 @@ export class HeaderComponent {
   }
 
   openBuilder() {
-    if (this.authService.isAuthenticated()) {
-      window.open(environment.builderUrl, '_blank');
-    } else {
-      window.location.href = `${environment.builderUrl}/signup`;
-    }
-  }
-
-  logout() {
-    this.authService.logout();
+    window.location.href = `${environment.builderUrl}/signup`;
   }
 
   openCalendlyDialog() {
@@ -65,6 +48,23 @@ export class HeaderComponent {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  scrollToTop() {
+    const currentUrl = this.router.url;
+    
+    if (currentUrl === '/' || currentUrl === '') {
+      // If already on home page, scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      // If on another page, navigate to home which will auto-scroll
+      this.router.navigate(['/']).then(() => {
+        // Small delay to ensure page has loaded, then scroll
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+      });
     }
   }
 }

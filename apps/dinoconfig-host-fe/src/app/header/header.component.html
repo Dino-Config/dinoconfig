@@ -1,5 +1,5 @@
 <mat-toolbar color="primary" class="toolbar">
-  <div class="logo">
+  <div class="logo" (click)="scrollToTop()" role="button" tabindex="0" (keydown.enter)="scrollToTop()" (keydown.space)="scrollToTop()">
     <img src="assets/logo.svg" alt="DinoConfig Icon" class="logo-icon" />
     <div>
       <span class="logo-text-dino">Dino</span>
@@ -13,16 +13,10 @@
     <a href="#how-it-works">How it works</a>
     <a href="#pricing">Pricing</a>
   </nav>
-  <div class="auth-buttons desktop-only" *ngIf="isAuthenticated() && currentUser() as user; else loggedOut">
-    <span class="welcome">Welcome, {{ user.firstName }} {{ user.lastName }}</span>
-    <button mat-raised-button color="accent" class="logout-btn" (click)="logout()">Logout</button>
+  <div class="auth-buttons desktop-only">
+    <button mat-button class="login-btn" (click)="openLoginDialog()">Sign in</button>
+    <button mat-raised-button class="demo-btn" (click)="openCalendlyDialog()">Book a demo</button>
   </div>
-  <ng-template #loggedOut>
-    <div class="auth-buttons desktop-only">
-      <button mat-button class="login-btn" (click)="openLoginDialog()">Sign in</button>
-      <button mat-raised-button class="demo-btn" (click)="openCalendlyDialog()">Book a demo</button>
-    </div>
-  </ng-template>
   
   <!-- Mobile Menu Button -->
   <button mat-icon-button class="mobile-menu-button" [matMenuTriggerFor]="mobileMenu">
@@ -44,21 +38,11 @@
       <span>Pricing</span>
     </button>
     <mat-divider></mat-divider>
-    <div *ngIf="isAuthenticated() && currentUser() as user; else mobileLoggedOut">
-      <div class="mobile-user-info">
-        <span>Welcome, {{ user.firstName }} {{ user.lastName }}</span>
-      </div>
-      <button mat-menu-item class="logout-menu-item" (click)="logout()">
-        <span>Logout</span>
-      </button>
-    </div>
-    <ng-template #mobileLoggedOut>
-      <button mat-menu-item class="demo-menu-item" (click)="openCalendlyDialog()">
-        <span>Book a Demo</span>
-      </button>
-      <button mat-menu-item class="login-menu-item" (click)="openLoginDialog()">
-        <span>Sign in</span>
-      </button>
-    </ng-template>
+    <button mat-menu-item class="demo-menu-item" (click)="openCalendlyDialog()">
+      <span>Book a Demo</span>
+    </button>
+    <button mat-menu-item class="login-menu-item" (click)="openLoginDialog()">
+      <span>Sign in</span>
+    </button>
   </mat-menu>
 </mat-toolbar>

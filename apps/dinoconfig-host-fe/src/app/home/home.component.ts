@@ -4,7 +4,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { DialogService } from '../dialogs/dialog.service';
-import { AuthService } from '../auth/services/auth.service';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -16,7 +15,6 @@ import { environment } from '../../environments/environment';
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private dialogService = inject(DialogService);
-  private authService = inject(AuthService);
 
   // Typing animation properties
   featureFlagsText = '';
@@ -211,11 +209,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   openSignupDialog() {
-    if (this.authService.isAuthenticated()) {
-      window.open(environment.builderUrl, '_blank');
-    } else {
-      window.location.href = `${environment.builderUrl}/signup`;
-    }
+    window.location.href = `${environment.builderUrl}/signup`;
   }
 
   openCalendlyDialog() {
