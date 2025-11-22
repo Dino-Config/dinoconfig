@@ -15,175 +15,139 @@
 
   <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="flex flex-col gap-2">
-        <label for="firstName" class="text-sm font-medium text-gray-700">First Name</label>
-        <input
-          id="firstName"
+      <mat-form-field appearance="outline">
+        <mat-label>First Name</mat-label>
+        <input matInput
           type="text"
           formControlName="firstName"
           placeholder="Enter your first name"
           required
           autocomplete="given-name"
-          class="w-full py-3 px-4 border border-gray-300 rounded-lg text-base transition-all box-border focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 placeholder:text-gray-400"
         />
         @if (getFieldError('firstName')) {
-          <span class="text-xs text-red-600 -mt-1">{{ getFieldError('firstName') }}</span>
+          <mat-error>{{ getFieldError('firstName') }}</mat-error>
         }
-      </div>
+      </mat-form-field>
 
-      <div class="flex flex-col gap-2">
-        <label for="lastName" class="text-sm font-medium text-gray-700">Last Name</label>
-        <input
-          id="lastName"
+      <mat-form-field appearance="outline">
+        <mat-label>Last Name</mat-label>
+        <input matInput
           type="text"
           formControlName="lastName"
           placeholder="Enter your last name"
           required
           autocomplete="family-name"
-          class="w-full py-3 px-4 border border-gray-300 rounded-lg text-base transition-all box-border focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 placeholder:text-gray-400"
         />
         @if (getFieldError('lastName')) {
-          <span class="text-xs text-red-600 -mt-1">{{ getFieldError('lastName') }}</span>
+          <mat-error>{{ getFieldError('lastName') }}</mat-error>
         }
-      </div>
+      </mat-form-field>
     </div>
 
-    <div class="flex flex-col gap-2">
-      <label for="company" class="text-sm font-medium text-gray-700">Company</label>
-      <input
-        id="company"
+    <mat-form-field appearance="outline">
+      <mat-label>Company</mat-label>
+      <input matInput
         type="text"
         formControlName="company"
         placeholder="Enter your company name"
         required
         autocomplete="organization"
-        class="w-full py-3 px-4 border border-gray-300 rounded-lg text-base transition-all box-border focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 placeholder:text-gray-400"
       />
       @if (getFieldError('company')) {
-        <span class="text-xs text-red-600 -mt-1">{{ getFieldError('company') }}</span>
+        <mat-error>{{ getFieldError('company') }}</mat-error>
       }
-    </div>
+    </mat-form-field>
 
-    <div class="flex flex-col gap-2">
-      <label for="email" class="text-sm font-medium text-gray-700">Email</label>
-      <input
-        id="email"
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput
         type="email"
         formControlName="email"
         placeholder="Enter your email address"
         required
         autocomplete="email"
-        class="w-full py-3 px-4 border border-gray-300 rounded-lg text-base transition-all box-border focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 placeholder:text-gray-400"
       />
       @if (getFieldError('email')) {
-        <span class="text-xs text-red-600 -mt-1">{{ getFieldError('email') }}</span>
+        <mat-error>{{ getFieldError('email') }}</mat-error>
       }
-    </div>
+    </mat-form-field>
 
-    <div class="flex flex-col gap-2">
-      <label for="password" class="text-sm font-medium text-gray-700">Password</label>
-      <div class="relative">
-        <input
-          id="password"
-          [type]="showPassword() ? 'text' : 'password'"
-          formControlName="password"
-          placeholder="Create a strong password"
-          required
-          autocomplete="new-password"
-          class="w-full py-3 px-4 pr-12 border border-gray-300 rounded-lg text-base transition-all box-border focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 placeholder:text-gray-400"
-        />
-        <button
-          type="button"
-          class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 flex items-center justify-center text-gray-500 transition-colors hover:text-gray-700"
-          (click)="togglePasswordVisibility()"
-          [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-        >
-          @if (showPassword()) {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="block">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-              <line x1="1" y1="1" x2="23" y2="23"></line>
-            </svg>
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="block">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-          }
-        </button>
-      </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput
+        [type]="showPassword() ? 'text' : 'password'"
+        formControlName="password"
+        placeholder="Create a strong password"
+        required
+        autocomplete="new-password"
+      />
+      <button mat-icon-button matSuffix
+        type="button"
+        (click)="togglePasswordVisibility()"
+        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+      >
+        @if (showPassword()) {
+          <mat-icon>visibility_off</mat-icon>
+        } @else {
+          <mat-icon>visibility</mat-icon>
+        }
+      </button>
       @if (getFieldError('password')) {
-        <span class="text-xs text-red-600 -mt-1">{{ getFieldError('password') }}</span>
+        <mat-error>{{ getFieldError('password') }}</mat-error>
       }
-    </div>
+    </mat-form-field>
 
-    <div class="flex flex-col gap-2">
-      <label for="confirmPassword" class="text-sm font-medium text-gray-700">Confirm Password</label>
-      <div class="relative">
-        <input
-          id="confirmPassword"
-          [type]="showConfirmPassword() ? 'text' : 'password'"
-          formControlName="confirmPassword"
-          placeholder="Confirm your password"
-          required
-          autocomplete="new-password"
-          class="w-full py-3 px-4 pr-12 border border-gray-300 rounded-lg text-base transition-all box-border focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 placeholder:text-gray-400"
-        />
-        <button
-          type="button"
-          class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 flex items-center justify-center text-gray-500 transition-colors hover:text-gray-700"
-          (click)="toggleConfirmPasswordVisibility()"
-          [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
-        >
-          @if (showConfirmPassword()) {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="block">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-              <line x1="1" y1="1" x2="23" y2="23"></line>
-            </svg>
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="block">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-          }
-        </button>
-      </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Confirm Password</mat-label>
+      <input matInput
+        [type]="showConfirmPassword() ? 'text' : 'password'"
+        formControlName="confirmPassword"
+        placeholder="Confirm your password"
+        required
+        autocomplete="new-password"
+      />
+      <button mat-icon-button matSuffix
+        type="button"
+        (click)="toggleConfirmPasswordVisibility()"
+        [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+      >
+        @if (showConfirmPassword()) {
+          <mat-icon>visibility_off</mat-icon>
+        } @else {
+          <mat-icon>visibility</mat-icon>
+        }
+      </button>
       @if (getPasswordMismatchError()) {
-        <span class="text-xs text-red-600 -mt-1">{{ getPasswordMismatchError() }}</span>
+        <mat-error>{{ getPasswordMismatchError() }}</mat-error>
       }
       @if (getFieldError('confirmPassword')) {
-        <span class="text-xs text-red-600 -mt-1">{{ getFieldError('confirmPassword') }}</span>
+        <mat-error>{{ getFieldError('confirmPassword') }}</mat-error>
       }
-    </div>
+    </mat-form-field>
 
     <div class="flex flex-col gap-2">
-      <label class="flex items-start gap-2 cursor-pointer text-gray-700 text-sm leading-relaxed">
-        <input
-          type="checkbox"
-          formControlName="agreeToTerms"
-          class="w-auto mt-0.5 cursor-pointer accent-blue-500 flex-shrink-0"
-        />
-        <span>
+      <mat-checkbox formControlName="agreeToTerms">
+        <span class="text-sm">
           I agree to the
           <a href="#" class="text-blue-500 no-underline font-medium transition-colors hover:text-blue-600 hover:underline">Terms of Service</a>
           and
           <a href="#" class="text-blue-500 no-underline font-medium transition-colors hover:text-blue-600 hover:underline">Privacy Policy</a>
         </span>
-      </label>
+      </mat-checkbox>
       @if (getFieldError('agreeToTerms')) {
         <span class="text-xs text-red-600 -mt-1">{{ getFieldError('agreeToTerms') }}</span>
       }
     </div>
 
-    <button
+    <button mat-raised-button
       type="submit"
-      class="w-full py-3.5 px-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white border-none rounded-lg text-base font-semibold cursor-pointer transition-all shadow-[0_2px_4px_rgba(59,130,246,0.2)] mt-2 hover:from-blue-600 hover:to-blue-700 hover:shadow-[0_4px_8px_rgba(59,130,246,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+      color="primary"
+      class="w-full mt-2"
       [disabled]="isLoading() || signupForm.invalid"
     >
       @if (isLoading()) {
-        <span class="flex items-center justify-center gap-2">
-          <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          Creating account...
-        </span>
+        <mat-spinner diameter="16" class="inline-block mr-2"></mat-spinner>
+        <span>Creating account...</span>
       } @else {
         Create Account
       }

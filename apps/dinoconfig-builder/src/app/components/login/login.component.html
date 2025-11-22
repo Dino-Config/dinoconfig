@@ -11,79 +11,69 @@
   }
 
   <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
-    <div class="flex flex-col gap-2">
-      <label for="email" class="text-sm font-medium text-gray-700">Email</label>
-      <input
-        id="email"
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput
         type="email"
         formControlName="email"
         placeholder="Enter your email"
         required
         autocomplete="email"
-        class="w-full py-3 px-4 border border-gray-300 rounded-lg text-base transition-all box-border focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 placeholder:text-gray-400"
       />
-    </div>
+      @if (loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched) {
+        <mat-error>Email is required</mat-error>
+      }
+      @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
+        <mat-error>Please enter a valid email address</mat-error>
+      }
+    </mat-form-field>
 
-    <div class="flex flex-col gap-2">
-      <label for="password" class="text-sm font-medium text-gray-700">Password</label>
-      <div class="relative">
-        <input
-          id="password"
-          [type]="showPassword() ? 'text' : 'password'"
-          formControlName="password"
-          placeholder="Enter your password"
-          required
-          autocomplete="current-password"
-          class="w-full py-3 px-4 pr-12 border border-gray-300 rounded-lg text-base transition-all box-border focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 placeholder:text-gray-400"
-        />
-        <button
-          type="button"
-          class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 flex items-center justify-center text-gray-500 transition-colors hover:text-gray-700"
-          (click)="togglePasswordVisibility()"
-          [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-        >
-          @if (showPassword()) {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="block">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-              <line x1="1" y1="1" x2="23" y2="23"></line>
-            </svg>
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="block">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-          }
-        </button>
-      </div>
-    </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput
+        [type]="showPassword() ? 'text' : 'password'"
+        formControlName="password"
+        placeholder="Enter your password"
+        required
+        autocomplete="current-password"
+      />
+      <button mat-icon-button matSuffix
+        type="button"
+        (click)="togglePasswordVisibility()"
+        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+      >
+        @if (showPassword()) {
+          <mat-icon>visibility_off</mat-icon>
+        } @else {
+          <mat-icon>visibility</mat-icon>
+        }
+      </button>
+      @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+        <mat-error>Password is required</mat-error>
+      }
+    </mat-form-field>
 
     <div class="flex justify-between items-center text-sm">
-      <label class="flex items-center gap-2 cursor-pointer text-gray-700">
-        <input
-          type="checkbox"
-          formControlName="rememberMe"
-          class="w-auto cursor-pointer accent-blue-500"
-        />
-        <span>Remember me</span>
-      </label>
+      <mat-checkbox formControlName="rememberMe">
+        Remember me
+      </mat-checkbox>
       <a routerLink="/forgot-password" class="text-blue-500 no-underline font-medium transition-colors hover:text-blue-600 hover:underline">
         Forgot password?
       </a>
     </div>
 
-    <button
+    <button mat-raised-button
       type="submit"
-      class="w-full py-3.5 px-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white border-none rounded-lg text-base font-semibold cursor-pointer transition-all shadow-[0_2px_4px_rgba(59,130,246,0.2)] hover:from-blue-600 hover:to-blue-700 hover:shadow-[0_4px_8px_rgba(59,130,246,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+      color="primary"
+      class="w-full"
       [disabled]="isLoading() || loginForm.invalid"
-    >
+    >   
       @if (isLoading()) {
-        <span class="flex items-center justify-center gap-2">
-          <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          Signing in...
-        </span>
-      } @else {
-        Sign In
+        <mat-icon>
+          <mat-spinner diameter="20"></mat-spinner>
+        </mat-icon> 
       }
+      Sign In
     </button>
   </form>
 
