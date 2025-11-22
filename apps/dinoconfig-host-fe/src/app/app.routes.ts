@@ -6,6 +6,10 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./home/home.component').then(m => m.HomeComponent)
   },
   {
+    path: 'about',
+    loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
+  },
+  {
     path: 'policies',
     loadComponent: () => import('./policies/policies.component').then(m => m.PoliciesComponent)
   },
