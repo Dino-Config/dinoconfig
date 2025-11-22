@@ -1,6 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import './auth-visual-sidebar.component.scss';
 
 @Component({
   selector: 'dc-auth-visual-sidebar',
@@ -10,7 +9,7 @@ import './auth-visual-sidebar.component.scss';
   styleUrl: './auth-visual-sidebar.component.scss'
 })
 export class AuthVisualSidebarComponent {
-  @Input() title: string = 'Welcome to DinoConfig';
-  @Input() description: string = 'Manage your configurations with ease and confidence.';
+  title = input<string>('Welcome to DinoConfig');
+  description = input<string>('Manage your configurations with ease and confidence.');
 }
 
