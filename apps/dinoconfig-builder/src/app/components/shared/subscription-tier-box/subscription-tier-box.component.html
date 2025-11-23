@@ -14,7 +14,7 @@
     </span>
   </div>
   @if (subscription().tier === 'free') {
-    <button class="w-full px-3 py-2 bg-gradient-to-br from-purple-500 to-purple-600 text-white border-none rounded-md text-xs font-semibold cursor-pointer transition-all duration-200 mt-3 hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(102,126,234,0.3)]">
+    <button class="w-full px-3 py-2 bg-gradient-to-br from-purple-500 to-purple-600 text-white border-none rounded-md text-xs font-semibold cursor-pointer transition-all duration-200 mt-3 hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(102,126,234,0.3)]" (click)="navigateToSubscription()">
       Upgrade to Pro
     </button>
   }

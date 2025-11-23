@@ -1,0 +1,266 @@
+<div class="profile-page">
+  <div class="main-layout">
+    @if (isLoading()) {
+      <div class="flex items-center justify-center min-h-screen">
+        <dc-spinner text="Loading profile..." size="large" [fullHeight]="true"></dc-spinner>
+      </div>
+    } @else if (error()) {
+      <div class="error-state">
+        <h2>Error loading profile</h2>
+        <p>{{ error() }}</p>
+      </div>
+    } @else {
+      <div class="profile-header">
+        <div class="header-content">
+          <h1 class="page-title">User Profile</h1>
+          <p class="page-subtitle">View and manage your account information</p>
+        </div>
+        <button 
+          class="refresh-btn" 
+          (click)="refreshUser()"
+          [disabled]="isLoading()"
+        >
+          <mat-icon class="refresh-icon">refresh</mat-icon>
+          {{ isLoading() ? 'Refreshing...' : 'Refresh Profile' }}
+        </button>
+      </div>
+
+      <div class="main-content">
+        <div class="profile-container">
+          <div class="profile-content">
+            
+            <div class="profile-section">
+              <button 
+                class="section-toggle"
+                (click)="toggleSection('personal')"
+              >
+                <mat-icon 
+                  class="chevron"
+                  [class.open]="isExpanded('personal')"
+                >
+                  expand_more
+                </mat-icon>
+                <span class="section-title">Personal Information</span>
+              </button>
+              
+              @if (isExpanded('personal')) {
+                <div class="profile-grid">
+                  <div class="profile-field">
+                    <span class="field-label">First Name:</span>
+                    <span class="field-value">{{ user()?.firstName || 'N/A' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">Last Name:</span>
+                    <span class="field-value">{{ user()?.lastName || 'N/A' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">Email:</span>
+                    <span class="field-value">{{ user()?.email || 'N/A' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">Phone Number:</span>
+                    <span class="field-value">{{ user()?.phoneNumber || 'Not provided' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">Company Name:</span>
+                    <span class="field-value">{{ user()?.companyName || 'Not provided' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">Account Status:</span>
+                    <span class="field-value status" [class.active]="user()?.isActive" [class.inactive]="!user()?.isActive">
+                      {{ user()?.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="profile-section">
+              <button 
+                class="section-toggle"
+                (click)="toggleSection('address')"
+              >
+                <mat-icon 
+                  class="chevron"
+                  [class.open]="isExpanded('address')"
+                >
+                  expand_more
+                </mat-icon>
+                <span class="section-title">Address Information</span>
+              </button>
+              
+              @if (isExpanded('address')) {
+                <div class="profile-grid">
+                  <div class="profile-field full-width">
+                    <span class="field-label">Address:</span>
+                    <span class="field-value">{{ user()?.address || 'Not provided' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">City:</span>
+                    <span class="field-value">{{ user()?.city || 'Not provided' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">State:</span>
+                    <span class="field-value">{{ user()?.state || 'Not provided' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">ZIP Code:</span>
+                    <span class="field-value">{{ user()?.zip || 'Not provided' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">Country:</span>
+                    <span class="field-value">{{ user()?.country || 'Not provided' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="profile-section">
+              <button 
+                class="section-toggle"
+                (click)="toggleSection('subscription')"
+              >
+                <mat-icon 
+                  class="chevron"
+                  [class.open]="isExpanded('subscription')"
+                >
+                  expand_more
+                </mat-icon>
+                <span class="section-title">Subscription & Plan</span>
+              </button>
+              
+              @if (isExpanded('subscription')) {
+                <div class="profile-grid">
+                  @if (isLoadingSubscription()) {
+                    <div class="profile-field full-width">
+                      <span class="field-value">Loading subscription details...</span>
+                    </div>
+                  } @else if (subscription()) {
+                    <div class="profile-field">
+                      <span class="field-label">Current Plan:</span>
+                      <span class="field-value tier-badge" [class.tier-badge--free]="subscription()!.tier === 'free'" [class.tier-badge--pro]="subscription()!.tier === 'pro'" [class.tier-badge--custom]="subscription()!.tier === 'custom'">
+                        {{ getTierDisplayName(subscription()!.tier) }}
+                      </span>
+                    </div>
+                    <div class="profile-field">
+                      <span class="field-label">Status:</span>
+                      <span class="field-value status" [class.active]="subscription()!.isActive" [class.inactive]="!subscription()!.isActive">
+                        {{ subscription()!.status.charAt(0).toUpperCase() + subscription()!.status.slice(1) }}
+                      </span>
+                    </div>
+                    <div class="profile-field">
+                      <span class="field-label">Max Brands:</span>
+                      <span class="field-value">
+                        {{ subscription()!.limits.maxBrands === -1 ? 'Unlimited' : subscription()!.limits.maxBrands }}
+                      </span>
+                    </div>
+                    <div class="profile-field">
+                      <span class="field-label">Max Configs per Brand:</span>
+                      <span class="field-value">
+                        {{ subscription()!.limits.maxConfigsPerBrand === -1 ? 'Unlimited' : subscription()!.limits.maxConfigsPerBrand }}
+                      </span>
+                    </div>
+                    @if (subscription()!.currentPeriodEnd) {
+                      <div class="profile-field">
+                        <span class="field-label">Renewal Date:</span>
+                        <span class="field-value">
+                          {{ formatDate(subscription()!.currentPeriodEnd) }}
+                        </span>
+                      </div>
+                    }
+                    <div class="profile-field full-width">
+                      <button 
+                        class="manage-subscription-btn" 
+                        (click)="goToSubscription()"
+                      >
+                        {{ subscription()!.tier === 'free' ? 'Upgrade Plan' : 'Manage Subscription' }}
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="profile-field full-width">
+                      <span class="field-value">Unable to load subscription details</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="profile-section">
+              <button 
+                class="section-toggle"
+                (click)="toggleSection('account')"
+              >
+                <mat-icon 
+                  class="chevron"
+                  [class.open]="isExpanded('account')"
+                >
+                  expand_more
+                </mat-icon>
+                <span class="section-title">Account Details</span>
+              </button>
+              
+              @if (isExpanded('account')) {
+                <div class="profile-grid">
+                  <div class="profile-field">
+                    <span class="field-label">User ID:</span>
+                    <span class="field-value">{{ user()?.id || 'N/A' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">Auth0 ID:</span>
+                    <span class="field-value">{{ user()?.auth0Id || 'N/A' }}</span>
+                  </div>
+                  <div class="profile-field">
+                    <span class="field-label">Member Since:</span>
+                    <span class="field-value">{{ formatDate(user()?.createdAt) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="profile-section">
+              <button 
+                class="section-toggle"
+                (click)="toggleSection('brands')"
+              >
+                <mat-icon 
+                  class="chevron"
+                  [class.open]="isExpanded('brands')"
+                >
+                  expand_more
+                </mat-icon>
+                <span class="section-title">Associated Brands</span>
+                @if (user()?.brands && user()!.brands.length > 0) {
+                  <span class="badge">{{ user()!.brands.length }}</span>
+                }
+              </button>
+              
+              @if (isExpanded('brands')) {
+                @if (user()?.brands && user()!.brands.length > 0) {
+                  <div class="brands-list">
+                    @for (brand of user()!.brands; track brand.id) {
+                      <div class="brand-item">
+                        <div class="brand-info">
+                          <h4 class="brand-name">{{ brand.name }}</h4>
+                          @if (brand.description) {
+                            <p class="brand-description">{{ brand.description }}</p>
+                          }
+                          @if (brand.website) {
+                            <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="brand-website">
+                              {{ brand.website }}
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="empty-message">No brands associated with this account.</p>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

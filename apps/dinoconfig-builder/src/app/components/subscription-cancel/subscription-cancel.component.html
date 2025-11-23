@@ -1,0 +1,47 @@
+<div class="subscription-cancel">
+  <div class="subscription-cancel__card">
+    <div class="subscription-cancel__icon">✗</div>
+    <h1>Checkout Cancelled</h1>
+    <p>Your subscription upgrade was cancelled.</p>
+    <p>No charges were made to your account.</p>
+    
+    @if (!loading() && subscription()) {
+      <div class="subscription-cancel__current-plan">
+        <h3>Your current plan:</h3>
+        <div class="subscription-cancel__plan-info">
+          <span class="subscription-cancel__plan-name">{{ getCurrentTierName() }}</span>
+          <span class="subscription-cancel__plan-description">{{ getCurrentTierDescription() }}</span>
+        </div>
+      </div>
+    }
+
+    <div class="subscription-cancel__help">
+      <h4>Need help?</h4>
+      <p>If you encountered any issues during checkout, please:</p>
+      <ul>
+        <li>Check your payment method details</li>
+        <li>Ensure you have sufficient funds</li>
+        <li>Contact support if the problem persists</li>
+      </ul>
+    </div>
+
+    <div class="subscription-cancel__actions">
+      <button 
+        class="subscription-cancel__button subscription-cancel__button--primary"
+        (click)="goToSubscription()">
+        Try Again
+      </button>
+      <button 
+        class="subscription-cancel__button subscription-cancel__button--secondary"
+        (click)="goHome()">
+        Return Home
+      </button>
+      <button 
+        class="subscription-cancel__button subscription-cancel__button--link"
+        (click)="contactSupport()">
+        Contact Support
+      </button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,113 @@
+<div class="subscription-page">
+  @if (notification()) {
+    <div class="notification" 
+         [class.notification-success]="notification()!.type === 'success'"
+         [class.notification-error]="notification()!.type === 'error'">
+      {{ notification()!.message }}
+      <button class="notification-close" (click)="hideNotification()">×</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <dc-spinner text="Loading subscription plans..." size="large" [fullHeight]="true"></dc-spinner>
+  } @else {
+    <div class="subscription-header">
+      <div class="header-content">
+        <h1 class="page-title">Subscription Plans</h1>
+        <p class="page-subtitle">
+          Choose the perfect plan for your needs. Cancel anytime.
+        </p>
+      </div>
+      @if (subscription()) {
+        <div class="current-plan-badge">
+          <span class="label">Current Plan:</span>
+          <span class="tier" [class.tier--free]="subscription()!.tier === 'free'"
+                [class.tier--starter]="subscription()!.tier === 'starter'"
+                [class.tier--pro]="subscription()!.tier === 'pro'"
+                [class.tier--custom]="subscription()!.tier === 'custom'">
+            {{ getTierDisplayName(subscription()!.tier) }}
+          </span>
+          @if (subscription()!.currentPeriodEnd) {
+            <span class="renewal">
+              Renews {{ formatDate(subscription()!.currentPeriodEnd) }}
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="subscription-content">
+      <div class="plans-grid">
+        @for (plan of plans; track plan.tier) {
+          <div class="plan-card"
+               [class.plan-card--featured]="plan.isFeatured"
+               [class.plan-card--active]="isCurrentPlan(plan.tier)">
+            @if (plan.badge) {
+              <div class="plan-card__badge">{{ plan.badge }}</div>
+            }
+            @if (isCurrentPlan(plan.tier)) {
+              <div class="plan-card__active-indicator">✓</div>
+            }
+            
+            <div class="plan-card__header">
+              <h2 class="plan-card__name">{{ plan.name }}</h2>
+              <div class="plan-card__price">
+                <span class="plan-card__amount">{{ plan.price }}</span>
+                @if (plan.period) {
+                  <span class="plan-card__period">{{ plan.period }}</span>
+                }
+              </div>
+              <p class="plan-card__description">{{ plan.description }}</p>
+            </div>
+
+            <div class="plan-card__features">
+              <ul>
+                @for (feature of plan.features; track feature) {
+                  <li>
+                    <svg class="check-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <circle cx="9" cy="9" r="9" fill="#10b981"/>
+                      <path d="M5 9L8 12L13 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    {{ feature }}
+                  </li>
+                }
+              </ul>
+            </div>
+
+            <div class="plan-card__action">
+              <button 
+                [class]="getButtonClass(plan)"
+                (click)="handlePlanAction(plan)"
+                [disabled]="isCurrentPlan(plan.tier) || processingTier() === plan.tier">
+                {{ getButtonText(plan) }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (subscription() && subscription()!.tier !== 'free') {
+        <div class="billing-section">
+          <div class="billing-card">
+            <div class="billing-icon">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" fill="#f0f9ff"/>
+                <path d="M16 24h16M20 18v12M28 18v12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="billing-content">
+              <h3>Manage Billing & Subscription</h3>
+              <p>Update payment methods, view invoices, and manage your subscription</p>
+            </div>
+            <button 
+              class="btn btn--outline" 
+              (click)="handleManageSubscription()">
+              Open Billing Portal
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
