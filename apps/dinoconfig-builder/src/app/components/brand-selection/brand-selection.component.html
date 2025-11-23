@@ -1,0 +1,73 @@
+<div class="brand-selection">
+  <div class="brand-selection-container">
+    @if (isLoading()) {
+      <dc-spinner text="Loading your brands..." size="large" [fullHeight]="true"></dc-spinner>
+    } @else if (error()) {
+      <div class="error-state">
+        <h2>Error loading brands</h2>
+        <p>{{ error() }}</p>
+        <button mat-raised-button color="primary" (click)="loadBrands()">
+          Try Again
+        </button>
+      </div>
+    } @else {
+      <div class="header">
+        <h1>Select Your Brand</h1>
+        <p>Choose a brand to start building configurations</p>
+      </div>
+
+      @if (brands().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">🏢</div>
+          <h2>No brands yet</h2>
+          <p>Create your first brand to get started with building configurations</p>
+          <button mat-raised-button color="primary" (click)="handleCreateNewBrand()">
+            Create Your First Brand
+          </button>
+        </div>
+      } @else {
+        <div class="brands-grid">
+          @for (brand of brands(); track brand.id) {
+            <div class="brand-card" (click)="handleBrandSelect(brand.id)">
+              <div class="brand-logo">
+                @if (brand.logo) {
+                  <img [src]="brand.logo" [alt]="brand.name + ' logo'" />
+                } @else {
+                  <div class="default-logo">
+                    {{ brand.name.charAt(0).toUpperCase() }}
+                  </div>
+                }
+              </div>
+              <div class="brand-info">
+                <h3>{{ brand.name }}</h3>
+                @if (brand.description) {
+                  <p class="brand-description">{{ brand.description }}</p>
+                }
+                <div class="brand-meta">
+                  @if (brand.createdAt) {
+                    <span class="created-date">
+                      Created {{ formatDate(brand.createdAt) }}
+                    </span>
+                  }
+                </div>
+              </div>
+              <div class="brand-actions">
+                <button mat-raised-button color="primary" class="select-btn">
+                  Select Brand
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="create-new-section">
+          <button mat-raised-button color="primary" (click)="handleCreateNewBrand()">
+            <mat-icon>add</mat-icon>
+            Create New Brand
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>
+

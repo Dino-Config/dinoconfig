@@ -1,0 +1,19 @@
+// Minimal SCSS - most styles are in Tailwind
+// Only custom Material overrides if needed
+
+::ng-deep {
+  .mat-drawer-container {
+    background-color: transparent;
+    overflow-x: hidden;
+  }
+
+  .mat-drawer {
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .mat-drawer-content {
+    overflow-x: hidden !important;
+  }
+}
