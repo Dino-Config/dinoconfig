@@ -1,0 +1,165 @@
+<dc-auth-layout
+  title="Create Account"
+  description="Join DinoConfig and start managing your configurations"
+  sidebarTitle="Start Your Journey"
+  sidebarDescription="Join thousands of developers managing configurations with DinoConfig."
+  maxWidth="500px"
+  padding="p-6 md:p-8"
+  [showOverflow]="true"
+>
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-600 py-3 px-4 rounded-lg mb-6 text-sm leading-relaxed">
+      {{ error() }}
+    </div>
+  }
+
+  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline">
+        <mat-label>First Name</mat-label>
+        <input matInput
+          type="text"
+          formControlName="firstName"
+          placeholder="Enter your first name"
+          required
+          autocomplete="given-name"
+        />
+        @if (getFieldError('firstName')) {
+          <mat-error>{{ getFieldError('firstName') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Last Name</mat-label>
+        <input matInput
+          type="text"
+          formControlName="lastName"
+          placeholder="Enter your last name"
+          required
+          autocomplete="family-name"
+        />
+        @if (getFieldError('lastName')) {
+          <mat-error>{{ getFieldError('lastName') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Company</mat-label>
+      <input matInput
+        type="text"
+        formControlName="company"
+        placeholder="Enter your company name"
+        required
+        autocomplete="organization"
+      />
+      @if (getFieldError('company')) {
+        <mat-error>{{ getFieldError('company') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput
+        type="email"
+        formControlName="email"
+        placeholder="Enter your email address"
+        required
+        autocomplete="email"
+      />
+      @if (getFieldError('email')) {
+        <mat-error>{{ getFieldError('email') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput
+        [type]="showPassword() ? 'text' : 'password'"
+        formControlName="password"
+        placeholder="Create a strong password"
+        required
+        autocomplete="new-password"
+      />
+      <button mat-icon-button matSuffix
+        type="button"
+        (click)="togglePasswordVisibility()"
+        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+      >
+        @if (showPassword()) {
+          <mat-icon>visibility_off</mat-icon>
+        } @else {
+          <mat-icon>visibility</mat-icon>
+        }
+      </button>
+      @if (getFieldError('password')) {
+        <mat-error>{{ getFieldError('password') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Confirm Password</mat-label>
+      <input matInput
+        [type]="showConfirmPassword() ? 'text' : 'password'"
+        formControlName="confirmPassword"
+        placeholder="Confirm your password"
+        required
+        autocomplete="new-password"
+      />
+      <button mat-icon-button matSuffix
+        type="button"
+        (click)="toggleConfirmPasswordVisibility()"
+        [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+      >
+        @if (showConfirmPassword()) {
+          <mat-icon>visibility_off</mat-icon>
+        } @else {
+          <mat-icon>visibility</mat-icon>
+        }
+      </button>
+      @if (getPasswordMismatchError()) {
+        <mat-error>{{ getPasswordMismatchError() }}</mat-error>
+      }
+      @if (getFieldError('confirmPassword')) {
+        <mat-error>{{ getFieldError('confirmPassword') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="flex flex-col gap-2">
+      <mat-checkbox formControlName="agreeToTerms">
+        <span class="text-sm">
+          I agree to the
+          <a href="#" class="text-blue-500 no-underline font-medium transition-colors hover:text-blue-600 hover:underline">Terms of Service</a>
+          and
+          <a href="#" class="text-blue-500 no-underline font-medium transition-colors hover:text-blue-600 hover:underline">Privacy Policy</a>
+        </span>
+      </mat-checkbox>
+      @if (getFieldError('agreeToTerms')) {
+        <span class="text-xs text-red-600 -mt-1">{{ getFieldError('agreeToTerms') }}</span>
+      }
+    </div>
+
+    <button mat-raised-button
+      type="submit"
+      color="primary"
+      class="w-full mt-2"
+      [disabled]="isLoading() || signupForm.invalid"
+    >
+      @if (isLoading()) {
+        <mat-spinner diameter="16" class="inline-block mr-2"></mat-spinner>
+        <span>Creating account...</span>
+      } @else {
+        Create Account
+      }
+    </button>
+  </form>
+
+  <div class="mt-8 text-center text-sm text-slate-500">
+    <p>
+      Already have an account?
+      <a routerLink="/signin" class="text-blue-500 no-underline font-semibold transition-colors hover:text-blue-600 hover:underline">
+        Sign in
+      </a>
+    </p>
+  </div>
+</dc-auth-layout>

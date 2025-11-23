@@ -1,0 +1,87 @@
+{
+  "name": "dinoconfig-builder",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "dc",
+  "sourceRoot": "apps/dinoconfig-builder/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/dinoconfig-builder",
+        "browser": "apps/dinoconfig-builder/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "apps/dinoconfig-builder/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/dinoconfig-builder/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/dinoconfig-builder/src/assets",
+            "output": "assets"
+          }
+        ],
+        "styles": ["apps/dinoconfig-builder/src/styles.scss"]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "dinoconfig-builder:build:production"
+        },
+        "development": {
+          "buildTarget": "dinoconfig-builder:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular/build:extract-i18n",
+      "options": {
+        "buildTarget": "dinoconfig-builder:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "dinoconfig-builder:build",
+        "staticFilePath": "dist/apps/dinoconfig-builder/browser",
+        "spa": true
+      }
+    }
+  }
+}
