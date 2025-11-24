@@ -1,0 +1,66 @@
+<div class="subscription-success">
+  @if (loading()) {
+    <div class="subscription-success__card subscription-success__card--loading">
+      <dc-spinner text="Processing your subscription..." size="large"></dc-spinner>
+    </div>
+  } @else if (error() || localError() || !subscription()) {
+    <div class="subscription-success__card">
+      <div class="subscription-success__icon subscription-success__icon--error">⚠</div>
+      <h1>Something went wrong</h1>
+      <p>{{ error() || localError() || 'Unable to load subscription details' }}</p>
+      <div class="subscription-success__actions">
+        <button 
+          class="subscription-success__button subscription-success__button--primary"
+          (click)="goToSubscription()">
+          View Subscription
+        </button>
+        <button 
+          class="subscription-success__button subscription-success__button--secondary"
+          (click)="goHome()">
+          Return Home
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="subscription-success__card">
+      <div class="subscription-success__icon">✓</div>
+      <h1>Welcome to {{ getTierDisplayName(subscription()!.tier) }}!</h1>
+      <p>Your subscription has been activated successfully.</p>
+      
+      @if (subscription()!.currentPeriodEnd) {
+        <p class="subscription-success__renewal">
+          Your subscription will renew on {{ formatDate(subscription()!.currentPeriodEnd) }}
+        </p>
+      }
+
+      <div class="subscription-success__details">
+        <h3>You now have access to:</h3>
+        <ul class="subscription-success__benefits">
+          @for (benefit of getTierBenefits(subscription()!.tier); track benefit) {
+            <li>
+              <svg class="check-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="9" r="9" fill="#10b981"/>
+                <path d="M5 9L8 12L13 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {{ benefit }}
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="subscription-success__actions">
+        <button 
+          class="subscription-success__button subscription-success__button--primary"
+          (click)="goHome()">
+          Get Started
+        </button>
+        <button 
+          class="subscription-success__button subscription-success__button--secondary"
+          (click)="goToSubscription()">
+          Manage Subscription
+        </button>
+      </div>
+    </div>
+  }
+</div>
+

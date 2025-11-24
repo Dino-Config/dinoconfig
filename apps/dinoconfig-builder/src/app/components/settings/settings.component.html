@@ -1,0 +1,301 @@
+<div class="settings-page">
+  <div class="main-layout">
+    <div class="settings-header">
+      <div class="header-content">
+        <h1 class="page-title">{{ getPageTitle() }}</h1>
+        <p class="page-subtitle">{{ getPageSubtitle() }}</p>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="settings-container">
+        <div class="settings-content">
+          
+          @if (currentRoute() === '/settings' || currentRoute() === '/settings/sdk') {
+            <div class="settings-section">
+              <button 
+                class="section-toggle"
+                (click)="toggleSection('sdk')"
+              >
+                <mat-icon 
+                  class="chevron"
+                  [class.open]="isExpanded('sdk')"
+                >
+                  expand_more
+                </mat-icon>
+                <span class="section-title">SDK & API Keys</span>
+              </button>
+              
+              @if (isExpanded('sdk')) {
+              <div class="settings-grid">
+                <div class="setting-item api-key-section">
+                  <label class="setting-label">API Keys</label>
+                  <p class="setting-description">
+                    Manage API keys to authenticate with the DinoConfig SDK. You can create multiple keys 
+                    for different applications or environments.
+                  </p>
+                  
+                  @if (notification()) {
+                    <div class="notification" [class.notification-success]="notification()!.type === 'success'" [class.notification-error]="notification()!.type === 'error'">
+                      {{ notification()!.message }}
+                    </div>
+                  }
+
+                  @if (generatedApiKey()) {
+                    <div class="api-key-display">
+                      <h4>New API Key: {{ generatedApiKey()!.name }}</h4>
+                      <div class="api-key-value">
+                        <code>{{ generatedApiKey()!.key }}</code>
+                        <button 
+                          class="btn btn-icon" 
+                          (click)="copyToClipboard(generatedApiKey()!.key)"
+                          title="Copy to clipboard"
+                        >
+                          <mat-icon>content_copy</mat-icon>
+                        </button>
+                      </div>
+                      <p class="api-key-warning">
+                        ⚠️ Make sure to copy your API key now. You won't be able to see it again!
+                      </p>
+                      <button 
+                        class="btn btn-outline" 
+                        (click)="generatedApiKey.set(null)"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  }
+
+                  @if (isLoadingApiKeys()) {
+                    <div class="flex items-center justify-center p-8">
+                      <dc-spinner text="Loading API keys..." size="medium"></dc-spinner>
+                    </div>
+                  } @else if (apiKeys()) {
+                    <div class="api-keys-section">
+                      @if (apiKeys()!.keys.length > 0) {
+                        <div class="api-keys-header">
+                          <h4>Your API Keys ({{ apiKeys()!.active }} active / {{ apiKeys()!.total }} total)</h4>
+                          <button 
+                            class="btn btn-primary" 
+                            (click)="showCreateForm.set(!showCreateForm())"
+                          >
+                            + Create New Key
+                          </button>
+                        </div>
+                      }
+
+                      @if (showCreateForm()) {
+                        <div class="api-key-create-form">
+                          <div class="form-field">
+                            <label>Key Name *</label>
+                            <input 
+                              type="text" 
+                              placeholder="e.g., Production App"
+                              [value]="newKeyName()"
+                              (input)="newKeyName.set($any($event.target).value)"
+                              maxlength="100"
+                            />
+                          </div>
+                          <div class="form-field">
+                            <label>Description (optional)</label>
+                            <input 
+                              type="text" 
+                              placeholder="What is this key for?"
+                              [value]="newKeyDescription()"
+                              (input)="newKeyDescription.set($any($event.target).value)"
+                              maxlength="500"
+                            />
+                          </div>
+                          <div class="form-actions">
+                            <button 
+                              class="btn btn-primary" 
+                              (click)="createApiKey()"
+                              [disabled]="isGenerating()"
+                            >
+                              {{ isGenerating() ? 'Creating...' : 'Create Key' }}
+                            </button>
+                            <button 
+                              class="btn btn-outline" 
+                              (click)="showCreateForm.set(false); newKeyName.set(''); newKeyDescription.set('')"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      }
+
+                      @if (apiKeys()!.keys.length > 0) {
+                        @for (key of apiKeys()!.keys; track key.id) {
+                          <div class="api-key-item" [class.inactive]="!key.isActive">
+                            <div class="api-key-item-header">
+                              <div class="api-key-item-title">
+                                <h5>{{ key.name }}</h5>
+                                @if (key.isActive) {
+                                  <span class="status-badge status-active">Active</span>
+                                } @else {
+                                  <span class="status-badge status-inactive">Inactive</span>
+                                }
+                              </div>
+                              <div class="api-key-item-actions">
+                                @if (key.isActive) {
+                                  <button 
+                                    class="btn btn-sm btn-danger" 
+                                    (click)="revokeApiKey(key.id, key.name)"
+                                  >
+                                    Revoke
+                                  </button>
+                                }
+                                <button 
+                                  class="btn btn-sm btn-outline" 
+                                  (click)="deleteApiKey(key.id, key.name)"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                            @if (key.description) {
+                              <p class="api-key-item-description">{{ key.description }}</p>
+                            }
+                            <div class="api-key-item-meta">
+                              <span><strong>Created:</strong> {{ formatDateTime(key.createdAt) }}</span>
+                              <span><strong>Last used:</strong> {{ formatDateTime(key.lastUsedAt) }}</span>
+                            </div>
+                          </div>
+                        }
+                      }
+
+                      @if (apiKeys()!.keys.length === 0 && !showCreateForm()) {
+                        <div class="api-key-empty">
+                          <p>You don't have any API keys yet.</p>
+                          <button 
+                            class="btn btn-primary" 
+                            (click)="showCreateForm.set(true)"
+                          >
+                            Create Your First API Key
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="api-key-docs">
+                    <h4>Usage Example</h4>
+                    <pre><code>import {{ '{' }} dinoconfigApi {{ '}' }} from '@dinoconfig/js-sdk';
+
+const dinoconfig = dinoconfigApi({{ '{' }}
+  apiKey: 'your-api-key-here',
+  baseUrl: 'http://localhost:3000/api',
+{{ '}' }});
+
+// Ready to use! Token exchange happens automatically
+const configs = await dinoconfig.configs.getAllConfigs(brandId);</code></pre>
+                  </div>
+                </div>
+              </div>
+            }
+            </div>
+          }
+
+          @if (currentRoute() === '/settings' || currentRoute() === '/settings/features') {
+            <div class="settings-section">
+              <button 
+                class="section-toggle"
+                (click)="toggleSection('features')"
+              >
+                <mat-icon 
+                  class="chevron"
+                  [class.open]="isExpanded('features')"
+                >
+                  expand_more
+                </mat-icon>
+                <span class="section-title">Features</span>
+              </button>
+              
+              @if (isExpanded('features')) {
+                <div class="settings-grid">
+                  <div class="setting-item features-section">
+                    @if (isLoadingSubscription()) {
+                      <div class="features-loading">Loading features...</div>
+                    } @else if (subscription()) {
+                      <div class="subscription-info">
+                        <div class="subscription-tier">
+                          <span class="tier-label">Current Plan:</span>
+                          <span class="tier-badge" [class.tier-free]="subscription()!.tier === 'free'" [class.tier-starter]="subscription()!.tier === 'starter'" [class.tier-pro]="subscription()!.tier === 'pro'" [class.tier-custom]="subscription()!.tier === 'custom'">
+                            {{ getTierDisplayName(subscription()!.tier) }}
+                          </span>
+                          @if (subscription()!.status !== 'active' && subscription()!.status !== 'trialing') {
+                            <span class="status-warning">({{ subscription()!.status }})</span>
+                          }
+                        </div>
+                        <div class="subscription-limits">
+                          <div class="limit-item">
+                            <span class="limit-label">Brands:</span>
+                            <span class="limit-value">
+                              {{ subscription()!.limits.maxBrands === -1 ? 'Unlimited' : subscription()!.limits.maxBrands }}
+                            </span>
+                          </div>
+                          <div class="limit-item">
+                            <span class="limit-label">Configs per Brand:</span>
+                            <span class="limit-value">
+                              {{ subscription()!.limits.maxConfigsPerBrand === -1 ? 'Unlimited' : subscription()!.limits.maxConfigsPerBrand }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="features-list">
+                        <h4>Available Features</h4>
+                        <div class="features-grid">
+                          @for (feature of getAllFeatures(); track feature) {
+                            <div class="feature-item" [class.enabled]="hasFeature(feature)" [class.disabled]="!hasFeature(feature)" [title]="getFeatureDescription(feature)">
+                              <div class="feature-status">
+                                @if (hasFeature(feature)) {
+                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="icon-enabled">
+                                    <circle cx="10" cy="10" r="9" fill="#10b981" stroke="#059669" stroke-width="2"/>
+                                    <path d="M6 10L9 13L14 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </svg>
+                                } @else {
+                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="icon-disabled">
+                                    <circle cx="10" cy="10" r="9" fill="#e5e7eb" stroke="#d1d5db" stroke-width="2"/>
+                                    <path d="M7 10L13 10" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+                                  </svg>
+                                }
+                              </div>
+                              <div class="feature-info">
+                                <div class="feature-name">{{ getFeatureDescription(feature) }}</div>
+                                @if (!hasFeature(feature)) {
+                                  <span class="feature-badge" [class.badge-free]="getFeatureTier(feature) === 'free'" [class.badge-starter]="getFeatureTier(feature) === 'starter'" [class.badge-pro]="getFeatureTier(feature) === 'pro'" [class.badge-custom]="getFeatureTier(feature) === 'custom'">
+                                    {{ getTierDisplayName(getFeatureTier(feature)) }}
+                                  </span>
+                                }
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+
+                      @if (subscription()!.tier !== 'custom') {
+                        <div class="upgrade-prompt">
+                          <h4>Want more features?</h4>
+                          <p>Upgrade your plan to unlock additional capabilities for your configurations.</p>
+                          <button class="btn btn-primary" (click)="goToSubscription()">
+                            View Plans & Upgrade
+                          </button>
+                        </div>
+                      }
+                    } @else {
+                      <div class="features-error">
+                        <p>Unable to load subscription features.</p>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

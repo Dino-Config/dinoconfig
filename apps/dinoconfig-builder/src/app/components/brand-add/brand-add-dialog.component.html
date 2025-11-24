@@ -1,0 +1,84 @@
+<div class="brand-add-dialog">
+  <div class="brand-add-container">
+    <div class="header">
+      <h1>Add New Brand</h1>
+      <p>Create a new brand to organize and manage your configurations</p>
+    </div>
+
+    @if (limitReached() && subscription()) {
+      <dc-subscription-limit-warning 
+        [message]="error() || 'You\'ve reached your brand limit'"
+        [currentTier]="subscription()!.tier"
+      ></dc-subscription-limit-warning>
+    }
+
+    <form [formGroup]="brandForm" (ngSubmit)="onSubmit()" class="brand-form flex flex-col gap-6">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Brand Name</mat-label>
+        <input matInput
+          type="text"
+          formControlName="name"
+          placeholder="Enter brand name"
+          required
+        />
+        @if (brandForm.get('name')?.hasError('required') && brandForm.get('name')?.touched) {
+          <mat-error>Brand name is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Description</mat-label>
+        <textarea matInput
+          formControlName="description"
+          placeholder="Enter brand description (optional)"
+          rows="3"
+        ></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Logo URL</mat-label>
+        <input matInput
+          type="url"
+          formControlName="logo"
+          placeholder="https://example.com/logo.png"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Website URL</mat-label>
+        <input matInput
+          type="url"
+          formControlName="website"
+          placeholder="https://example.com"
+        />
+      </mat-form-field>
+
+      @if (error() && !limitReached()) {
+        <div class="bg-red-50 border border-red-200 text-red-600 py-3 px-4 rounded-lg mb-6 text-sm">
+          {{ error() }}
+        </div>
+      }
+
+      <div class="form-actions">
+        <button mat-stroked-button
+          type="button"
+          (click)="onCancel()"
+          [disabled]="isLoading()">
+          Skip for now
+        </button>
+        <button mat-raised-button
+          type="submit"
+          color="primary"
+          [disabled]="isLoading() || brandForm.invalid">
+          @if (isLoading()) {
+            <mat-icon>
+                <mat-spinner diameter="16" class="inline-block mr-2"></mat-spinner>
+            </mat-icon> 
+          }
+          Create Brand
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

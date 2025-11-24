@@ -50,5 +50,11 @@ export class AuthService {
   forgotPassword(email: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
   }
+
+  logout(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/logout`, {}, {
+      withCredentials: true
+    });
+  }
 }
 

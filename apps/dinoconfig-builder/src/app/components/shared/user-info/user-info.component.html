@@ -1,0 +1,21 @@
+<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg transition-all duration-200 cursor-pointer"
+     [class.justify-center]="isCollapsed()"
+     [class.p-2]="isCollapsed()">
+  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base flex-shrink-0"
+       [class.w-8]="isCollapsed()"
+       [class.h-8]="isCollapsed()"
+       [class.text-sm]="isCollapsed()">
+    {{ user().firstName ? user().firstName.charAt(0).toUpperCase() : 'U' }}
+  </div>
+  @if (!isCollapsed()) {
+    <div class="flex-1 min-w-0" (click)="goProfile()">
+      <div class="text-sm font-semibold text-gray-900 mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+        {{ getUserDisplayName() }}
+      </div>
+      <div class="text-xs text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis">
+        {{ user().email }}
+      </div>
+    </div>
+  }
+</div>
+

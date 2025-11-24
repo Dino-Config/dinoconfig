@@ -1,0 +1,30 @@
+<button 
+  class="w-full flex items-center px-5 py-3 border-none bg-transparent text-gray-500 text-sm font-medium cursor-pointer transition-all duration-200 relative"
+  [class.bg-gray-50]="isActive()"
+  [class.text-gray-700]="isActive()"
+  [class.justify-center]="isCollapsed()"
+  [class.pl-11]="isSubItem() && !isCollapsed()"
+  [class.text-[13px]]="isSubItem()"
+  [class.text-left]="isSubItem()"
+  (click)="onClick()"
+>
+  @if (icon()) {
+    <mat-icon class="w-5 h-5 text-xl transition-colors duration-200 flex-shrink-0"
+              [class.mr-0]="isCollapsed()"
+              [class.mr-3]="!isCollapsed()"
+              [class.text-blue-600]="isActive()">
+      {{ icon() }}
+    </mat-icon>
+  }
+  @if (!isCollapsed()) {
+    <span class="transition-colors duration-200 whitespace-nowrap flex-1 text-left">{{ label() }}</span>
+  }
+  @if (showArrow() && !isCollapsed()) {
+    <mat-icon class="w-4 h-4 text-base ml-auto transition-all duration-200 flex-shrink-0 text-gray-400"
+              [class.rotate-90]="arrowRotated()"
+              [class.text-blue-600]="arrowRotated()">
+      chevron_right
+    </mat-icon>
+  }
+</button>
+

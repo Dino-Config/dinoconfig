@@ -1,0 +1,20 @@
+<mat-sidenav-container autosize class="h-screen overflow-x-hidden">
+  <mat-sidenav 
+    mode="side" 
+    opened="true"
+    [style.width]="getSidenavWidth()"
+    class="bg-white border-r border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.06)] flex flex-col"
+    [class.overflow-hidden]="isCollapsed()"
+  >
+    <dc-left-navigation
+      [isCollapsed]="isCollapsed()"
+      [onToggle]="toggleSidebar.bind(this)"
+    ></dc-left-navigation>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="flex-1 flex flex-col overflow-x-hidden">
+    <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#f7f8fa]">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,0 +1,7 @@
+<div class="spinner-container" [class.full-height]="fullHeight()">
+  <mat-spinner [diameter]="spinnerDiameter()"></mat-spinner>
+  @if (text()) {
+    <p class="spinner-text">{{ text() }}</p>
+  }
+</div>
+

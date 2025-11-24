@@ -1,0 +1,135 @@
+<div class="flex flex-col h-full overflow-hidden">
+  <!-- Header -->
+  <div class="p-6 pb-5 border-b border-gray-200 flex items-center justify-between relative flex-shrink-0 transition-all duration-300"
+       [class.px-4]="isCollapsed()"
+       [class.justify-center]="isCollapsed()">
+    @if (isCollapsed()) {
+      <img 
+        src="/assets/dinoconfig-logo.svg" 
+        alt="DinoConfig" 
+        class="w-12 h-12 object-contain transition-all duration-200 cursor-pointer hover:scale-110 hover:brightness-110 active:scale-95"
+        (click)="onToggle()()"
+      />
+    } @else {
+      <h2 
+        class="text-2xl font-bold text-gray-900 m-0 bg-gradient-to-br from-blue-600 to-purple-600 bg-clip-text text-transparent transition-opacity duration-200 whitespace-nowrap pr-2.5 cursor-pointer relative hover:opacity-80 hover:scale-[1.02] active:scale-[0.98] group"
+        (click)="onToggle()()"
+      >
+        DinoConfig Builder
+      </h2>
+    }
+  </div>
+
+  <!-- Navigation Sections -->
+  <div class="flex-1 py-5 overflow-y-auto overflow-x-hidden min-h-0">
+    <!-- Main Section -->
+    <div class="mb-8">
+      <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-[0.5px] m-0 mb-3 ml-5"
+          [class.hidden]="isCollapsed()">
+        Main
+      </h3>
+      <ul class="list-none p-0 m-0">
+        <li class="mb-1">
+          <dc-nav-menu-item
+            icon="build"
+            label="Builder"
+            [isActive]="getActiveItem() === 'builder'"
+            [isCollapsed]="isCollapsed()"
+            (clicked)="goBuilder()"
+          ></dc-nav-menu-item>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Account Section -->
+    <div class="mb-8">
+      <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-[0.5px] m-0 mb-3 ml-5"
+          [class.hidden]="isCollapsed()">
+        Account
+      </h3>
+      <ul class="list-none p-0 m-0">
+        <li class="mb-1">
+          <dc-nav-menu-item
+            icon="person"
+            label="Profile"
+            [isActive]="getActiveItem() === 'profile'"
+            [isCollapsed]="isCollapsed()"
+            (clicked)="goProfile()"
+          ></dc-nav-menu-item>
+        </li>
+        <li class="mb-1">
+          <dc-nav-menu-item
+            icon="settings"
+            label="Settings"
+            [isActive]="getActiveItem() === 'settings'"
+            [isCollapsed]="isCollapsed()"
+            [showArrow]="true"
+            [arrowRotated]="isActive('/settings')"
+            (clicked)="goSettings()"
+          ></dc-nav-menu-item>
+        </li>
+        @if (!isCollapsed() && isActive('/settings')) {
+          <li class="mb-1">
+            <dc-nav-menu-item
+              icon=""
+              label="SDK & API Keys"
+              [isActive]="isActive('/settings/sdk')"
+              [isCollapsed]="isCollapsed()"
+              [isSubItem]="true"
+              (clicked)="goSettingsSdk()"
+            ></dc-nav-menu-item>
+          </li>
+        }
+        @if (!isCollapsed() && isActive('/settings')) {
+          <li class="mb-1">
+            <dc-nav-menu-item
+              icon=""
+              label="Features"
+              [isActive]="isActive('/settings/features')"
+              [isCollapsed]="isCollapsed()"
+              [isSubItem]="true"
+              (clicked)="goSettingsFeatures()"
+            ></dc-nav-menu-item>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="p-5 border-t border-gray-200 flex flex-col gap-4 flex-shrink-0 transition-all duration-300 overflow-hidden"
+       [class.px-4]="isCollapsed()"
+       [class.py-5]="isCollapsed()"
+       [class.gap-3]="isCollapsed()">
+    @if (!loading() && user() && subscription() && !isCollapsed()) {
+      <dc-subscription-tier-box [subscription]="subscription()!"></dc-subscription-tier-box>
+    }
+
+    @if (!loading() && user()) {
+      <dc-user-info [user]="user()!" [isCollapsed]="isCollapsed()"></dc-user-info>
+    }
+    
+    <button 
+      class="w-full flex items-center justify-center px-4 py-3 border-none rounded-lg bg-[#8b8b8b] text-white text-sm font-medium cursor-pointer transition-all duration-200 gap-2 hover:bg-[#454545] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(239,68,68,0.3)] active:translate-y-0 active:shadow-[0_2px_4px_rgba(239,68,68,0.2)]"
+      [class.w-10]="isCollapsed()"
+      [class.h-10]="isCollapsed()"
+      [class.p-2]="isCollapsed()"
+      [class.text-[0]]="isCollapsed()"
+      [class.m-0]="isCollapsed()"
+      [class.flex-shrink-0]="isCollapsed()"
+      [class.shadow-[0_2px_4px_rgba(0,0,0,0.1)]]="isCollapsed()"
+      (click)="handleLogout()"
+      [title]="isCollapsed() ? 'Logout' : ''"
+    >
+      <mat-icon class="w-[18px] h-[18px] text-lg flex-shrink-0 text-white"
+                [class.mr-0]="isCollapsed()"
+                [class.w-5]="isCollapsed()"
+                [class.h-5]="isCollapsed()">
+        logout
+      </mat-icon>
+      @if (!isCollapsed()) {
+        <span class="text-white">Logout</span>
+      }
+    </button>
+  </div>
+</div>
