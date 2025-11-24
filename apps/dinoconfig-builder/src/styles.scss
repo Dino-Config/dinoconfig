@@ -1,5 +1,6 @@
 @use './app/theme.scss';
 @use "tailwindcss";
+@use '@angular/material' as mat;
 
 /* Global styles */
 body {
@@ -17,4 +18,12 @@ body {
 .brand-add-dialog-panel,
 .config-add-dialog-panel {
   --mat-dialog-container-shape: 24px;
+}
+
+:root {
+  @include mat.expansion-overrides((
+    container-shape: 8px,
+    header-collapsed-state-height: 67px,
+    container-elevation-shadow: rgba(0, 0, 0, 0.05) 0px 2px 4px 0px
+  ));
 }

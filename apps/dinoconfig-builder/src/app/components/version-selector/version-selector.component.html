@@ -1,21 +1,18 @@
 @if (versions().length > 0) {
-  <div class="version-selector" [class.collapsed]="isCollapsed()">
-    <div class="version-selector__header" (click)="toggleCollapse()">
-      <h3>Version History</h3>
-      <div class="version-selector__header-right">
+  <mat-expansion-panel class="version-selector">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <h3 class="version-selector__title">Version History</h3>
+      </mat-panel-title>
+      <mat-panel-description>
         <div class="version-selector__active-indicator">
           <span class="version-selector__active-label">Active Version:</span>
           <span class="version-selector__active-version">v{{ activeVersion() || 'Latest' }}</span>
         </div>
-        <button class="version-selector__collapse-toggle" [attr.aria-label]="isCollapsed() ? 'Expand' : 'Collapse'">
-          <mat-icon [style.transform]="isCollapsed() ? 'rotate(-90deg)' : 'rotate(0deg)'" [style.transition]="'transform 0.2s'">
-            expand_more
-          </mat-icon>
-        </button>
-      </div>
-    </div>
-    
-    @if (!isCollapsed()) {
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+
+    <div class="version-selector__content">
       <div class="version-selector__controls">
         <div class="version-selector__dropdown-container">
           <label for="version-select" class="version-selector__dropdown-label">
@@ -72,7 +69,7 @@
           </div>
         </div>
       }
-    }
-  </div>
+    </div>
+  </mat-expansion-panel>
 }
 

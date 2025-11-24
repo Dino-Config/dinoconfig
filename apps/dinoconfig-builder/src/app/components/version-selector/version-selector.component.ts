@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { ConfigService } from '../../services/config.service';
 import { Config } from '../../models/config.models';
 
@@ -15,7 +16,8 @@ import { Config } from '../../models/config.models';
     MatButtonModule,
     MatSelectModule,
     MatFormFieldModule,
-    MatIconModule
+    MatIconModule,
+    MatExpansionModule
   ],
   templateUrl: './version-selector.component.html',
   styleUrl: './version-selector.component.scss'
@@ -35,7 +37,6 @@ export class VersionSelectorComponent {
   notification = output<{ type: 'success' | 'error' | 'warning' | 'info'; message: string }>();
 
   isSettingActive = signal(false);
-  isCollapsed = signal(true);
   previewVersion = signal<Config | null>(null);
 
   constructor() {
@@ -46,9 +47,6 @@ export class VersionSelectorComponent {
     });
   }
 
-  toggleCollapse(): void {
-    this.isCollapsed.update(v => !v);
-  }
 
   onVersionChange(versionNumber: number): void {
     const version = this.versions().find(v => v.version === versionNumber);
