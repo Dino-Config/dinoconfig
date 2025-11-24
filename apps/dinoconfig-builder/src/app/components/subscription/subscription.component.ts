@@ -73,7 +73,6 @@ export class SubscriptionComponent implements OnInit {
         '20 brands',
         '20 configs per brand',
         'All SDKs & APIs',
-        'Advanced targeting',
         'Priority support',
         'Version history',
         'Team collaboration',
@@ -91,7 +90,6 @@ export class SubscriptionComponent implements OnInit {
       features: [
         'Unlimited brands & configs',
         'Everything in Pro',
-        'SAML SSO',
         'Custom integrations',
         'Dedicated support',
         'On-premise option'

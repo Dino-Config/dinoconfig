@@ -97,7 +97,6 @@ export class SubscriptionSuccessComponent implements OnInit {
           'Up to 20 brands',
           'Up to 20 configs per brand',
           'All SDKs & APIs',
-          'Advanced targeting',
           'Priority support',
           'Version history',
           'Team collaboration',
@@ -107,7 +106,6 @@ export class SubscriptionSuccessComponent implements OnInit {
         return [
           'Unlimited brands & configs',
           'Everything in Pro',
-          'SAML SSO',
           'Custom integrations',
           'Dedicated support',
           'On-premise option'
