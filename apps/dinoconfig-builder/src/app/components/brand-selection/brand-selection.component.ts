@@ -3,9 +3,11 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { BrandService } from '../../services/brand.service';
 import { Brand } from '../../models/user.models';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
+import { BrandAddDialogComponent } from '../brand-add/brand-add-dialog.component';
 import { catchError, of } from 'rxjs';
 
 @Component({
@@ -18,6 +20,7 @@ import { catchError, of } from 'rxjs';
 export class BrandSelectionComponent implements OnInit {
   private router = inject(Router);
   private brandService = inject(BrandService);
+  private dialog = inject(MatDialog);
 
   brands = signal<Brand[]>([]);
   isLoading = signal(true);
@@ -61,7 +64,18 @@ export class BrandSelectionComponent implements OnInit {
   }
 
   handleCreateNewBrand(): void {
-    this.router.navigate(['/brands/add']);
+    const dialogRef = this.dialog.open(BrandAddDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      disableClose: false,
+      panelClass: 'brand-add-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.brands.set([...this.brands(), result]);
+      }
+    });
   }
 
   formatDate(dateString?: string): string {

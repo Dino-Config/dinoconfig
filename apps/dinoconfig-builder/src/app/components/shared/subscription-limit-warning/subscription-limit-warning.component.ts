@@ -1,0 +1,23 @@
+import { Component, input, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+
+@Component({
+  selector: 'dc-subscription-limit-warning',
+  standalone: true,
+  imports: [CommonModule, MatButtonModule],
+  templateUrl: './subscription-limit-warning.component.html',
+  styleUrl: './subscription-limit-warning.component.scss'
+})
+export class SubscriptionLimitWarningComponent {
+  private router = inject(Router);
+
+  message = input.required<string>();
+  currentTier = input.required<string>();
+
+  handleUpgrade(): void {
+    this.router.navigate(['/subscription']);
+  }
+}
+

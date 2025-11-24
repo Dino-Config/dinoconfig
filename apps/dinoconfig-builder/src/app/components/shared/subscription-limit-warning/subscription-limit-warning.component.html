@@ -1,0 +1,13 @@
+<div class="flex items-start gap-4 p-5 bg-yellow-50 border border-yellow-400 rounded-lg mb-5">
+  <div class="text-3xl flex-shrink-0">⚠️</div>
+  <div class="flex-1">
+    <h3 class="m-0 mb-2 text-lg font-semibold text-yellow-800">Subscription Limit Reached</h3>
+    <p class="m-0 mb-3 text-sm text-yellow-800 leading-relaxed">{{ message() }}</p>
+    @if (currentTier() === 'free') {
+      <button mat-raised-button color="primary" (click)="handleUpgrade()">
+        Upgrade to Pro
+      </button>
+    }
+  </div>
+</div>
+
