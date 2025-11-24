@@ -1,0 +1,35 @@
+.active-version-container {
+  background: #fff;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  .active-version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .active-version-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .active-label {
+    font-size: 14px;
+    color: #7f8c8d;
+  }
+
+  .active-version {
+    font-size: 14px;
+    color: #27ae60;
+    font-weight: 600;
+    background: #d5f4e6;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+}
+

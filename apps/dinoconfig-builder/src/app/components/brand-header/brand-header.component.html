@@ -1,0 +1,24 @@
+<div class="brand-header">
+  <button class="btn back-button" (click)="goBack()">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+  <div class="brand-info">
+    @if (brand()) {
+      <div class="brand-field">
+        <span class="field-label">Brand name:</span>
+        <div class="field-value">
+          <h1>{{ brand()!.name }}</h1>
+        </div>
+      </div>
+      @if (brand()!.description) {
+        <div class="brand-field">
+          <span class="field-label">Description:</span>
+          <div class="field-value">
+            <p>{{ brand()!.description }}</p>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+

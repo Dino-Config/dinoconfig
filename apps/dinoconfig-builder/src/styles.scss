@@ -14,6 +14,7 @@ body {
 }
 
 // Brand add dialog panel border radius
-.brand-add-dialog-panel {
+.brand-add-dialog-panel,
+.config-add-dialog-panel {
   --mat-dialog-container-shape: 24px;
 }

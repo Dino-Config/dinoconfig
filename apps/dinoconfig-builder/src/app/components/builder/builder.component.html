@@ -1,0 +1,57 @@
+@if (isLoading()) {
+  <div class="builder-loading">
+    <dc-spinner text="Loading brand and configs..." size="large" [fullHeight]="true"></dc-spinner>
+  </div>
+} @else if (error()) {
+  <div class="builder-error">
+    <img src="assets/dino-think.svg" alt="Dino Thinking" class="dino-thinking" />
+    <h2>Error</h2>
+    <p>{{ error() }}</p>
+    <button class="btn primary" (click)="goToBrands()">
+      Back to Brand Selection
+    </button>
+  </div>
+} @else {
+  <div class="multi-config-builder">
+    <div class="main-layout">
+      <dc-brand-header [brand]="brand()"></dc-brand-header>
+
+      @if (limitReached() && subscription()) {
+        <div class="limit-warning-container">
+          <dc-subscription-limit-warning 
+            [message]="limitErrorMessage() || 'You\'ve reached your config limit'"
+            [currentTier]="subscription()!.tier"
+          ></dc-subscription-limit-warning>
+        </div>
+      }
+
+      <div class="main-content">
+        <dc-config-sidebar
+          [configs]="configs()"
+          [selectedId]="selectedId()"
+          (selected)="onConfigSelect($event)"
+          (deleted)="onConfigDelete($event)"
+          (renamed)="onConfigRename($event)"
+          (created)="onConfigCreate($event)"
+        ></dc-config-sidebar>
+
+        <div class="config-content">
+          @if (selectedConfig() && configVersions().length > 0) {
+            <dc-version-selector
+              [brandId]="brandId()!"
+              [configId]="selectedConfig()!.id"
+              [configName]="selectedConfig()!.name"
+              [selectedVersion]="selectedVersion()"
+              [activeVersion]="activeVersions()[selectedConfig()!.name]"
+              [versions]="configVersions()"
+              (versionSelected)="onVersionSelect($event)"
+              (activeVersionSet)="onActiveVersionSet($event)"
+              (notification)="onNotification($event)"
+            ></dc-version-selector>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+

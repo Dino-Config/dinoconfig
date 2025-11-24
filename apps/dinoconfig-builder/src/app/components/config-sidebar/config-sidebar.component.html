@@ -1,0 +1,56 @@
+<div class="config-sidebar">
+  <div class="sidebar-header">
+    <h3 class="section-title">Configurations</h3>
+    <span class="config-count">{{ configs().length }}</span>
+  </div>
+  
+  @if (configs().length === 0) {
+    <div class="empty-configs">
+      <img src="assets/write.svg" alt="" class="write-icon-svg" />
+      <p>No configurations yet</p>
+      <small>Click the button below to create your first configuration</small>
+    </div>
+  } @else {
+    <ul class="config-list">
+      @for (config of configs(); track config.id) {
+        <li [class.selected]="selectedId() === config.id">
+          <div class="config-item">
+            <button
+              (click)="onSelect(config.id)"
+              class="config-btn"
+            >
+              <div class="config-icon">
+                {{ selectedId() === config.id ? '📄' : '📋' }}
+              </div>
+              <span class="config-name">{{ config.name }}</span>
+            </button>
+            <button 
+              class="menu-btn" 
+              (click)="toggleExpanded(config.id)"
+            >
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </div>
+          @if (expandedId() === config.id) {
+            <div class="config-actions">
+              <button (click)="onRename(config.id); expandedId.set(null)" class="action-btn rename">
+                <mat-icon>edit</mat-icon>
+                Rename
+              </button>
+              <button (click)="onDelete(config.id); expandedId.set(null)" class="action-btn delete">
+                <mat-icon>delete</mat-icon>
+                Delete
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <button class="create-config-btn" (click)="onCreate()">
+    <mat-icon>add</mat-icon>
+    New Configuration
+  </button>
+</div>
+
