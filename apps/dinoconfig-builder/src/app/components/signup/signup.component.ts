@@ -118,7 +118,7 @@ export class SignupComponent {
     }).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/brands']);
+        this.router.navigate(['/verify-email']);
       },
       error: (err: any) => {
         this.isLoading.set(false);
