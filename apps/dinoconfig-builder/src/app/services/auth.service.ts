@@ -56,5 +56,11 @@ export class AuthService {
       withCredentials: true
     });
   }
+
+  sendVerificationEmail(userId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/send-verification`, { userId }, {
+      withCredentials: true
+    });
+  }
 }
 

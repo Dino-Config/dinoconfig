@@ -1,0 +1,75 @@
+<div class="subscription-violation-modal-overlay">
+  <div class="subscription-violation-modal">
+    <div class="subscription-violation-modal__header">
+      <div class="subscription-violation-modal__icon">🚨</div>
+      <h2>Subscription Upgrade Required</h2>
+      <p>Your current usage exceeds your plan limits. Please upgrade to continue using all features.</p>
+    </div>
+
+    <div class="subscription-violation-modal__content">
+      <div class="violations-list">
+        @for (violation of violations().violations; track $index) {
+          <div class="violation-item">
+            <div class="violation-item__icon">
+              {{ violation.type === 'brands' ? '🏢' : '⚙️' }}
+            </div>
+            <div class="violation-item__content">
+              <h4>{{ violation.type === 'brands' ? 'Brands' : 'Configs' }} Limit</h4>
+              <p>{{ violation.message }}</p>
+              <div class="violation-item__stats">
+                <span class="current">{{ violation.current }}</span>
+                <span class="separator">/</span>
+                <span class="limit">{{ violation.limit }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="recommendation">
+        <h3>Recommended Plan</h3>
+        <p>
+          Based on your current usage, we recommend upgrading to the
+          <strong>{{ getTierDisplayName(recommendedPlan()) }}</strong> plan.
+        </p>
+        <div class="plan-benefits">
+          @if (recommendedPlan() === 'starter') {
+            <ul>
+              <li>✅ Up to 5 brands</li>
+              <li>✅ Up to 10 configs per brand</li>
+              <li>✅ Basic SDK</li>
+              <li>✅ Community support</li>
+            </ul>
+          }
+          @if (recommendedPlan() === 'pro') {
+            <ul>
+              <li>✅ Up to 20 brands</li>
+              <li>✅ Up to 20 configs per brand</li>
+              <li>✅ All SDKs & APIs</li>
+              <li>✅ Advanced targeting</li>
+              <li>✅ Priority support</li>
+            </ul>
+          }
+          @if (recommendedPlan() === 'custom') {
+            <ul>
+              <li>✅ Unlimited brands & configs</li>
+              <li>✅ Everything in Pro</li>
+              <li>✅ Custom integrations</li>
+              <li>✅ Dedicated support</li>
+            </ul>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="subscription-violation-modal__actions">
+      <button 
+        class="btn btn--primary" 
+        (click)="handleUpgrade()"
+      >
+        Upgrade Now
+      </button>
+    </div>
+  </div>
+</div>
+

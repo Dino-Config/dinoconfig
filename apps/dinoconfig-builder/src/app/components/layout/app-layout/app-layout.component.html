@@ -18,3 +18,16 @@
     </main>
   </mat-sidenav-content>
 </mat-sidenav-container>
+
+@if (showViolationModal() && violations()) {
+  <dc-subscription-violation-modal
+    [violations]="violations()!"
+  ></dc-subscription-violation-modal>
+}
+
+<dc-idle-warning-modal
+  [isVisible]="idleVisible()"
+  [remainingSeconds]="idleRemainingSeconds()"
+  (onKeepSession)="handleKeepSession()"
+  (onLogout)="handleLogout()"
+></dc-idle-warning-modal>

@@ -1,0 +1,90 @@
+<div class="email-verification-pending">
+  <div class="verification-card">
+    <div class="verification-icon">
+      <img src="/assets/dino-email.svg" alt="Dino Thinking" class="dino-email" />
+    </div>
+    
+    <h1>Verify Your Email Address</h1>
+    
+    <p class="verification-message">
+      We've sent a verification email to <strong>{{ user()?.email }}</strong>
+    </p>
+    
+    <p class="verification-instructions">
+      Please check your inbox and click the verification link to complete your registration and access DinoConfig Builder.
+    </p>
+
+    @if (autoCheckCount() > 0) {
+      <p class="auto-check-info">
+        Automatically checking verification status...
+      </p>
+    }
+
+    @if (user() && user()!.verificationEmailResendCount >= 3 && !user()!.emailVerified) {
+      <div class="alert alert-error">
+        ⚠️ You have reached the maximum number of verification email attempts. Please contact support for assistance.
+      </div>
+    }
+
+    <div class="verification-tips">
+      <h3>Didn't receive the email?</h3>
+      <ul>
+        <li>Check your spam or junk folder</li>
+        <li>Make sure you entered the correct email address</li>
+        <li>Wait a few minutes for the email to arrive</li>
+      </ul>
+    </div>
+
+    <div class="verification-actions">
+      <button 
+        class="btn-primary"
+        (click)="handleCheckVerification()"
+        [disabled]="isCheckingVerification()"
+      >
+        @if (isCheckingVerification()) {
+          <span class="spinner-small"></span>
+          <span>Checking...</span>
+        } @else {
+          <span>I've Verified My Email</span>
+        }
+      </button>
+
+      <button 
+        class="btn-secondary"
+        (click)="handleResendEmail()"
+        [disabled]="isResending() || cooldownSeconds() > 0 || (user()?.verificationEmailResendCount ?? 0) >= 3"
+      >
+        @if (isResending()) {
+          <span class="spinner-small"></span>
+          <span>Sending...</span>
+        } @else if (cooldownSeconds() > 0) {
+          <span>Wait {{ cooldownSeconds() }}s to resend</span>
+        } @else if ((user()?.verificationEmailResendCount ?? 0) >= 3) {
+          <span>Resend Limit Reached</span>
+        } @else {
+          <span>Resend Verification Email ({{ getRemainingResends() }} left)</span>
+        }
+      </button>
+
+      <button 
+        class="btn-text"
+        (click)="handleLogout()"
+      >
+        Logout
+      </button>
+    </div>
+
+    @if (resendSuccess()) {
+      <div class="alert alert-success">
+        Verification email sent successfully! Please check your inbox.
+      </div>
+    }
+
+    @if (resendError()) {
+      <div class="alert alert-error">
+        {{ resendError() }}
+      </div>
+    }
+  </div>
+</div>
+
