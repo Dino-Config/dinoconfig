@@ -1,0 +1,31 @@
+<dc-base-form-element
+  [config]="config()"
+  [isEditable]="isEditable()"
+  (edit)="edit.emit()"
+  (delete)="delete.emit()"
+>
+  <div class="radio-group-wrapper">
+    <label class="form-label">
+      {{ config().label || config().name }}
+      @if (config().required) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
+    <mat-radio-group
+      [value]="value() || ''"
+      (change)="onValueChange($event.value)"
+      [required]="config().required ?? false"
+      class="radio-group"
+    >
+      @for (option of options(); track option) {
+        <mat-radio-button [value]="option">
+          {{ option }}
+        </mat-radio-button>
+      }
+    </mat-radio-group>
+    @if (config().required) {
+      <div class="required-hint">* Required</div>
+    }
+  </div>
+</dc-base-form-element>
+

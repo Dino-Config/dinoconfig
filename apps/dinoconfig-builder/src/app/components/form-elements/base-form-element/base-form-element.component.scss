@@ -1,0 +1,83 @@
+.form-element-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  overflow: visible;
+  position: relative;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  border: 1.5px solid #e5e7eb;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #3b82f6;
+    .form-element-actions {
+      opacity: 1;
+    }
+  }
+
+  .form-element-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &.edit-btn {
+        color: #3b82f6;
+
+        &:hover {
+          background: #eff6ff;
+        }
+      }
+
+      &.delete-btn {
+        color: #ef4444;
+
+        &:hover {
+          background: #fef2f2;
+        }
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  &.checkbox-wrapper {
+    // Checkbox specific styles can be added here if needed
+  }
+}
+

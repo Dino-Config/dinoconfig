@@ -49,6 +49,14 @@
               (notification)="onNotification($event)"
             ></dc-version-selector>
           }
+          <dc-config-builder-panel-dragdrop
+            [selectedConfig]="selectedConfig()"
+            [brandId]="brandId()"
+            [formData]="formData()"
+            (formDataChange)="onFormDataChange($event)"
+            (configUpdated)="onConfigUpdated($event)"
+            (notification)="onNotification($event)"
+          ></dc-config-builder-panel-dragdrop>
         </div>
       </div>
     </div>

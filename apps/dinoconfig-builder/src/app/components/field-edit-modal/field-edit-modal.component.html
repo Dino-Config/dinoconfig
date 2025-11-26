@@ -1,0 +1,25 @@
+<div class="field-edit-modal">
+  <div class="field-edit-modal__header">
+    <h2>{{ data.title }}</h2>
+    <button
+      type="button"
+      class="field-edit-modal__close"
+      (click)="onClose()"
+      aria-label="Close edit field modal"
+      mat-icon-button
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div class="field-edit-modal__body">
+    <div class="field-builder-style-scope field-edit-modal-content">
+      <dc-field-form
+        [mode]="data.mode"
+        [field]="data.field"
+        (save)="dialogRef.close($event)"
+        (cancel)="onClose()"
+      ></dc-field-form>
+    </div>
+  </div>
+</div>
+

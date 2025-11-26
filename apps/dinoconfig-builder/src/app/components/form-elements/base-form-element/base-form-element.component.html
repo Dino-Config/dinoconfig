@@ -1,0 +1,18 @@
+<div class="form-element-wrapper" [class.checkbox-wrapper]="config().type === 'checkbox'">
+  @if (isEditable()) {
+    <div class="form-element-actions">
+      <button class="action-btn edit-btn" (click)="onEdit()" title="Edit field">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M8.75 2.625L11.375 5.25M10.5 1.75L12.25 3.5a.875.875 0 010 1.237L6.125 11.083a2.625 2.625 0 01-1.855.767H2.625v-1.645c0-.696.276-1.364.767-1.855L9.263 1.75a.875.875 0 011.237 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="action-btn delete-btn" (click)="onDelete()" title="Delete field">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  }
+  <ng-content></ng-content>
+</div>
+

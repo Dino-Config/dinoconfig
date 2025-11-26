@@ -1,0 +1,24 @@
+<dc-base-form-element
+  [config]="config()"
+  [isEditable]="isEditable()"
+  (edit)="edit.emit()"
+  (delete)="delete.emit()"
+>
+  <mat-form-field appearance="outline" class="w-full">
+    <mat-label>{{ config().label || config().name }}</mat-label>
+    <input
+      matInput
+      [matDatepicker]="picker"
+      [value]="dateValue()"
+      (dateChange)="onValueChange($event.value)"
+      [placeholder]="'Select ' + (config().label || config().name)"
+      [required]="config().required"
+    />
+    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker></mat-datepicker>
+    @if (config().required) {
+      <mat-hint class="required-hint">* Required</mat-hint>
+    }
+  </mat-form-field>
+</dc-base-form-element>
+

@@ -1,0 +1,149 @@
+.gridstack-canvas-wrapper {
+  position: relative;
+  min-height: 600px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+  padding: 20px;
+  transition: all 0.2s ease;
+
+  &.dragging-over {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    border-style: solid;
+  }
+
+  .canvas-empty-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #6b7280;
+    pointer-events: none;
+    user-select: none;
+
+    svg {
+      margin: 0 auto 16px;
+    }
+
+    h4 {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+  }
+
+  .grid-stack {
+    min-height: 400px;
+
+    .grid-stack-item {
+      .grid-stack-item-content {
+        overflow: visible;
+      }
+    }
+
+    // GridStack placeholder styling (shows where item will be dropped)
+    .grid-stack-placeholder {
+      background: rgba(59, 130, 246, 0.1) !important;
+      border: 2px dashed #3b82f6 !important;
+      border-radius: 8px !important;
+    }
+  }
+}
+
+// Override GridStack default styles for better UX
+.grid-stack > .grid-stack-item {
+  // Style during drag/resize
+  &.ui-draggable-dragging,
+  &.ui-resizable-resizing {
+    opacity: 0.8;
+    z-index: 100;
+    transition: none;
+  }
+
+  // Resize handles
+  > .ui-resizable-handle {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  // Southeast (bottom-right) corner handle
+  > .ui-resizable-se {
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: se-resize;
+    background-image: none;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid #3b82f6;
+      border-bottom: 2px solid #3b82f6;
+    }
+  }
+
+  // South (bottom) handle
+  > .ui-resizable-s {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    cursor: s-resize;
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  // East (right) handle
+  > .ui-resizable-e {
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    cursor: e-resize;
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  // West (left) handle
+  > .ui-resizable-w {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    cursor: w-resize;
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  // Southwest (bottom-left) corner handle
+  > .ui-resizable-sw {
+    bottom: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    cursor: sw-resize;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      width: 10px;
+      height: 10px;
+      border-left: 2px solid #3b82f6;
+      border-bottom: 2px solid #3b82f6;
+    }
+  }
+}
+

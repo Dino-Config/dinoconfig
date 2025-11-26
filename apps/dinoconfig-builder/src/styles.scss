@@ -1,6 +1,7 @@
 @use './app/theme.scss';
 @use "tailwindcss";
 @use '@angular/material' as mat;
+@import 'gridstack/dist/gridstack.min.css';
 
 /* Global styles */
 body {

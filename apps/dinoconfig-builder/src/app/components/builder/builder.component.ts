@@ -13,6 +13,7 @@ import { SubscriptionLimitWarningComponent } from '../shared/subscription-limit-
 import { SubscriptionService } from '../../services/subscription.service';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { catchError, of } from 'rxjs';
+import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dragdrop/config-builder-panel-dragdrop.component';
 
 @Component({
   selector: 'dc-builder',
@@ -23,7 +24,8 @@ import { catchError, of } from 'rxjs';
     ConfigSidebarComponent,
     VersionSelectorComponent,
     SpinnerComponent,
-    SubscriptionLimitWarningComponent
+    SubscriptionLimitWarningComponent,
+    ConfigBuilderPanelDragDropComponent
   ],
   templateUrl: './builder.component.html',
   styleUrl: './builder.component.scss'
@@ -47,6 +49,7 @@ export class BuilderComponent implements OnInit {
   subscription = signal<SubscriptionStatus | null>(null);
   limitReached = signal(false);
   limitErrorMessage = signal<string>('');
+  formData = signal<Record<string, any>>({});
 
   brandId = signal<number | null>(null);
 
@@ -146,11 +149,13 @@ export class BuilderComponent implements OnInit {
     const config = id ? this.configs().find(c => c.id === id) || null : null;
     this.selectedConfig.set(config);
     
-    if (id) {
+    if (id && config) {
+      this.formData.set(config.formData || {});
       this.loadConfigVersions(id);
     } else {
       this.configVersions.set([]);
       this.selectedVersion.set(null);
+      this.formData.set({});
     }
   }
 
@@ -291,6 +296,28 @@ export class BuilderComponent implements OnInit {
 
   onNotification(notification: { type: 'success' | 'error' | 'warning' | 'info'; message: string }): void {
     // TODO: Implement notification service if needed
+    console.log('Notification:', notification);
+  }
+
+  onFormDataChange(formData: Record<string, any>): void {
+    this.formData.set(formData);
+  }
+
+  onConfigUpdated(data: { config: Config; versions: Config[]; previousConfigId: number }): void {
+    // Update the config in the list
+    const updatedConfigs = this.configs().map(c => 
+      c.id === data.config.id ? data.config : c
+    );
+    this.configs.set(updatedConfigs);
+    
+    // Update selected config if it's the one that was updated
+    if (this.selectedConfig()?.id === data.config.id) {
+      this.selectedConfig.set(data.config);
+      this.formData.set(data.config.formData || {});
+    }
+    
+    // Update versions
+    this.configVersions.set(data.versions);
   }
 
   goToBrands(): void {

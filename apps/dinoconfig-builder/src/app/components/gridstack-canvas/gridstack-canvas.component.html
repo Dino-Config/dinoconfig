@@ -1,0 +1,120 @@
+<div class="gridstack-canvas-wrapper">
+  @if (fields().length === 0) {
+    <div class="canvas-empty-state">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <rect x="8" y="8" width="48" height="48" rx="4" stroke="#d1d5db" stroke-width="2" stroke-dasharray="4 4"/>
+        <path d="M32 24v16M24 32h16" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h4>Empty Canvas</h4>
+      <p>Click the + button next to form elements to add them to the canvas</p>
+    </div>
+  }
+
+  <gridstack [options]="gridOptions" (change)="onGridChange($event)">
+    @for (field of fields(); track trackByFieldId($index, field)) {
+      <gridstack-item
+        [options]="{
+          id: field.id,
+          x: field.x,
+          y: field.y,
+          w: field.w,
+          h: field.h
+        }"
+      >
+        @switch (getComponentSelector(field.type)) {
+          @case ('dc-text-input-element') {
+            <dc-text-input-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @case ('dc-number-input-element') {
+            <dc-number-input-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @case ('dc-textarea-element') {
+            <dc-textarea-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @case ('dc-checkbox-element') {
+            <dc-checkbox-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @case ('dc-radio-group-element') {
+            <dc-radio-group-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @case ('dc-select-element') {
+            <dc-select-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @case ('dc-range-element') {
+            <dc-range-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @case ('dc-date-picker-element') {
+            <dc-date-picker-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @default {
+            <dc-text-input-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+        }
+      </gridstack-item>
+    }
+  </gridstack>
+</div>
+

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Config } from '../models/config.models';
+import { Config, GridFieldConfig } from '../models/config.models';
 
 @Injectable({
   providedIn: 'root'
@@ -80,6 +80,18 @@ export class ConfigService {
   deleteConfig(brandId: number, configId: number): Observable<void> {
     return this.http.delete<void>(
       `${this.apiUrl}/brands/${brandId}/configs/${configId}/definition`,
+      { withCredentials: true }
+    );
+  }
+
+  updateConfigLayout(
+    brandId: number,
+    configId: number,
+    layoutData: { layout: GridFieldConfig[]; formData: Record<string, any> }
+  ): Observable<{ config: Config; versions: Config[] }> {
+    return this.http.patch<{ config: Config; versions: Config[] }>(
+      `${this.apiUrl}/brands/${brandId}/configs/${configId}/layout`,
+      layoutData,
       { withCredentials: true }
     );
   }

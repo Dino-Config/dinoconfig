@@ -1,0 +1,55 @@
+@if (!selectedConfig()) {
+  <div class="config-builder-panel dragdrop-mode">
+    <div class="panel-header">
+      <h3 class="section-title">Configuration Builder</h3>
+      <p class="section-subtitle">Create or select a config to get started</p>
+    </div>
+    <div class="builder-disabled">
+      <div class="empty-state">
+        <img src="assets/dino-sad.svg" alt="No configuration selected" class="empty-icon-svg" />
+        <h4>No Configuration Selected</h4>
+        <p>Please create or select a configuration from the sidebar to start building your form.</p>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="config-builder-panel dragdrop-mode">
+    <div class="panel-header">
+      <div class="header-content">
+        <h3 class="section-title">{{ selectedConfig()?.name }}</h3>
+        <p class="section-subtitle">Drag and drop form elements to build your configuration</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-success" (click)="onSaveConfig()" [disabled]="isSavingConfig()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Save Configuration
+        </button>
+        <button class="btn btn-outline" (click)="onExportSchema()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2m0 0L4.667 5.333M8 2v8" 
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Export Layout
+        </button>
+      </div>
+    </div>
+    <div class="dragdrop-workspace">
+      <div class="workspace-sidebar">
+        <dc-form-element-palette (addElement)="onAddElement($event)"></dc-form-element-palette>
+      </div>
+      <div class="workspace-canvas">
+        <dc-gridstack-canvas
+          [fields]="gridFields()"
+          [formData]="formData()"
+          (fieldsChange)="onFieldsChange($event)"
+          (formDataChange)="formDataChange.emit($event)"
+          (editField)="onEditField($event)"
+          (deleteField)="onDeleteField($event)"
+        ></dc-gridstack-canvas>
+      </div>
+    </div>
+  </div>
+}
+

@@ -1,0 +1,126 @@
+<div class="form-element-wrapper" [class.checkbox-wrapper]="field.type === 'checkbox'">
+  @if (isEditable) {
+    <div class="form-element-actions">
+      <button class="action-btn edit-btn" (click)="onEdit()" title="Edit field">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M8.75 2.625L11.375 5.25M10.5 1.75L12.25 3.5a.875.875 0 010 1.237L6.125 11.083a2.625 2.625 0 01-1.855.767H2.625v-1.645c0-.696.276-1.364.767-1.855L9.263 1.75a.875.875 0 011.237 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="action-btn delete-btn" (click)="onDelete()" title="Delete field">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  }
+
+  @if (field.type === 'checkbox') {
+    <div class="checkbox-content">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          class="form-checkbox"
+          [checked]="value || false"
+          (change)="onValueChange($any($event.target).checked)"
+        />
+        <span class="checkbox-text">
+          {{ field.label || field.name }}
+          @if (field.required) {
+            <span class="required-indicator">*</span>
+          }
+        </span>
+      </label>
+    </div>
+  } @else if (field.type === 'radio') {
+    <label class="form-element-label">
+      {{ field.label || field.name }}
+      @if (field.required) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
+    <div class="radio-group">
+      @for (option of parsedOptions; track option) {
+        <label class="radio-label">
+          <input
+            type="radio"
+            class="form-radio"
+            [name]="field.name"
+            [value]="option"
+            [checked]="value === option"
+            (change)="onValueChange(option)"
+          />
+          <span class="radio-text">{{ option }}</span>
+        </label>
+      }
+    </div>
+  } @else if (field.type === 'select') {
+    <label class="form-element-label">
+      {{ field.label || field.name }}
+      @if (field.required) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
+    <select
+      class="form-control form-select"
+      [value]="value || ''"
+      (change)="onValueChange($any($event.target).value)"
+    >
+      <option value="">Select an option</option>
+      @for (option of parsedOptions; track option) {
+        <option [value]="option">{{ option }}</option>
+      }
+    </select>
+  } @else if (field.type === 'textarea') {
+    <label class="form-element-label">
+      {{ field.label || field.name }}
+      @if (field.required) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
+    <textarea
+      class="form-control"
+      [value]="value || ''"
+      (input)="onValueChange($any($event.target).value)"
+      [placeholder]="'Enter ' + (field.label || field.name)"
+      [attr.maxlength]="field.maxLength"
+    ></textarea>
+  } @else if (field.type === 'range') {
+    <label class="form-element-label">
+      {{ field.label || field.name }}
+      @if (field.required) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
+    <div class="range-wrapper">
+      <input
+        type="range"
+        class="form-range"
+        [min]="field.min ?? 0"
+        [max]="field.max ?? 100"
+        [value]="value || (field.min ?? 0)"
+        (input)="onValueChange(+$any($event.target).value)"
+      />
+      <span class="range-value">{{ value || (field.min ?? 0) }}</span>
+    </div>
+  } @else {
+    <label class="form-element-label">
+      {{ field.label || field.name }}
+      @if (field.required) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
+    <input
+      [type]="field.type"
+      class="form-control"
+      [value]="value || ''"
+      (input)="onValueChange($any($event.target).value)"
+      [placeholder]="'Enter ' + (field.label || field.name)"
+      [required]="field.required"
+      [min]="field.min"
+      [max]="field.max"
+      [attr.maxlength]="field.maxLength"
+      [attr.pattern]="field.pattern"
+    />
+  }
+</div>
+
