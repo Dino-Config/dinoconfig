@@ -1,39 +1,124 @@
 <mat-toolbar color="primary" class="toolbar">
-  <div class="logo" (click)="scrollToTop()" role="button" tabindex="0" (keydown.enter)="scrollToTop()" (keydown.space)="scrollToTop()">
-    <img src="assets/logo.svg" alt="DinoConfig Icon" class="logo-icon" />
-    <div>
-      <span class="logo-text-dino">Dino</span>
-      <span class="logo-text">Config</span>
+  <div class="toolbar-content">
+    <div class="logo" (click)="scrollToTop()" role="button" tabindex="0" (keydown.enter)="scrollToTop()" (keydown.space)="scrollToTop()">
+      <img src="assets/logo.svg" alt="DinoConfig Icon" class="logo-icon" />
+      <div>
+        <span class="logo-text-dino">Dino</span>
+        <span class="logo-text">Config</span>
+      </div>
+    </div>
+    <nav class="nav-links desktop-only">
+      <button mat-button class="nav-dropdown-btn" [matMenuTriggerFor]="platformMenu">
+        Platform
+        <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #platformMenu="matMenu" class="nav-dropdown-menu" yPosition="below">
+        <button mat-menu-item (click)="navigateToSection('features')">
+          <span>Features</span>
+        </button>
+        <button mat-menu-item (click)="navigateToSection('how-it-works')">
+          <span>How it Works</span>
+        </button>
+      </mat-menu>
+      <button mat-button class="nav-dropdown-btn" [matMenuTriggerFor]="termsMenu">
+        Terms & Policies
+        <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #termsMenu="matMenu" class="nav-dropdown-menu" yPosition="below">
+        <button mat-menu-item (click)="navigateToPolicy('privacy-policy')">
+          <span>Privacy Policy</span>
+        </button>
+        <button mat-menu-item (click)="navigateToPolicy('billing-refund-policy')">
+          <span>Billing Refund Policy</span>
+        </button>
+        <button mat-menu-item (click)="navigateToPolicy('acceptable-use-policy')">
+          <span>Acceptable Use Policy</span>
+        </button>
+      </mat-menu>
+      <button mat-button class="nav-dropdown-btn" [matMenuTriggerFor]="developersMenu">
+        Developers
+        <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #developersMenu="matMenu" class="nav-dropdown-menu" yPosition="below">
+        <button mat-menu-item (click)="navigateToDevelopers('docs')">
+          <span>Docs Home</span>
+        </button>
+        <button mat-menu-item (click)="navigateToDevelopers('api-docs')">
+          <span>API docs</span>
+        </button>
+        <button mat-menu-item (click)="navigateToDevelopers('blog')">
+          <span>Blog</span>
+        </button>
+        <button mat-menu-item (click)="navigateToDevelopers('guides')">
+          <span>Guides</span>
+        </button>
+        <button mat-menu-item (click)="navigateToDevelopers('quickstart')">
+          <span>Dinoconfig quickstart</span>
+        </button>
+      </mat-menu>
+      <a href="#pricing">Pricing</a>
+      <a class="builder-link" (click)="openBuilder()">Builder</a>
+    </nav>
+    <div class="auth-buttons desktop-only">
+      <button mat-button class="login-btn" (click)="openLoginDialog()">Sign in</button>
+      <button mat-raised-button class="demo-btn" (click)="openCalendlyDialog()">Book a demo</button>
     </div>
   </div>
-  <span class="spacer"></span>
-  <nav class="nav-links desktop-only">
-    <a href="#features">Features</a>
-    <a (click)="openBuilder()">Builder</a>
-    <a href="#how-it-works">How it works</a>
-    <a href="#pricing">Pricing</a>
-  </nav>
-  <div class="auth-buttons desktop-only">
-    <button mat-button class="login-btn" (click)="openLoginDialog()">Sign in</button>
-    <button mat-raised-button class="demo-btn" (click)="openCalendlyDialog()">Book a demo</button>
-  </div>
-  
-  <!-- Mobile Menu Button -->
   <button mat-icon-button class="mobile-menu-button" [matMenuTriggerFor]="mobileMenu">
     <mat-icon>more_vert</mat-icon>
   </button>
-
-  <!-- Mobile Menu -->
   <mat-menu #mobileMenu="matMenu" class="mobile-menu" xPosition="before">
-    <button mat-menu-item (click)="navigateToSection('features')">
-      <span>Features</span>
-    </button>
     <button mat-menu-item (click)="openBuilder()">
       <span>Builder</span>
     </button>
-    <button mat-menu-item (click)="navigateToSection('how-it-works')">
-      <span>How it works</span>
+    <button mat-menu-item class="mobile-dropdown-btn" [matMenuTriggerFor]="mobilePlatformMenu">
+      <span>Platform</span>
+      <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
     </button>
+    <mat-menu #mobilePlatformMenu="matMenu" class="mobile-dropdown-menu" xPosition="before">
+      <button mat-menu-item (click)="navigateToSection('features')">
+        <span>Features</span>
+      </button>
+      <button mat-menu-item (click)="navigateToSection('how-it-works')">
+        <span>How it Works</span>
+      </button>
+    </mat-menu>
+    <button mat-menu-item class="mobile-dropdown-btn" [matMenuTriggerFor]="mobileTermsMenu">
+      <span>Terms & Policies</span>
+      <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+    </button>
+    <mat-menu #mobileTermsMenu="matMenu" class="mobile-dropdown-menu" xPosition="before">
+      <button mat-menu-item (click)="navigateToPolicy('privacy')">
+        <span>Privacy Policy</span>
+      </button>
+      <button mat-menu-item (click)="navigateToPolicy('billing-refund')">
+        <span>Billing Refund Policy</span>
+      </button>
+      <button mat-menu-item (click)="navigateToPolicy('acceptable-use')">
+        <span>Acceptable Use Policy</span>
+      </button>
+    </mat-menu>
+    <button mat-menu-item class="mobile-dropdown-btn" [matMenuTriggerFor]="mobileDevelopersMenu">
+      <span>Developers</span>
+      <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+    </button>
+    <mat-menu #mobileDevelopersMenu="matMenu" class="mobile-dropdown-menu" xPosition="before">
+      <button mat-menu-item (click)="navigateToDevelopers('docs')">
+        <span>Docs Home</span>
+      </button>
+      <button mat-menu-item (click)="navigateToDevelopers('api-docs')">
+        <span>API docs</span>
+      </button>
+      <button mat-menu-item (click)="navigateToDevelopers('blog')">
+        <span>Blog</span>
+      </button>
+      <button mat-menu-item (click)="navigateToDevelopers('guides')">
+        <span>Guides</span>
+      </button>
+      <button mat-menu-item (click)="navigateToDevelopers('quickstart')">
+        <span>Dinoconfig quickstart</span>
+      </button>
+    </mat-menu>
     <button mat-menu-item (click)="navigateToSection('pricing')">
       <span>Pricing</span>
     </button>
