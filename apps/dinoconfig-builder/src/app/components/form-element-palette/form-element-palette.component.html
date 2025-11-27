@@ -1,0 +1,26 @@
+<div class="form-element-palette">
+  <div class="palette-header">
+    <h4>Form Elements</h4>
+    <p>Click to add elements to the canvas</p>
+  </div>
+  <div class="palette-items">
+    @for (item of paletteItems; track item.id) {
+      <div class="palette-item">
+        <div class="palette-item-content">
+          <div class="palette-item-icon" [innerHTML]="getSafeIcon(item.icon)"></div>
+          <span class="palette-item-label">{{ item.label }}</span>
+        </div>
+        <button
+          class="palette-item-add-btn"
+          (click)="onAddElement(item)"
+          [title]="'Add ' + item.label"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    }
+  </div>
+</div>
+

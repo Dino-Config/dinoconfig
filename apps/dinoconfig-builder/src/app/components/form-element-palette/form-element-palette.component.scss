@@ -1,0 +1,111 @@
+.form-element-palette {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+
+  .palette-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+
+    h4 {
+      margin: 0 0 4px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+  }
+
+  .palette-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .palette-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      transform: translateX(2px);
+    }
+
+    .palette-item-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+
+      .palette-item-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        color: #3b82f6;
+        flex-shrink: 0;
+
+        svg {
+          width: 20px;
+          height: 20px;
+        }
+      }
+
+      .palette-item-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+      }
+    }
+
+    .palette-item-add-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: none;
+      border-radius: 6px;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        background: #2563eb;
+        transform: scale(1.1);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}
+

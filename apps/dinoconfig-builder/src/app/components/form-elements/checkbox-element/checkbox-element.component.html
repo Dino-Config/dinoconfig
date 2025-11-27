@@ -1,0 +1,21 @@
+<dc-base-form-element
+  [config]="config()"
+  [isEditable]="isEditable()"
+  [class.checkbox-wrapper]="true"
+  (edit)="edit.emit()"
+  (delete)="delete.emit()"
+>
+  <div class="checkbox-content">
+    <mat-checkbox
+      [checked]="value() || false"
+      (change)="onValueChange($event.checked)"
+      [required]="config().required"
+    >
+      {{ config().label || config().name }}
+      @if (config().required) {
+        <span class="required-indicator">*</span>
+      }
+    </mat-checkbox>
+  </div>
+</dc-base-form-element>
+

@@ -1,0 +1,17 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.checkbox-content {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+
+.required-indicator {
+  color: #ef4444;
+  margin-left: 4px;
+}
+

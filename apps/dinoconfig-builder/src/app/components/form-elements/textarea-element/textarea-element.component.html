@@ -1,0 +1,23 @@
+<dc-base-form-element
+  [config]="config()"
+  [isEditable]="isEditable()"
+  (edit)="edit.emit()"
+  (delete)="delete.emit()"
+>
+  <mat-form-field appearance="outline" class="w-full">
+    <mat-label>{{ config().label || config().name }}</mat-label>
+    <textarea
+      matInput
+      [value]="value() || ''"
+      (input)="onValueChange($any($event.target).value)"
+      [placeholder]="'Enter ' + (config().label || config().name)"
+      [required]="config().required"
+      [attr.maxlength]="config().maxLength"
+      rows="4"
+    ></textarea>
+    @if (config().required) {
+      <mat-hint class="required-hint">* Required</mat-hint>
+    }
+  </mat-form-field>
+</dc-base-form-element>
+

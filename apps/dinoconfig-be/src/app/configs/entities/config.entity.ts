@@ -27,10 +27,22 @@ export class Config {
   formData: Record<string, any>;
 
   @Column({ type: 'jsonb', nullable: true })
-  schema?: Record<string, any>;
-
-  @Column({ type: 'jsonb', nullable: true })
-  uiSchema?: Record<string, any>;
+  layout?: Array<{
+    id: string;
+    name: string;
+    type: string;
+    label?: string;
+    options?: string;
+    required?: boolean;
+    min?: number;
+    max?: number;
+    maxLength?: number;
+    pattern?: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }>;
 
   @Column({ type: 'int' })
   version: number;

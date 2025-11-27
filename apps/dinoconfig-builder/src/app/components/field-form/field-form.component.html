@@ -1,0 +1,145 @@
+<div class="field-builder-form">
+  <div class="form-row">
+    <div class="form-group">
+      <label [for]="mode + '-field-name'">
+        Field Name *
+        <span class="label-hint">The unique identifier for this field</span>
+      </label>
+      <input
+        [id]="mode + '-field-name'"
+        placeholder="e.g., username, apiKey, maxRetries"
+        [value]="fieldData().name || ''"
+        (input)="updateField('name', $any($event.target).value)"
+      />
+    </div>
+    <div class="form-group">
+      <label [for]="mode + '-field-label'">
+        Display Label
+        <span class="label-hint">Optional label shown to users</span>
+      </label>
+      <input
+        [id]="mode + '-field-label'"
+        placeholder="e.g., Username, API Key, Max Retries"
+        [value]="fieldData().label || ''"
+        (input)="updateField('label', $any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <dc-field-type-selector
+    [value]="fieldData().type"
+    (valueChange)="onTypeChange($event)"
+  ></dc-field-type-selector>
+
+  @if (isChoiceField()) {
+    <div class="form-group options-group">
+      <label [for]="mode + '-field-options'">
+        Options *
+        <span class="label-hint">Comma-separated list of choices</span>
+      </label>
+      <input
+        [id]="mode + '-field-options'"
+        placeholder="e.g., Option 1, Option 2, Option 3"
+        [value]="fieldData().options || ''"
+        (input)="updateField('options', $any($event.target).value)"
+      />
+    </div>
+  }
+
+  <div class="validation-section">
+    <button
+      type="button"
+      class="validation-toggle"
+      (click)="toggleValidations()"
+    >
+      <svg [class.open]="showValidations()" class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Advanced Validation Settings
+      {{ showValidations() ? ' (Hide)' : ' (Show)' }}
+    </button>
+
+    @if (showValidations()) {
+      <div class="validation-fields">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="fieldData().required || false"
+            (change)="updateField('required', $any($event.target).checked)"
+          />
+          <span>Required field</span>
+        </label>
+
+        @if (isNumberField()) {
+          <div class="form-row">
+            <div class="form-group">
+              <label [for]="mode + '-field-min'">Minimum Value</label>
+              <input
+                [id]="mode + '-field-min'"
+                type="number"
+                placeholder="Min"
+                [value]="fieldData().min ?? ''"
+                (input)="updateField('min', parseNumber($any($event.target).value))"
+              />
+            </div>
+            <div class="form-group">
+              <label [for]="mode + '-field-max'">Maximum Value</label>
+              <input
+                [id]="mode + '-field-max'"
+                type="number"
+                placeholder="Max"
+                [value]="fieldData().max ?? ''"
+                (input)="updateField('max', parseNumber($any($event.target).value))"
+              />
+            </div>
+          </div>
+        }
+
+        @if (isTextLikeField()) {
+          <div class="form-group">
+            <label [for]="mode + '-field-maxlength'">Maximum Length</label>
+            <input
+              [id]="mode + '-field-maxlength'"
+              type="number"
+              placeholder="Maximum character length"
+              [value]="fieldData().maxLength ?? ''"
+              (input)="updateField('maxLength', parseNumber($any($event.target).value))"
+            />
+          </div>
+          <div class="form-group">
+            <label [for]="mode + '-field-pattern'">Pattern (Regular Expression)</label>
+            <input
+              [id]="mode + '-field-pattern'"
+              placeholder="e.g., ^[a-zA-Z0-9]*$"
+              [value]="fieldData().pattern || ''"
+              (input)="updateField('pattern', $any($event.target).value || undefined)"
+            />
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button
+      class="btn btn-primary"
+      (click)="onSave()"
+      [disabled]="!isValid() || isSaving()"
+    >
+      @if (mode() === 'edit') {
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      } @else {
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 3.333v9.334M3.333 8h9.334" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      }
+      {{ mode() === 'edit' ? 'Save Field Changes' : 'Add Field' }}
+    </button>
+    <button class="btn btn-ghost" (click)="onCancel()" [disabled]="isSaving()">
+      {{ mode() === 'edit' ? 'Cancel Editing' : 'Cancel' }}
+    </button>
+  </div>
+</div>
+

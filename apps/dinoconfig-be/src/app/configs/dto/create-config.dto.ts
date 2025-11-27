@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsArray } from 'class-validator';
 
 export class CreateConfigDto {
   @IsString()
@@ -12,10 +12,21 @@ export class CreateConfigDto {
   formData: Record<string, any>;
 
   @IsOptional()
-  @IsObject()
-  schema?: Record<string, any>;
-
-  @IsOptional()
-  @IsObject()
-  uiSchema?: Record<string, any>;
+  @IsArray()
+  layout?: Array<{
+    id: string;
+    name: string;
+    type: string;
+    label?: string;
+    options?: string;
+    required?: boolean;
+    min?: number;
+    max?: number;
+    maxLength?: number;
+    pattern?: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }>;
 }

@@ -7,7 +7,7 @@ import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Feature } from '../features/enums/feature.enum';
 import { RequireFeature } from '../subscriptions/decorators/require-feature.decorator';
 import { FeatureGuard } from '../subscriptions/guards/feature.guard';
-import { UpdateFieldDto } from './dto/update-field.dto';
+import { UpdateConfigLayoutDto } from './dto/update-config-layout.dto';
 
 @Controller('brands')
 @UseGuards(UserAuthGuard)
@@ -105,36 +105,18 @@ export class ConfigsController {
     return this.configsService.setActiveVersionByName(req.user.auth0Id, parseInt(brandId), configName, body.version, req.user.company);
   }
 
-  @Patch(':brandId/configs/:configId/fields/:fieldName')
-  updateField(
+  @Patch(':brandId/configs/:configId/layout')
+  updateConfigLayout(
     @Request() req,
     @Param('brandId') brandId: string,
     @Param('configId') configId: string,
-    @Param('fieldName') fieldName: string,
-    @Body() dto: UpdateFieldDto,
+    @Body() dto: UpdateConfigLayoutDto,
   ) {
-    return this.configsService.updateField(
+    return this.configsService.updateConfigLayout(
       req.user.auth0Id,
       parseInt(brandId),
       parseInt(configId),
-      fieldName,
       dto,
-      req.user.company,
-    );
-  }
-
-  @Delete(':brandId/configs/:configId/fields/:fieldName')
-  removeField(
-    @Request() req,
-    @Param('brandId') brandId: string,
-    @Param('configId') configId: string,
-    @Param('fieldName') fieldName: string,
-  ) {
-    return this.configsService.removeField(
-      req.user.auth0Id,
-      parseInt(brandId),
-      parseInt(configId),
-      fieldName,
       req.user.company,
     );
   }

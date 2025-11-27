@@ -1,0 +1,30 @@
+<dc-base-form-element
+  [config]="config()"
+  [isEditable]="isEditable()"
+  (edit)="edit.emit()"
+  (delete)="delete.emit()"
+>
+  <div class="range-wrapper">
+    <label class="form-label">
+      {{ config().label || config().name }}
+      @if (config().required) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
+    <div class="slider-container">
+      <mat-slider
+        [min]="minValue()"
+        [max]="maxValue()"
+        discrete
+        [showTickMarks]="true"
+      >
+        <input matSliderThumb [(ngModel)]="sliderValue" (ngModelChange)="onValueChange($event)" [required]="config().required ?? false">
+      </mat-slider>
+      <span class="range-value">{{ currentValue() }}</span>
+    </div>
+    @if (config().required) {
+      <div class="required-hint">* Required</div>
+    }
+  </div>
+</dc-base-form-element>
+

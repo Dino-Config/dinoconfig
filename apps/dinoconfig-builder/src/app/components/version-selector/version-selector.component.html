@@ -1,0 +1,75 @@
+@if (versions().length > 0) {
+  <mat-expansion-panel class="version-selector">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <h3 class="version-selector__title">Version History</h3>
+      </mat-panel-title>
+      <mat-panel-description>
+        <div class="version-selector__active-indicator">
+          <span class="version-selector__active-label">Active Version:</span>
+          <span class="version-selector__active-version">v{{ activeVersion() || 'Latest' }}</span>
+        </div>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+
+    <div class="version-selector__content">
+      <div class="version-selector__controls">
+        <div class="version-selector__dropdown-container">
+          <label for="version-select" class="version-selector__dropdown-label">
+            Select Version to Preview:
+          </label>
+          <mat-form-field appearance="outline" class="version-selector__dropdown-field">
+            <mat-select id="version-select" [value]="previewVersion()?.version || ''" (selectionChange)="onVersionChange($event.value)">
+              @for (version of versions(); track version.id) {
+                <mat-option [value]="version.version">
+                  v{{ version.version }} - {{ formatDate(version.createdAt) }}
+                  @if (activeVersion() === version.version) {
+                    <span> (Active)</span>
+                  }
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+        <div class="version-selector__actions">
+          <button
+            class="version-selector__set-active-btn"
+            (click)="setActiveVersion()"
+            [disabled]="isSettingActive() || (previewVersion() && activeVersion() === previewVersion()!.version)"
+          >
+            {{ isSettingActive() ? 'Setting...' : 'Set as Active Version' }}
+          </button>
+        </div>
+      </div>
+      
+      @if (previewVersion()) {
+        <div class="version-selector__preview">
+          <div class="version-selector__preview-header">
+            <h4>Preview - Version {{ previewVersion()!.version }}</h4>
+            <div class="version-selector__preview-date">
+              Created: {{ formatDate(previewVersion()!.createdAt) }}
+            </div>
+            @if (activeVersion() === previewVersion()!.version) {
+              <div class="version-selector__preview-active-badge">Currently Active</div>
+            }
+          </div>
+          
+          @if (previewVersion()!.description) {
+            <div class="version-selector__preview-description">
+              <strong>Description:</strong> {{ previewVersion()!.description }}
+            </div>
+          }
+          
+          <div class="version-selector__preview-data">
+            <strong>Form Data:</strong>
+            <pre class="version-selector__preview-json">
+              {{ previewVersion()!.formData | json }}
+            </pre>
+          </div>
+        </div>
+      }
+    </div>
+  </mat-expansion-panel>
+}
+

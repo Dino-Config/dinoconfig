@@ -28,6 +28,10 @@ export const appRoutes: Route[] = [
         loadComponent: () => import('./components/brand-selection/brand-selection.component').then(m => m.BrandSelectionComponent)
       },
       {
+        path: 'brands/:brandId/builder',
+        loadComponent: () => import('./components/builder/builder.component').then(m => m.BuilderComponent)
+      },
+      {
         path: 'profile',
         loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent)
       },

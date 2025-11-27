@@ -1,0 +1,200 @@
+.version-selector {
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  &__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  &__content {
+    padding-top: 20px;
+  }
+
+  &__active-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  &__active-label {
+    font-size: 14px;
+    color: #7f8c8d;
+  }
+
+  &__active-version {
+    font-size: 14px;
+    color: #27ae60;
+    font-weight: 600;
+    background: #d5f4e6;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  &__controls {
+    display: flex;
+    align-items: end;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  &__dropdown-container {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  &__dropdown-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 8px;
+  }
+
+  &__dropdown-field {
+    width: 100%;
+
+    ::ng-deep {
+      .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+  }
+
+  &__set-active-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      background: #219a52;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+
+  &__preview {
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  &__preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+  }
+
+  &__preview-date {
+    font-size: 12px;
+    color: #7f8c8d;
+  }
+
+  &__preview-active-badge {
+    background: #27ae60;
+    color: white;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  &__preview-description {
+    font-size: 14px;
+    color: #5a6c7d;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  &__preview-data {
+    margin-top: 12px;
+  }
+
+  &__preview-json {
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 12px;
+    color: #2c3e50;
+    overflow-x: auto;
+    margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    line-height: 1.4;
+    white-space: pre;
+  }
+}
+
+// Material Expansion Panel overrides
+::ng-deep {
+  .version-selector {
+    .mat-expansion-panel-header {
+      padding: 16px 20px;
+    }
+
+    .mat-expansion-panel-body {
+      padding: 0 20px 20px 20px;
+    }
+
+    .mat-expansion-panel-header-title,
+    .mat-expansion-panel-header-description {
+      align-items: center;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .version-selector {
+    &__controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__dropdown-container {
+      min-width: auto;
+    }
+
+    &__preview-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}
+

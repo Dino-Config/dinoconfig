@@ -37,19 +37,10 @@ export class BrandSelectionComponent implements OnInit {
     this.brandService.getBrands().pipe(
       catchError((err: any) => {
         this.error.set(err.error?.message || 'Failed to load brands');
-        return of(null);
+        return of([]);
       })
     ).subscribe(data => {
-      if (data) {
-        // Handle both array response and object with brands
-        if (Array.isArray(data)) {
-          this.brands.set(data);
-        } else if ('brands' in data && Array.isArray(data.brands)) {
-          this.brands.set(data.brands);
-        } else {
-          this.brands.set([]);
-        }
-      }
+      this.brands.set(data);
       this.isLoading.set(false);
     });
   }

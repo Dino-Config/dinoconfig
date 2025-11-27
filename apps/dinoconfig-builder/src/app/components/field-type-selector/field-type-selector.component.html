@@ -1,0 +1,61 @@
+<div class="field-type-selector-expanded">
+  <button 
+    type="button"
+    class="type-selector-toggle"
+    (click)="toggleOpen()"
+  >
+    <svg 
+      [class.open]="isOpen()"
+      class="chevron"
+      width="16" 
+      height="16" 
+      viewBox="0 0 16 16" 
+      fill="none"
+    >
+      <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Field Type: {{ selectedOption?.icon }} {{ selectedOption?.label }}
+    {{ isOpen() ? ' (Hide)' : ' (Show)' }}
+  </button>
+
+  @if (isOpen()) {
+    <div class="type-selector-panel">
+      <div class="category-tabs">
+        @for (cat of categories; track cat.id) {
+          <button
+            type="button"
+            [class.active]="selectedCategory() === cat.id"
+            class="category-tab"
+            (click)="selectCategory(cat.id)"
+          >
+            <span class="cat-icon">{{ cat.icon }}</span>
+            <span class="cat-label">{{ cat.label }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="type-options-grid">
+        @for (option of filteredOptions; track option.value) {
+          <button
+            type="button"
+            [class.selected]="value === option.value"
+            class="type-option"
+            (click)="selectType(option.value)"
+          >
+            <span class="option-icon">{{ option.icon }}</span>
+            <div class="option-content">
+              <span class="option-label">{{ option.label }}</span>
+              <span class="option-description">{{ option.description }}</span>
+            </div>
+            @if (value === option.value) {
+              <svg class="check-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M16.667 5L7.5 14.167L3.333 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>
+
