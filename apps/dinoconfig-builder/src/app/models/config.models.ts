@@ -42,8 +42,6 @@ export interface Config {
   name: string;
   description?: string;
   formData: Record<string, any>;
-  schema?: Record<string, any>;
-  uiSchema?: Record<string, any>;
   layout?: GridFieldConfig[];
   version: number;
   createdAt: string;

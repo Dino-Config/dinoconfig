@@ -58,18 +58,98 @@ export class GridStackCanvasComponent {
   trackByFieldId: TrackByFunction<GridFieldConfig> = (index: number, field: GridFieldConfig) => field.id;
 
   onGridChange(event: any): void {
-    const items: GridStackWidget[] = Array.isArray(event) ? event : (event?.items || []);
-    const itemMap = new Map(items.map((item: any) => [item.id, item]));
-    const currentFields = this.fields();
+    // GridStack Angular component's change event structure can vary
+    // We'll use a reliable approach: query DOM directly for GridStack nodes
+    // GridStack stores position data in gridstackNode on each item element
     
-    const updatedFields = currentFields.map(field => {
-      const item = itemMap.get(field.id);
-      return item 
-        ? { ...field, x: item.x || 0, y: item.y || 0, w: item.w || field.w, h: item.h || field.h }
-        : field;
+    // Use requestAnimationFrame to ensure DOM is fully updated after GridStack moves items
+    requestAnimationFrame(() => {
+      const currentFields = this.fields();
+      const itemMap = new Map<string, { x: number; y: number; w: number; h: number }>();
+      
+      // Query the grid container - use a more specific selector
+      const gridElement = document.querySelector('gridstack .grid-stack') || 
+                         document.querySelector('.grid-stack');
+      
+      if (gridElement) {
+        const gridItems = gridElement.querySelectorAll('.grid-stack-item');
+        gridItems.forEach((el: Element) => {
+          const node = (el as any).gridstackNode;
+          if (node && node.id) {
+            const id = String(node.id);
+            itemMap.set(id, {
+              x: node.x ?? 0,
+              y: node.y ?? 0,
+              w: node.w ?? 4,
+              h: node.h ?? 1
+            });
+          }
+        });
+      }
+      
+      // Also try to extract from event if it has items
+      if (itemMap.size === 0) {
+        let items: any[] = [];
+        if (Array.isArray(event)) {
+          items = event;
+        } else if (event?.items && Array.isArray(event.items)) {
+          items = event.items;
+        }
+        
+        items.forEach((item: any) => {
+          const id = String(item.id || item.el?.getAttribute?.('gs-id') || '');
+          if (id && typeof item.x === 'number' && typeof item.y === 'number') {
+            itemMap.set(id, {
+              x: item.x,
+              y: item.y,
+              w: item.w ?? 4,
+              h: item.h ?? 1
+            });
+          }
+        });
+      }
+      
+      if (itemMap.size > 0) {
+        this.updateFieldsFromMap(itemMap, currentFields);
+      }
+    });
+  }
+  
+  private updateFieldsFromMap(
+    itemMap: Map<string, { x: number; y: number; w: number; h: number }>,
+    currentFields: GridFieldConfig[]
+  ): void {
+    if (itemMap.size === 0) {
+      return;
+    }
+    
+    const updatedFields: GridFieldConfig[] = currentFields.map(field => {
+      const position = itemMap.get(field.id);
+      if (position) {
+        return {
+          ...field,
+          x: position.x,
+          y: position.y,
+          w: position.w,
+          h: position.h
+        };
+      }
+      return field;
     });
     
-    this.fieldsChange.emit(updatedFields);
+    // Only emit if positions actually changed
+    const hasChanges = updatedFields.some((field, index) => {
+      const original = currentFields[index];
+      return !original || 
+        field.x !== original.x || 
+        field.y !== original.y || 
+        field.w !== original.w || 
+        field.h !== original.h;
+    });
+    
+    if (hasChanges) {
+      this.fieldsChange.emit(updatedFields);
+    }
   }
 
   addElement(item: PaletteItem): void {

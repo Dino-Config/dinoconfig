@@ -62,8 +62,7 @@ export class ConfigService {
         name: configData.name,
         description: configData.description || '',
         formData: configData.formData || {},
-        schema: configData.schema || { type: 'object', properties: {}, required: [] },
-        uiSchema: configData.uiSchema || {}
+        layout: configData.layout || undefined
       },
       { withCredentials: true }
     );

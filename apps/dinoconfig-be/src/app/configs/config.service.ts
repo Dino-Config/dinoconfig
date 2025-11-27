@@ -10,9 +10,8 @@ import { UpdateConfigDto } from './dto/update-config.dto';
 import { UpdateConfigResponseDto } from './dto/update-config-response.dto';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Feature } from '../features/enums/feature.enum';
-import { UpdateFieldDto, FieldType } from './dto/update-field.dto';
-import { JSONSchema7 } from 'json-schema';
 import { ConfigDefinitionService } from './config-definition.service';
+import { UpdateConfigLayoutDto } from './dto/update-config-layout.dto';
 
 @Injectable()
 export class ConfigsService {
@@ -57,137 +56,6 @@ export class ConfigsService {
     throw new NotFoundException(`Config definition missing for config "${config.id}"`);
   }
 
-  private getSchemaType(fieldType: FieldType): JSONSchema7['type'] {
-    if (['number', 'range'].includes(fieldType)) {
-      return 'number';
-    }
-    if (fieldType === 'checkbox') {
-      return 'boolean';
-    }
-    return 'string';
-  }
-
-  private getWidget(fieldType: FieldType): string | undefined {
-    const widgetMap: Record<FieldType, string | undefined> = {
-      text: undefined,
-      password: 'password',
-      select: undefined,
-      checkbox: undefined,
-      radio: 'radio',
-      number: undefined,
-      textarea: 'textarea',
-      email: 'email',
-      range: 'range',
-      url: 'uri',
-      tel: undefined,
-      search: undefined,
-      time: undefined,
-      'datetime-local': undefined,
-      month: undefined,
-      week: undefined,
-    };
-
-    return widgetMap[fieldType];
-  }
-
-  private requiresInputType(fieldType: FieldType): boolean {
-    const unsupported: FieldType[] = ['tel', 'search', 'time', 'datetime-local', 'month', 'week'];
-    return unsupported.includes(fieldType);
-  }
-
-  private createUiEntry(fieldType: FieldType, widget?: string) {
-    if (this.requiresInputType(fieldType)) {
-      return {
-        'ui:widget': 'text',
-        'ui:options': { inputType: fieldType },
-      };
-    }
-
-    if (widget) {
-      return {
-        'ui:widget': widget,
-      };
-    }
-
-    return {};
-  }
-
-  private getDefaultValueForField(fieldType: FieldType, options?: string) {
-    if (fieldType === 'checkbox') {
-      return false;
-    }
-    if (['number', 'range'].includes(fieldType)) {
-      return 0;
-    }
-    if (['radio', 'select'].includes(fieldType) && options) {
-      const parsed = options
-        .split(',')
-        .map(o => o.trim())
-        .filter(Boolean);
-      return parsed[0] ?? '';
-    }
-    return '';
-  }
-
-  private shouldResetValue(fieldType: FieldType, previousValue: unknown, options?: string): boolean {
-    if (previousValue === undefined) {
-      return true;
-    }
-
-    switch (fieldType) {
-      case 'checkbox':
-        return typeof previousValue !== 'boolean';
-      case 'number':
-      case 'range':
-        return typeof previousValue !== 'number';
-      case 'radio':
-      case 'select': {
-        if (typeof previousValue !== 'string') {
-          return true;
-        }
-        if (!options) {
-          return false;
-        }
-        const parsed = options
-          .split(',')
-          .map(o => o.trim())
-          .filter(Boolean);
-        return !parsed.includes(previousValue as string);
-      }
-      default:
-        return typeof previousValue !== 'string';
-    }
-  }
-
-  private buildSchemaProperty(dto: UpdateFieldDto, fieldType: FieldType) {
-    const schemaProperty: Record<string, any> = {
-      type: this.getSchemaType(fieldType),
-      title: dto.label || dto.name,
-    };
-
-    if (['select', 'radio'].includes(fieldType) && dto.options) {
-      schemaProperty.enum = dto.options
-        .split(',')
-        .map(o => o.trim())
-        .filter(Boolean);
-    }
-
-    if (typeof dto.min === 'number') {
-      schemaProperty.minimum = dto.min;
-    }
-    if (typeof dto.max === 'number') {
-      schemaProperty.maximum = dto.max;
-    }
-    if (typeof dto.maxLength === 'number') {
-      schemaProperty.maxLength = dto.maxLength;
-    }
-    if (dto.pattern) {
-      schemaProperty.pattern = dto.pattern;
-    }
-
-    return schemaProperty;
-  }
-
   async create(userId: string, brandId: number, dto: CreateConfigDto, company: string): Promise<Config> {
     const brand = await this.getBrandByIdForUser(userId, brandId);
     const definition = await this.configDefinitionService.getOrCreateDefinition(brand, dto.name, company);
@@ -205,8 +73,7 @@ export class ConfigsService {
     const config = this.configRepo.create({
       description: dto.description,
       formData: dto.formData ?? {},
-      schema: dto.schema ?? { type: 'object', properties: {} },
-      uiSchema: dto.uiSchema ?? {},
+      layout: dto.layout ?? undefined,
       brand: { id: brand.id } as Brand,
       definition: { id: definition.id } as ConfigDefinition,
       version: nextVersion,
@@ -228,7 +95,7 @@ export class ConfigsService {
   }
 
   /**
-   * Updates config content (description, formData, schema, uiSchema)
+   * Updates config content (description, formData, layout)
    * Always creates a new version. Use updateDefinitionName for renaming.
    */
   async update(
@@ -269,8 +136,7 @@ export class ConfigsService {
     const newConfig = this.configRepo.create({
       description: dto.description ?? existing.description,
       formData: dto.formData ?? existing.formData,
-      schema: dto.schema ?? existing.schema,
-      uiSchema: dto.uiSchema ?? existing.uiSchema,
+      layout: dto.layout ?? existing.layout,
       brand: { id: brand.id } as Brand,
       definition: { id: definition.id } as ConfigDefinition,
       version: nextVersion,
@@ -669,176 +535,6 @@ export class ConfigsService {
     await this.setActiveVersionForConfig(brand.id, configName, version, company);
   }
 
-  async updateField(
-    userId: string,
-    brandId: number,
-    configId: number,
-    fieldName: string,
-    dto: UpdateFieldDto,
-    company: string,
-  ): Promise<UpdateConfigResponseDto> {
-    const brand = await this.getBrandByIdForUser(userId, brandId);
-
-    const existing = await this.configRepo
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.definition', 'definition')
-      .where('config.id = :configId', { configId })
-      .andWhere('config.brandId = :brandId', { brandId: brand.id })
-      .andWhere('definition.company = :company', { company })
-      .getOne();
-
-    if (!existing) {
-      throw new NotFoundException(`Config with ID "${configId}" not found`);
-    }
-
-    const schema: JSONSchema7 = {
-      type: 'object',
-      properties: {},
-      ...((existing.schema as JSONSchema7) ?? {}),
-    };
-
-    const properties: Record<string, any> = { ...(schema.properties as Record<string, any> ?? {}) };
-
-    if (!properties[fieldName]) {
-      throw new NotFoundException(`Field "${fieldName}" not found in config "${existing.name}"`);
-    }
-
-    const newFieldName = dto.name.trim();
-    const updatedProperties = { ...properties };
-
-    delete updatedProperties[fieldName];
-    updatedProperties[newFieldName] = this.buildSchemaProperty(dto, dto.type);
-
-    const requiredSet = new Set<string>(Array.isArray(schema.required) ? schema.required as string[] : []);
-    if (fieldName !== newFieldName) {
-      requiredSet.delete(fieldName);
-    }
-    if (dto.required) {
-      requiredSet.add(newFieldName);
-    } else {
-      requiredSet.delete(newFieldName);
-    }
-
-    const updatedSchema: JSONSchema7 = {
-      ...schema,
-      properties: updatedProperties,
-    };
-
-    if (requiredSet.size > 0) {
-      updatedSchema.required = Array.from(requiredSet);
-    } else {
-      delete updatedSchema.required;
-    }
-
-    const existingUiSchema = existing.uiSchema ?? {};
-    const updatedUiSchema: Record<string, any> = { ...existingUiSchema };
-    if (fieldName !== newFieldName) {
-      delete updatedUiSchema[fieldName];
-    }
-
-    const uiEntry = this.createUiEntry(dto.type, this.getWidget(dto.type));
-    if (Object.keys(uiEntry).length > 0) {
-      updatedUiSchema[newFieldName] = uiEntry;
-    } else {
-      delete updatedUiSchema[newFieldName];
-    }
-
-    const updatedFormData: Record<string, any> = { ...(existing.formData ?? {}) };
-    const previousValue = updatedFormData[fieldName];
-    if (fieldName !== newFieldName) {
-      delete updatedFormData[fieldName];
-    }
-
-    if (this.shouldResetValue(dto.type, previousValue, dto.options)) {
-      updatedFormData[newFieldName] = this.getDefaultValueForField(dto.type, dto.options);
-    } else if (previousValue !== undefined) {
-      updatedFormData[newFieldName] = previousValue;
-    } else {
-      updatedFormData[newFieldName] = this.getDefaultValueForField(dto.type, dto.options);
-    }
-
-    return this.update(
-      userId,
-      brandId,
-      configId,
-      {
-        schema: updatedSchema as Record<string, any>,
-        uiSchema: updatedUiSchema,
-        formData: updatedFormData,
-      },
-      company,
-    );
-  }
-
-  async removeField(
-    userId: string,
-    brandId: number,
-    configId: number,
-    fieldName: string,
-    company: string,
-  ): Promise<UpdateConfigResponseDto> {
-    const brand = await this.getBrandByIdForUser(userId, brandId);
-
-    const existing = await this.configRepo
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.definition', 'definition')
-      .where('config.id = :configId', { configId })
-      .andWhere('config.brandId = :brandId', { brandId: brand.id })
-      .andWhere('definition.company = :company', { company })
-      .getOne();
-
-    if (!existing) {
-      throw new NotFoundException(`Config with ID "${configId}" not found`);
-    }
-
-    const schema: JSONSchema7 = {
-      type: 'object',
-      properties: {},
-      ...((existing.schema as JSONSchema7) ?? {}),
-    };
-
-    const properties: Record<string, any> = { ...(schema.properties as Record<string, any> ?? {}) };
-
-    if (!properties[fieldName]) {
-      throw new NotFoundException(`Field "${fieldName}" not found in config "${existing.name}"`);
-    }
-
-    delete properties[fieldName];
-
-    const updatedSchema: JSONSchema7 = {
-      ...schema,
-      properties,
-    };
-
-    if (Array.isArray(schema.required)) {
-      const remainingRequired = (schema.required as string[]).filter(name => name !== fieldName);
-      if (remainingRequired.length > 0) {
-        updatedSchema.required = remainingRequired;
-      } else {
-        delete updatedSchema.required;
-      }
-    }
-
-    const existingUiSchema = existing.uiSchema ?? {};
-    const updatedUiSchema: Record<string, any> = { ...existingUiSchema };
-    delete updatedUiSchema[fieldName];
-
-    const updatedFormData: Record<string, any> = { ...(existing.formData ?? {}) };
-    delete updatedFormData[fieldName];
-
-    return this.update(
-      userId,
-      brandId,
-      configId,
-      {
-        schema: updatedSchema as Record<string, any>,
-        uiSchema: updatedUiSchema,
-        formData: updatedFormData,
-      },
-      company,
-    );
-  }
-
   async getActiveConfigForSDK(brandName: string, configName: string, company: string): Promise<Config | null> {
     const brand = await this.brandRepo.findOne({
       where: { name: brandName, company: company },
@@ -887,6 +583,66 @@ export class ConfigsService {
     });
 
     return this.withVirtualProperties(config) as Config | null;
+  }
+
+  async updateConfigLayout(
+    userId: string,
+    brandId: number,
+    configId: number,
+    dto: UpdateConfigLayoutDto,
+    company: string,
+  ): Promise<UpdateConfigResponseDto> {
+    const brand = await this.getBrandByIdForUser(userId, brandId);
+
+    const existing = await this.configRepo
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.definition', 'definition')
+      .where('config.id = :configId', { configId })
+      .andWhere('config.brandId = :brandId', { brandId: brand.id })
+      .andWhere('definition.company = :company', { company })
+      .getOne();
+
+    if (!existing) {
+      throw new NotFoundException(`Config with ID "${configId}" not found`);
+    }
+
+    const definition = await this.resolveDefinitionForConfig(existing, brand, company);
+
+    // Get next version number
+    const latestConfig = await this.configRepo.findOne({
+      where: {
+        brand: { id: brand.id },
+        definition: { id: definition.id },
+      },
+      order: { version: 'DESC' },
+    });
+
+    const nextVersion = latestConfig ? latestConfig.version + 1 : 1;
+
+    // Create new config version with updated layout and formData
+    const newConfig = this.configRepo.create({
+      description: existing.description,
+      formData: dto.formData,
+      layout: dto.layout,
+      brand: { id: brand.id } as Brand,
+      definition: { id: definition.id } as ConfigDefinition,
+      version: nextVersion,
+    });
+
+    const savedConfig = await this.configRepo.save(newConfig);
+    await this.setActiveVersionForConfig(brand.id, definition.name, savedConfig.version, company);
+    
+    const reloadedConfig = await this.configRepo.findOne({
+      where: { id: savedConfig.id },
+      relations: ['definition'],
+    });
+    
+    const allVersions = await this.getConfigVersions(userId, brandId, definition.name, company);
+    
+    return {
+      config: this.withVirtualProperties(reloadedConfig) as Config,
+      versions: allVersions
+    };
   }
 
   private async getBrandByIdForUser(userId: string, brandId: number): Promise<Brand> {
