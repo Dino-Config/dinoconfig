@@ -1,4 +1,5 @@
 import { Route } from '@angular/router';
+import { emailVerificationGuard } from './guards/email-verification.guard';
 
 export const appRoutes: Route[] = [
   {
@@ -14,8 +15,13 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./components/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
   },
   {
+    path: 'verify-email',
+    loadComponent: () => import('./components/email-verification/email-verification.component').then(m => m.EmailVerificationComponent)
+  },
+  {
     path: '',
     loadComponent: () => import('./components/layout/app-layout/app-layout.component').then(m => m.AppLayoutComponent),
+    canActivate: [emailVerificationGuard],
     children: [
       {
         path: 'brands',

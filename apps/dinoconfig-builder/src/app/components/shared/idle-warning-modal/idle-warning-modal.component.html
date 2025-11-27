@@ -1,0 +1,57 @@
+@if (isVisible()) {
+  <div class="idle-warning-overlay">
+    <div class="idle-warning-modal">
+      <div class="idle-warning-icon">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" stroke="#f59e0b" stroke-width="4" fill="#fef3c7"/>
+          <path d="M32 20v16M32 44h.02" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <h2 class="idle-warning-title">Session Expiring Soon</h2>
+      
+      <p class="idle-warning-message">
+        You've been inactive for a while. Your session will expire in:
+      </p>
+
+      <div class="idle-warning-countdown">
+        <span class="countdown-time">
+          {{ minutes() }}:{{ seconds().toString().padStart(2, '0') }}
+        </span>
+      </div>
+
+      <p class="idle-warning-submessage">
+        Click "Keep Session" to continue working, or you'll be logged out automatically.
+      </p>
+
+      <div class="idle-warning-actions">
+        <button 
+          class="btn btn--primary btn--large"
+          (click)="onKeepSession.emit()"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M16.667 9.167v5a1.667 1.667 0 01-1.667 1.666H5a1.667 1.667 0 01-1.667-1.666v-10A1.667 1.667 0 015 2.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M13.333 2.5h5v5M8.333 11.667L18.333 2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Keep Session Active
+        </button>
+        
+        <button 
+          class="btn btn--outline btn--large"
+          (click)="onLogout.emit()"
+        >
+          Logout Now
+        </button>
+      </div>
+
+      <div class="idle-warning-info">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 7v4M8 5h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>Any activity will automatically extend your session</span>
+      </div>
+    </div>
+  </div>
+}
+
