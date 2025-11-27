@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,7 +22,8 @@ import { environment } from '../../environments/environment';
     RouterModule
   ],
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.scss']
+  styleUrls: ['./header.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class HeaderComponent {
   private dialogService = inject(DialogService);
@@ -45,9 +46,36 @@ export class HeaderComponent {
   }
 
   navigateToSection(sectionId: string) {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    const currentUrl = this.router.url;
+    
+    if (currentUrl === '/' || currentUrl === '') {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        const headerHeight = 70;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      this.router.navigate(['/']).then(() => {
+        setTimeout(() => {
+          const element = document.getElementById(sectionId);
+          if (element) {
+            const headerHeight = 70;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        }, 100);
+      });
     }
   }
 
@@ -55,16 +83,21 @@ export class HeaderComponent {
     const currentUrl = this.router.url;
     
     if (currentUrl === '/' || currentUrl === '') {
-      // If already on home page, scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // If on another page, navigate to home which will auto-scroll
       this.router.navigate(['/']).then(() => {
-        // Small delay to ensure page has loaded, then scroll
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 100);
       });
     }
+  }
+
+  navigateToPolicy(policyId: string) {
+    this.router.navigate(['/policies', policyId]);
+  }
+
+  navigateToDevelopers(section: string) {
+    console.log(`Navigate to developers section: ${section}`);
   }
 }
