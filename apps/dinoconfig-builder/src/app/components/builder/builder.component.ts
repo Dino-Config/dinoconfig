@@ -1,31 +1,28 @@
 import { Component, signal, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../services/config.service';
 import { BrandService } from '../../services/brand.service';
 import { Config } from '../../models/config.models';
 import { Brand } from '../../models/user.models';
 import { BrandHeaderComponent } from '../brand-header/brand-header.component';
 import { ConfigSidebarComponent } from '../config-sidebar/config-sidebar.component';
-import { VersionSelectorComponent } from '../version-selector/version-selector.component';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { SubscriptionLimitWarningComponent } from '../shared/subscription-limit-warning/subscription-limit-warning.component';
 import { SubscriptionService } from '../../services/subscription.service';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { catchError, of } from 'rxjs';
-import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dragdrop/config-builder-panel-dragdrop.component';
 
 @Component({
   selector: 'dc-builder',
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     BrandHeaderComponent,
     ConfigSidebarComponent,
-    VersionSelectorComponent,
     SpinnerComponent,
-    SubscriptionLimitWarningComponent,
-    ConfigBuilderPanelDragDropComponent
+    SubscriptionLimitWarningComponent
   ],
   templateUrl: './builder.component.html',
   styleUrl: './builder.component.scss'
@@ -40,16 +37,12 @@ export class BuilderComponent implements OnInit {
   brand = signal<Brand | null>(null);
   configs = signal<Config[]>([]);
   selectedId = signal<number | null>(null);
-  selectedConfig = signal<Config | null>(null);
-  selectedVersion = signal<number | null>(null);
-  configVersions = signal<Config[]>([]);
   activeVersions = signal<Record<string, number>>({});
   isLoading = signal(true);
   error = signal<string | null>(null);
   subscription = signal<SubscriptionStatus | null>(null);
   limitReached = signal(false);
   limitErrorMessage = signal<string>('');
-  formData = signal<Record<string, any>>({});
 
   brandId = signal<number | null>(null);
 
@@ -75,6 +68,16 @@ export class BuilderComponent implements OnInit {
         } else {
           this.router.navigate(['/brands']);
         }
+      }
+    });
+
+    // Listen to child route params for configId to sync sidebar selection
+    this.route.firstChild?.params.subscribe(params => {
+      const configId = params['configId'] ? parseInt(params['configId']) : null;
+      if (configId && this.selectedId() !== configId) {
+        this.selectedId.set(configId);
+      } else if (!configId) {
+        this.selectedId.set(null);
       }
     });
 
@@ -145,50 +148,19 @@ export class BuilderComponent implements OnInit {
   }
 
   onConfigSelect(id: number | null): void {
+    const brandId = this.brandId();
+    if (!brandId) return;
     this.selectedId.set(id);
-    const config = id ? this.configs().find(c => c.id === id) || null : null;
-    this.selectedConfig.set(config);
-    
-    if (id && config) {
-      this.formData.set(config.formData || {});
-      this.loadConfigVersions(id);
+
+    if (id) {
+      // Navigate to config route
+      this.router.navigate(['/brands', brandId, 'builder', 'configs', id]);
     } else {
-      this.configVersions.set([]);
-      this.selectedVersion.set(null);
-      this.formData.set({});
+      // Navigate to builder without config
+      this.router.navigate(['/brands', brandId, 'builder']);
     }
   }
 
-  private loadConfigVersions(configId: number): void {
-    const brandId = this.brandId();
-    if (!brandId) return;
-
-    this.configService.getConfigVersions(brandId, configId).pipe(
-      catchError((err: any) => {
-        if (err.status === 403) {
-          this.configVersions.set([]);
-          return of([]);
-        }
-        return of([]);
-      })
-    ).subscribe(versions => {
-      if (!Array.isArray(versions)) {
-        this.configVersions.set([]);
-        return;
-      }
-      
-      const sortedVersions = [...versions].sort((a, b) => b.version - a.version);
-      this.configVersions.set(sortedVersions);
-      
-      if (sortedVersions.length > 0) {
-        this.selectedVersion.set(sortedVersions[0].version);
-      }
-    });
-  }
-
-  onVersionSelect(version: number): void {
-    this.selectedVersion.set(version);
-  }
 
   onConfigCreate(name: string): void {
     const brandId = this.brandId();
@@ -208,10 +180,10 @@ export class BuilderComponent implements OnInit {
     ).subscribe(response => {
       if (response) {
         this.configs.set([...this.configs(), response]);
-        this.selectedId.set(response.id);
-        this.selectedConfig.set(response);
         this.limitReached.set(false);
         this.limitErrorMessage.set('');
+        // Navigate to the new config
+        this.router.navigate(['/brands', brandId, 'builder', 'configs', response.id]);
       }
     });
   }
@@ -231,9 +203,9 @@ export class BuilderComponent implements OnInit {
       })
     ).subscribe(() => {
       this.configs.set(this.configs().filter(c => c.id !== id));
+      // If deleted config was selected, navigate back to builder
       if (this.selectedId() === id) {
-        this.selectedId.set(null);
-        this.selectedConfig.set(null);
+        this.router.navigate(['/brands', brandId, 'builder']);
       }
     });
   }
@@ -256,32 +228,15 @@ export class BuilderComponent implements OnInit {
     ).subscribe(updatedConfig => {
       if (updatedConfig) {
         this.configs.set(this.configs().map(c => c.id === id ? updatedConfig : c));
-        if (this.selectedId() === id) {
-          this.selectedConfig.set(updatedConfig);
-        }
+        // Reload configs to get updated active versions
+        this.configService.getConfigDefinitions(brandId).pipe(
+          catchError(() => of([]))
+        ).subscribe(configs => {
+          this.configs.set(configs);
+          this.activeVersions.set(this.extractActiveVersions(configs));
+        });
       }
     });
-  }
-
-  onActiveVersionSet(version: number): void {
-    const selected = this.selectedConfig();
-    if (!selected) return;
-
-    this.activeVersions.update(prev => ({
-      ...prev,
-      [selected.name]: version
-    }));
-
-    // Reload configs to get updated active versions
-    const brandId = this.brandId();
-    if (brandId) {
-      this.configService.getConfigDefinitions(brandId).pipe(
-        catchError(() => of([]))
-      ).subscribe(configs => {
-        this.configs.set(configs);
-        this.activeVersions.set(this.extractActiveVersions(configs));
-      });
-    }
   }
 
   private extractActiveVersions(configs: Config[]): Record<string, number> {
@@ -294,30 +249,17 @@ export class BuilderComponent implements OnInit {
     return activeVersionsData;
   }
 
-  onNotification(notification: { type: 'success' | 'error' | 'warning' | 'info'; message: string }): void {
-    // TODO: Implement notification service if needed
-    console.log('Notification:', notification);
-  }
-
-  onFormDataChange(formData: Record<string, any>): void {
-    this.formData.set(formData);
-  }
-
   onConfigUpdated(data: { config: Config; versions: Config[]; previousConfigId: number }): void {
-    // Update the config in the list
-    const updatedConfigs = this.configs().map(c => 
-      c.id === data.config.id ? data.config : c
-    );
-    this.configs.set(updatedConfigs);
-    
-    // Update selected config if it's the one that was updated
-    if (this.selectedConfig()?.id === data.config.id) {
-      this.selectedConfig.set(data.config);
-      this.formData.set(data.config.formData || {});
+    // Reload configs to get updated active versions
+    const brandId = this.brandId();
+    if (brandId) {
+      this.configService.getConfigDefinitions(brandId).pipe(
+        catchError(() => of([]))
+      ).subscribe(configs => {
+        this.configs.set(configs);
+        this.activeVersions.set(this.extractActiveVersions(configs));
+      });
     }
-    
-    // Update versions
-    this.configVersions.set(data.versions);
   }
 
   goToBrands(): void {

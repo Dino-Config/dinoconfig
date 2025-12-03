@@ -1,0 +1,35 @@
+@if (isLoading()) {
+  <div class="config-view-loading">
+    <p>Loading config...</p>
+  </div>
+} @else if (error()) {
+  <div class="config-view-error">
+    <h2>Error</h2>
+    <p>{{ error() }}</p>
+  </div>
+} @else if (selectedConfig()) {
+  <div class="config-view">
+    @if (configVersions().length > 0) {
+      <dc-version-selector
+        [brandId]="brandId()!"
+        [configId]="selectedConfig()!.id"
+        [configName]="selectedConfig()!.name"
+        [selectedVersion]="selectedVersion()"
+        [activeVersion]="activeVersions()[selectedConfig()!.name]"
+        [versions]="configVersions()"
+        (versionSelected)="onVersionSelect($event)"
+        (activeVersionSet)="onActiveVersionSet($event)"
+        (notification)="onNotification($event)"
+      ></dc-version-selector>
+    }
+    <dc-config-builder-panel-dragdrop
+      [selectedConfig]="selectedConfig()"
+      [brandId]="brandId()"
+      [formData]="formData()"
+      (formDataChange)="onFormDataChange($event)"
+      (configUpdated)="onConfigUpdated($event)"
+      (notification)="onNotification($event)"
+    ></dc-config-builder-panel-dragdrop>
+  </div>
+}
+

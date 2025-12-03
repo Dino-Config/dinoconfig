@@ -36,27 +36,23 @@
         ></dc-config-sidebar>
 
         <div class="config-content">
-          @if (selectedConfig() && configVersions().length > 0) {
-            <dc-version-selector
-              [brandId]="brandId()!"
-              [configId]="selectedConfig()!.id"
-              [configName]="selectedConfig()!.name"
-              [selectedVersion]="selectedVersion()"
-              [activeVersion]="activeVersions()[selectedConfig()!.name]"
-              [versions]="configVersions()"
-              (versionSelected)="onVersionSelect($event)"
-              (activeVersionSet)="onActiveVersionSet($event)"
-              (notification)="onNotification($event)"
-            ></dc-version-selector>
+          @if (selectedId()) {
+            <router-outlet></router-outlet>
+          } @else {
+            <div class="config-builder-panel dragdrop-mode">
+              <div class="panel-header">
+                <h3 class="section-title">Configuration Builder</h3>
+                <p class="section-subtitle">Create or select a config to get started</p>
+              </div>
+              <div class="builder-disabled">
+                <div class="empty-state">
+                  <img src="/assets/dino-sad.svg" alt="No configuration selected" class="empty-icon-svg" />
+                  <h4>No Configuration Selected</h4>
+                  <p>Please create or select a configuration from the sidebar to start building your form.</p>
+                </div>
+              </div>
+            </div>
           }
-          <dc-config-builder-panel-dragdrop
-            [selectedConfig]="selectedConfig()"
-            [brandId]="brandId()"
-            [formData]="formData()"
-            (formDataChange)="onFormDataChange($event)"
-            (configUpdated)="onConfigUpdated($event)"
-            (notification)="onNotification($event)"
-          ></dc-config-builder-panel-dragdrop>
         </div>
       </div>
     </div>
