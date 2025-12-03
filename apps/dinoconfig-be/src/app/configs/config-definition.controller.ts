@@ -15,6 +15,7 @@ import { ConfigDefinitionService } from './config-definition.service';
 import { BrandsService } from '../brands/brand.service';
 import { ConfigsService } from './config.service';
 import { UsersService } from '../users/user.service';
+import { UpdateConfigDefinitionDto } from './dto/update-config-definition.dto';
 
 @Controller('brands')
 @UseGuards(UserAuthGuard)
@@ -52,45 +53,35 @@ export class ConfigDefinitionController {
   }
 
   /**
-   * Update config definition name via config ID
-   * This is used when renaming from the config editor
+   * Update config definition by definition ID (partial update)
    */
-  @Patch(':brandId/configs/:configId/name')
-  async updateConfigName(
+  @Patch(':brandId/config-definitions/:configDefinitionId')
+  async updateConfigDefinition(
     @Request() req,
     @Param('brandId') brandId: string,
-    @Param('configId') configId: string,
-    @Body() dto: { name: string },
+    @Param('configDefinitionId') configDefinitionId: string,
+    @Body() dto: UpdateConfigDefinitionDto,
   ) {
-    const config = await this.configsService.findOneByBrandAndCompanyId(
-      req.user.auth0Id,
-      parseInt(brandId),
-      parseInt(configId),
-      req.user.company,
-    );
-
-    if (!config.definition) {
-      throw new NotFoundException('Config definition not found');
-    }
-
     const brand = await this.getBrandForUser(req.user.auth0Id, parseInt(brandId));
 
-    await this.configDefinitionService.updateName(
-      config.definition.id,
-      dto.name,
+    const updatedDefinition = await this.configDefinitionService.update(
+      parseInt(configDefinitionId),
+      dto,
       brand,
       req.user.company,
     );
 
-    // Reload config with updated definition
-    const reloadedConfig = await this.configsService.findOneByBrandAndCompanyId(
-      req.user.auth0Id,
-      parseInt(brandId),
-      parseInt(configId),
-      req.user.company,
-    );
-
-    return reloadedConfig;
+    // Return updated definition in the same format as findAll
+    return {
+      id: updatedDefinition.id,
+      name: updatedDefinition.name,
+      definition: {
+        id: updatedDefinition.id,
+        name: updatedDefinition.name,
+        company: updatedDefinition.company,
+      },
+      company: updatedDefinition.company,
+    };
   }
 
   /**

@@ -225,16 +225,10 @@ export class BuilderComponent implements OnInit {
         console.error('Failed to rename config:', err);
         return of(null);
       })
-    ).subscribe(updatedConfig => {
-      if (updatedConfig) {
-        this.configs.set(this.configs().map(c => c.id === id ? updatedConfig : c));
-        // Reload configs to get updated active versions
-        this.configService.getConfigDefinitions(brandId).pipe(
-          catchError(() => of([]))
-        ).subscribe(configs => {
-          this.configs.set(configs);
-          this.activeVersions.set(this.extractActiveVersions(configs));
-        });
+    ).subscribe(updatedDefinition => {
+      if (updatedDefinition) {
+        // Update the definition in the list with the returned updated definition
+        this.configs.set(this.configs().map(c => c.id === id ? updatedDefinition : c));
       }
     });
   }

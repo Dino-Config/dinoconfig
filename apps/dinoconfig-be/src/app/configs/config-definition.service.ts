@@ -5,6 +5,7 @@ import { ConfigDefinition } from './entities/config-definition.entity';
 import { Config } from './entities/config.entity';
 import { ActiveVersion } from './entities/active-version.entity';
 import { Brand } from '../brands/entities/brand.entity';
+import { UpdateConfigDefinitionDto } from './dto/update-config-definition.dto';
 
 @Injectable()
 export class ConfigDefinitionService {
@@ -117,11 +118,11 @@ export class ConfigDefinitionService {
   }
 
   /**
-   * Updates the name of a config definition
+   * Updates a config definition (partial update)
    */
-  async updateName(
+  async update(
     definitionId: number,
-    newName: string,
+    updateData: UpdateConfigDefinitionDto,
     brand: Brand,
     company: string,
   ): Promise<ConfigDefinition> {
@@ -139,26 +140,27 @@ export class ConfigDefinitionService {
       );
     }
 
-    const trimmedName = newName.trim();
-    if (trimmedName === definition.name) {
-      return definition;
+    // Update name if provided
+    if (updateData.name) {
+      const trimmedName = updateData.name.trim();
+      if (trimmedName !== definition.name) {
+        // Check for name conflicts
+        const conflictingDefinition = await this.configDefinitionRepo.findOne({
+          where: {
+            brand: { id: brand.id },
+            name: trimmedName,
+            company,
+          },
+        });
+
+        if (conflictingDefinition && conflictingDefinition.id !== definition.id) {
+          throw new ConflictException(`Config with name "${trimmedName}" already exists`);
+        }
+
+        definition.name = trimmedName;
+      }
     }
 
-    // Check for name conflicts
-    const conflictingDefinition = await this.configDefinitionRepo.findOne({
-      where: {
-        brand: { id: brand.id },
-        name: trimmedName,
-        company,
-      },
-    });
-
-    if (conflictingDefinition && conflictingDefinition.id !== definition.id) {
-      throw new ConflictException(`Config with name "${trimmedName}" already exists`);
-    }
-
-    // Update definition name
-    definition.name = trimmedName;
     const updatedDefinition = await this.configDefinitionRepo.save(definition);
     await this.syncDefinitionAssociations(updatedDefinition, brand, company);
 
