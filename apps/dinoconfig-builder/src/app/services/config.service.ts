@@ -68,9 +68,9 @@ export class ConfigService {
     );
   }
 
-  updateConfigName(brandId: number, configId: number, newName: string): Observable<Config> {
+  updateConfigName(brandId: number, configDefinitionId: number, newName: string): Observable<Config> {
     return this.http.patch<Config>(
-      `${this.apiUrl}/brands/${brandId}/configs/${configId}/name`,
+      `${this.apiUrl}/brands/${brandId}/config-definitions/${configDefinitionId}`,
       { name: newName.trim() },
       { withCredentials: true }
     );
