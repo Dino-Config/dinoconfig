@@ -193,10 +193,10 @@ export class ConfigDefinitionService {
   /**
    * Gets all config definitions for a brand
    */
-  async findAll(brand: Brand, company: string): Promise<ConfigDefinition[]> {
+  async findAll(brandId: number, userId: string, company: string): Promise<ConfigDefinition[]> {
     return this.configDefinitionRepo.find({
       where: {
-        brand: { id: brand.id },
+        brand: { id: brandId, user: { auth0Id: userId } },
         company,
       },
     });

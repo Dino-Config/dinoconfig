@@ -40,35 +40,15 @@ export class ConfigDefinitionController {
 
   /**
    * Get all config definitions for the sidebar
-   * Returns definitions with their latest/active config info
+   * Returns only definition info (id, name) - no config data loaded
+   * Config data is loaded on demand when a specific config is selected
    */
   @Get(':brandId/config-definitions')
   async findAll(
     @Request() req,
     @Param('brandId') brandId: string,
   ) {
-    const brand = await this.getBrandForUser(req.user.auth0Id, parseInt(brandId));
-    const definitions = await this.configDefinitionService.findAll(brand, req.user.company);
-    
-    // Load active config for each definition to return as Config objects for compatibility
-    const configsWithDefinitions = await Promise.all(
-      definitions.map(async (def) => {
-        try {
-          const activeConfig = await this.configsService.getActiveConfig(
-            req.user.auth0Id,
-            parseInt(brandId),
-            def.name,
-            req.user.company,
-          );
-          return activeConfig || null;
-        } catch {
-          return null;
-        }
-      })
-    );
-
-    // Filter out nulls and return as Config array (with virtual properties)
-    return configsWithDefinitions.filter((c): c is NonNullable<typeof c> => c !== null);
+    return await this.configDefinitionService.findAll(parseInt(brandId), req.user.auth0Id, req.user.company);
   }
 
   /**

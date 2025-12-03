@@ -376,23 +376,21 @@ export class ConfigsService {
   }
 
 
-  async getConfigVersionsById(userId: string, brandId: number, configId: number, company: string): Promise<Config[]> {
-    const brand = await this.getBrandByIdForUser(userId, brandId);
+  async getConfigVersionsById(userId: string, brandId: number, configDefinitionId: number, company: string): Promise<Config[]> {    
+    // Get the definition by ID
+    const definition = await this.configDefinitionRepo.findOne({
+      where: {
+        id: configDefinitionId,
+        brand: { id: brandId, user: { auth0Id: userId } },
+        company,
+      },
+    });
     
-    // First get the config to find its name
-    const config = await this.configRepo
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.definition', 'definition')
-      .where('config.id = :configId', { configId })
-      .andWhere('config.brandId = :brandId', { brandId: brand.id })
-      .andWhere('definition.company = :company', { company })
-      .getOne();
-    
-    if (!config) {
-      throw new NotFoundException(`Config with ID "${configId}" not found`);
+    if (!definition) {
+      throw new NotFoundException(`Config definition with ID "${configDefinitionId}" not found`);
     }
     
-    const definition = await this.resolveDefinitionForConfig(config, brand, company);
+    // Use the definition name to get all versions
     return this.getConfigVersions(userId, brandId, definition.name, company);
   }
 
