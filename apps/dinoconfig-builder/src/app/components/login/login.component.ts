@@ -43,8 +43,7 @@ export class LoginComponent {
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
-    rememberMe: [false]
+    password: ['', [Validators.required]]
   });
 
   onSubmit(): void {
