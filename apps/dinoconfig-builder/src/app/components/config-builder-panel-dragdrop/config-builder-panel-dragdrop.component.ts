@@ -7,6 +7,7 @@ import { FieldUtilsService } from '../../services/field-utils.service';
 import { FormElementPaletteComponent, PaletteItem } from '../form-element-palette/form-element-palette.component';
 import { GridStackCanvasComponent } from '../gridstack-canvas/gridstack-canvas.component';
 import { FieldEditModalComponent, FieldEditModalData } from '../field-edit-modal/field-edit-modal.component';
+import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'dc-config-builder-panel-dragdrop',
@@ -21,6 +22,7 @@ export class ConfigBuilderPanelDragDropComponent {
   selectedConfig = input<Config | null>(null);
   brandId = input<number | null>(null);
   formData = input<Record<string, any>>({});
+  paletteItem = input<PaletteItem | null>(null);
   
   // Signal-based outputs
   formDataChange = output<Record<string, any>>();
@@ -48,6 +50,14 @@ export class ConfigBuilderPanelDragDropComponent {
         this.loadGridFields(config);
       } else {
         this.gridFields.set([]);
+      }
+    });
+
+    // Effect to handle palette items from parent
+    effect(() => {
+      const item = this.paletteItem();
+      if (item) {
+        this.onAddElement(item);
       }
     });
   }
@@ -150,21 +160,22 @@ export class ConfigBuilderPanelDragDropComponent {
     const field = this.gridFields().find(f => f.id === fieldId);
     if (!field) return;
 
-    const confirmDelete = confirm(
-      `Are you sure you want to delete the field "${field.label || field.name}"? This action cannot be undone.`
-    );
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: { message: `Are you sure you want to delete the field "${field.label || field.name}"? This action cannot be undone.` }
+    });
 
-    if (!confirmDelete) return;
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) return;
 
-    const updatedFields = this.gridFields().filter(f => f.id !== fieldId);
-    this.gridFields.set(updatedFields);
+      const updatedFields = this.gridFields().filter(f => f.id !== fieldId);
+      this.gridFields.set(updatedFields);
 
-    // Remove from formData
-    const currentData = this.currentFormData();
-    const updatedFormData = { ...currentData };
-    delete updatedFormData[field.name];
-    this.formDataChange.emit(updatedFormData);
-    this.notification.emit({ type: 'success', message: `Field "${field.label || field.name}" deleted successfully.` });
+      const currentData = this.currentFormData();
+      const updatedFormData = { ...currentData };
+      delete updatedFormData[field.name];
+      this.formDataChange.emit(updatedFormData);
+      this.notification.emit({ type: 'success', message: `Field "${field.label || field.name}" deleted successfully.` });
+    });
   }
 
   onSaveConfig(): void {

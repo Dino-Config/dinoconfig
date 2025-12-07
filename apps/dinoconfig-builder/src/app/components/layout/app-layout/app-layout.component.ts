@@ -87,7 +87,7 @@ export class AppLayoutComponent {
   }
 
   handleLogout(): void {
-    window.location.href = environment.homeUrl;
+    window.location.href = `${environment.homeUrl}/signin`;
   }
 }
 

@@ -4,29 +4,45 @@
   .panel-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 24px 32px;
+    padding: 28px 32px;
     border-radius: 12px;
     margin-bottom: 24px;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
 
     .header-content {
+      flex: 1;
+      min-width: 0;
+
+      .header-title-section {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
       .section-title {
-        margin: 0 0 4px 0;
+        margin: 0;
         font-size: 24px;
         font-weight: 700;
         color: white;
+        line-height: 1.2;
       }
 
       .section-subtitle {
         margin: 0;
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.9);
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.4;
       }
     }
 
     .header-actions {
       display: flex;
       gap: 12px;
+      flex-shrink: 0;
 
       .btn {
         padding: 10px 20px;
@@ -85,18 +101,20 @@
 
   .dragdrop-workspace {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 360px 1fr;
     gap: 24px;
-    min-height: 600px;
     animation: slideInUp 0.4s ease;
+    align-items: start;
 
-    .workspace-sidebar {
-      position: relative;
+    .workspace-palette {
+      display: flex;
+      flex-direction: column;
       animation: slideInUp 0.4s ease 0.1s both;
     }
 
     .workspace-canvas {
-      min-height: 600px;
+      display: flex;
+      flex-direction: column;
       animation: slideInUp 0.4s ease 0.2s both;
     }
   }
@@ -141,25 +159,72 @@
     }
   }
 
-  @media (max-width: 1024px) {
-    .dragdrop-workspace {
-      grid-template-columns: 1fr;
-
-      .workspace-sidebar {
-        position: static;
-      }
-    }
-
+  @media (max-width: 1300px) {
     .panel-header {
-      .header-actions {
-        flex-direction: column;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+
+      .header-content {
         width: 100%;
+      }
+
+      .header-actions {
+        width: 100%;
+        flex-direction: row;
+        justify-content: flex-end;
 
         .btn {
-          width: 100%;
+          flex: 1;
           justify-content: center;
         }
       }
+    }
+
+    .dragdrop-workspace {
+      grid-template-columns: 1fr;
+
+      .workspace-palette {
+        order: 1;
+      }
+
+      .workspace-canvas {
+        order: 2;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .panel-header {
+      padding: 20px 16px;
+      gap: 16px;
+
+      .header-content {
+        .header-title-section {
+          .section-title {
+            font-size: 20px;
+          }
+
+          .section-subtitle {
+            font-size: 13px;
+          }
+        }
+      }
+
+      .header-actions {
+        flex-direction: column;
+        gap: 10px;
+
+        .btn {
+          width: 100%;
+          padding: 12px 16px;
+          font-size: 13px;
+        }
+      }
+    }
+
+    .dragdrop-workspace {
+      gap: 16px;
     }
   }
 }

@@ -287,5 +287,72 @@
       height: 20px;
     }
   }
+
+  @media (max-width: 900px) {
+    position: relative;
+    max-height: none;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 12px;
+
+    .sidebar-header {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+
+      .section-title {
+        font-size: 16px;
+      }
+
+      .config-count {
+        font-size: 11px;
+        padding: 3px 10px;
+      }
+    }
+
+    .config-list {
+      li {
+        margin-bottom: 6px;
+
+        .config-item {
+          .config-btn {
+            padding: 10px;
+            font-size: 13px;
+            gap: 10px;
+
+            .config-icon {
+              font-size: 18px;
+            }
+
+            .config-name {
+              font-size: 13px;
+            }
+          }
+
+          .menu-btn {
+            padding: 6px;
+          }
+        }
+
+        .config-actions {
+          padding: 6px;
+
+          .action-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            gap: 6px;
+          }
+        }
+      }
+    }
+
+    .create-config-btn {
+      padding: 12px;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+  }
 }
 

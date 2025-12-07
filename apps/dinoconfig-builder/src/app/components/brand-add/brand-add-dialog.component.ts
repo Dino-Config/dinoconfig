@@ -2,17 +2,11 @@ import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatError } from '@angular/material/form-field';
 import { BrandService } from '../../services/brand.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { SubscriptionLimitWarningComponent } from '../shared/subscription-limit-warning/subscription-limit-warning.component';
 import { catchError, of } from 'rxjs';
-import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'dc-brand-add-dialog',
@@ -21,12 +15,6 @@ import { MatIconModule } from '@angular/material/icon';
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatError,
     SubscriptionLimitWarningComponent
   ],
   templateUrl: './brand-add-dialog.component.html',

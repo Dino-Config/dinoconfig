@@ -1,11 +1,13 @@
 .gridstack-canvas-wrapper {
   position: relative;
-  min-height: 600px;
+  min-height: 650px;
+  max-height: 650px;
   background: #f9fafb;
   border-radius: 12px;
   border: 2px dashed #d1d5db;
   padding: 20px;
   transition: all 0.2s ease;
+  overflow-y: auto;
 
   &.dragging-over {
     background: #eff6ff;
@@ -143,6 +145,35 @@
       height: 10px;
       border-left: 2px solid #3b82f6;
       border-bottom: 2px solid #3b82f6;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .gridstack-canvas-wrapper {
+    min-height: 400px;
+    max-height: 500px;
+    padding: 12px;
+    border-radius: 10px;
+
+    .canvas-empty-state {
+      h4 {
+        font-size: 16px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+
+      svg {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 12px;
+      }
+    }
+
+    .grid-stack {
+      min-height: 300px;
     }
   }
 }

@@ -3,8 +3,23 @@
     <h4>Form Elements</h4>
     <p>Click to add elements to the canvas</p>
   </div>
+  
+  <div class="category-tabs">
+    @for (cat of categories; track cat.id) {
+      <button
+        type="button"
+        [class.active]="selectedCategory() === cat.id"
+        class="category-tab"
+        (click)="selectCategory(cat.id)"
+      >
+        <span class="cat-icon">{{ cat.icon }}</span>
+        <span class="cat-label">{{ cat.label }}</span>
+      </button>
+    }
+  </div>
+
   <div class="palette-items">
-    @for (item of paletteItems; track item.id) {
+    @for (item of filteredItems(); track item.id) {
       <div class="palette-item">
         <div class="palette-item-content">
           <div class="palette-item-icon" [innerHTML]="getSafeIcon(item.icon)"></div>

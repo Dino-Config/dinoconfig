@@ -103,5 +103,43 @@
       }
     }
   }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+
+    .back-button {
+      padding: 8px;
+      font-size: 18px;
+    }
+
+    .brand-info {
+      width: 100%;
+
+      .brand-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-bottom: 12px;
+
+        .field-label {
+          min-width: auto;
+          font-size: 11px;
+        }
+
+        .field-value {
+          h1 {
+            font-size: 1.4rem;
+          }
+
+          p {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+  }
 }
 

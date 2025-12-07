@@ -5,6 +5,8 @@ import { TokenBlacklistService } from '../service/token-blacklist.service';
 import { SdkAuthService } from '../service/sdk-auth.service';
 import { UserAuthGuard } from '../guard/user-auth.guard';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../../users/user.service';
+import * as jwt from 'jsonwebtoken';
 
 @Controller('auth')
 export class AuthController {
@@ -13,6 +15,7 @@ export class AuthController {
     private readonly tokenBlacklistService: TokenBlacklistService,
     private readonly configService: ConfigService,
     private readonly sdkAuthService: SdkAuthService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Get('token')
@@ -36,12 +39,12 @@ export class AuthController {
     @Body() body: { email: string; password: string },
     @Res({ passthrough: true }) res: Response,) {
     const { email, password } = body;
-    const user = await this.authService.login(email, password);
-    if (!user) {
+    const authResponse = await this.authService.login(email, password);
+    if (!authResponse) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-     const { access_token, id_token, refresh_token } = user;
+     const { access_token, id_token, refresh_token } = authResponse;
 
     res.cookie('access_token', access_token, {
       httpOnly: true,
@@ -73,7 +76,56 @@ export class AuthController {
       });
     }
 
-    return user;
+    // Decode id_token to get auth0Id and fetch user data
+    let userData = null;
+    if (id_token) {
+      try {
+        const decoded = jwt.decode(id_token) as any;
+        if (decoded && decoded.sub) {
+          const auth0Id = decoded.sub;
+          let user = await this.usersService.findByAuth0Id(auth0Id);
+          
+          // If user doesn't exist in database, create them
+          if (!user) {
+            const auth0User = await this.authService.getUserById(auth0Id);
+            user = await this.usersService.createFromAuth0({
+              user_id: auth0Id,
+              email: decoded.email || auth0User.email,
+              name: decoded.name || auth0User.name,
+              company: decoded['X-INTERNAL-COMPANY'] || decoded['https://dinoconfig.com/company'] || null
+            });
+          }
+          
+          // Update email verification status if needed
+          try {
+            const auth0User = await this.authService.getUserById(auth0Id);
+            const freshEmailVerified = auth0User.email_verified || false;
+            
+            if (user.emailVerified !== freshEmailVerified) {
+              await this.usersService.updateEmailVerificationStatus(auth0Id, freshEmailVerified);
+              user.emailVerified = freshEmailVerified;
+            }
+          } catch (error) {
+            console.error('Failed to fetch email verification status from Auth0:', error);
+            const emailVerified = decoded.email_verified ?? false;
+            if (user.emailVerified !== emailVerified) {
+              await this.usersService.updateEmailVerificationStatus(auth0Id, emailVerified);
+              user.emailVerified = emailVerified;
+            }
+          }
+          
+          userData = user;
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data after login:', error);
+        // Continue without user data - it can be fetched later via /users endpoint
+      }
+    }
+
+    return {
+      ...authResponse,
+      user: userData
+    };
   }
 
   @Post('logout')

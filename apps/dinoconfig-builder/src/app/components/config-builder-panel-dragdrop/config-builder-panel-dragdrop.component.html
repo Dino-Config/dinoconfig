@@ -16,16 +16,12 @@
   <div class="config-builder-panel dragdrop-mode">
     <div class="panel-header">
       <div class="header-content">
-        <h3 class="section-title">{{ selectedConfig()?.name }}</h3>
-        <p class="section-subtitle">Drag and drop form elements to build your configuration</p>
+        <div class="header-title-section">
+          <h3 class="section-title">{{ selectedConfig()?.name }}</h3>
+          <p class="section-subtitle">Drag and drop form elements to build your configuration</p>
+        </div>
       </div>
       <div class="header-actions">
-        <button class="btn btn-success" (click)="onSaveConfig()" [disabled]="isSavingConfig()">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Save Configuration
-        </button>
         <button class="btn btn-outline" (click)="onExportSchema()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2m0 0L4.667 5.333M8 2v8" 
@@ -33,10 +29,16 @@
           </svg>
           Export Layout
         </button>
+        <button class="btn btn-success" (click)="onSaveConfig()" [disabled]="isSavingConfig()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Save Configuration
+        </button>
       </div>
     </div>
     <div class="dragdrop-workspace">
-      <div class="workspace-sidebar">
+      <div class="workspace-palette">
         <dc-form-element-palette (addElement)="onAddElement($event)"></dc-form-element-palette>
       </div>
       <div class="workspace-canvas">

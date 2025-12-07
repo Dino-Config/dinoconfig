@@ -1,15 +1,16 @@
-import { Component, input, signal, inject, OnInit } from '@angular/core';
+import { Component, input, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { UserService } from '../../../services/user.service';
-import { SubscriptionService } from '../../../services/subscription.service';
+import { UserStateService } from '../../../services/user-state.service';
 import { AuthService } from '../../../services/auth.service';
+import { AuthStateService } from '../../../services/auth-state.service';
+import { LimitViolationService } from '../../../services/limit-violation.service';
 import { environment } from '../../../../environments/environment';
 import { User } from '../../../models/user.models';
 import { SubscriptionStatus } from '../../../models/subscription.models';
-import { catchError, of, filter } from 'rxjs';
+import { filter } from 'rxjs';
 import { SubscriptionTierBoxComponent } from '../../shared/subscription-tier-box/subscription-tier-box.component';
 import { UserInfoComponent } from '../../shared/user-info/user-info.component';
 import { NavMenuItemComponent } from '../../shared/nav-menu-item/nav-menu-item.component';
@@ -31,22 +32,36 @@ import { NavMenuItemComponent } from '../../shared/nav-menu-item/nav-menu-item.c
 })
 export class LeftNavigationComponent implements OnInit {
   router = inject(Router);
-  private userService = inject(UserService);
-  private subscriptionService = inject(SubscriptionService);
+  private userState = inject(UserStateService);
   private authService = inject(AuthService);
+  private authState = inject(AuthStateService);
+  private limitViolationService = inject(LimitViolationService);
 
   isCollapsed = input<boolean>(false);
   onToggle = input<() => void>(() => {});
 
-  user = signal<User | null>(null);
-  subscription = signal<SubscriptionStatus | null>(null);
-  loading = signal<boolean>(true);
+  user = this.userState.user;
+  // Use subscription data from LimitViolationService to avoid duplicate API calls
+  subscription = computed<SubscriptionStatus | null>(() => {
+    const violations = this.limitViolationService.violations();
+    if (!violations) return null;
+    // LimitViolationsResult extends SubscriptionStatus, so we can use it directly
+    return {
+      tier: violations.tier,
+      status: violations.status,
+      limits: violations.limits,
+      features: violations.features,
+      currentPeriodEnd: violations.currentPeriodEnd,
+      isActive: violations.isActive
+    };
+  });
+  loading = computed(() => this.userState.loading() || this.limitViolationService.loading());
 
   currentPath = signal<string>('');
 
   ngOnInit(): void {
-    this.loadUser();
-    this.loadSubscription();
+    // User is loaded automatically by UserStateService preflight
+    // Subscription data is loaded by LimitViolationService, no need to load it here
 
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -57,39 +72,8 @@ export class LeftNavigationComponent implements OnInit {
     this.currentPath.set(this.router.url);
   }
 
-  private loadUser(): void {
-    this.userService.getUser().pipe(
-      catchError(() => of(null))
-    ).subscribe(user => {
-      this.user.set(user);
-      this.loading.set(false);
-    });
-  }
-
-  private loadSubscription(): void {
-    this.subscriptionService.getSubscriptionWithViolations().pipe(
-      catchError(() => of(null))
-    ).subscribe(data => {
-      if (data) {
-        this.subscription.set({
-          tier: data.tier,
-          status: data.status,
-          limits: data.limits,
-          features: data.features,
-          currentPeriodEnd: data.currentPeriodEnd,
-          isActive: data.isActive
-        });
-      }
-    });
-  }
-
   goBuilder(): void {
-    const lastBrandId = localStorage.getItem('lastBrandId');
-    if (!lastBrandId) {
-      this.router.navigate(['/brands']);
-      return;
-    }
-    this.router.navigate(['/brands', lastBrandId, 'builder']);
+    this.router.navigate(['/brands']);
   }
 
   goProfile(): void {
@@ -114,10 +98,10 @@ export class LeftNavigationComponent implements OnInit {
 
     this.authService.logout().subscribe({
       next: () => {
-        window.location.href = environment.homeUrl;
+        window.location.href = `${environment.homeUrl}/signin`;
       },
       error: () => {
-        window.location.href = environment.homeUrl;
+        window.location.href = `${environment.homeUrl}/signin`;
       }
     });
   }
