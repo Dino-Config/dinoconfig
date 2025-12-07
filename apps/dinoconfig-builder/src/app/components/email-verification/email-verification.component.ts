@@ -183,10 +183,10 @@ export class EmailVerificationComponent implements OnInit, OnDestroy {
 
       await firstValueFrom(this.authService.logout());
 
-      window.location.href = environment.homeUrl;
+      window.location.href = `${environment.homeUrl}/signin`;
     } catch (error) {
       console.error('Logout error:', error);
-      window.location.href = environment.homeUrl;
+      window.location.href = `${environment.homeUrl}/signin`;
     }
   }
 

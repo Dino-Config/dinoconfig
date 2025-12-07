@@ -37,6 +37,10 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     // User is loaded automatically by UserStateService preflight
+    // Ensure user is loaded if not already loaded
+    if (!this.userState.isUserLoaded() && !this.userState.loading()) {
+      this.userState.loadUser();
+    }
     // Only load subscription, user data comes from state
     this.loadSubscription();
   }

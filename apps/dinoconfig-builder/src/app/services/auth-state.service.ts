@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { UserStateService } from './user-state.service';
@@ -10,6 +11,7 @@ import { UserStateService } from './user-state.service';
 export class AuthStateService {
   private http = inject(HttpClient);
   private userState = inject(UserStateService);
+  private router = inject(Router);
   private readonly apiUrl = environment.apiUrl;
 
   // Signals for auth state
@@ -21,13 +23,24 @@ export class AuthStateService {
   readonly loading = this._loading.asReadonly();
 
   async checkAuthStatus(forceCheck: boolean = false): Promise<void> {
-    // Check if we're on a public route
+    // Check if we're on a public route or root path (which redirects to signin)
     const publicRoutes = ['/signin', '/signup', '/forgot-password', '/verify-email'];
-    const isPublicRoute = typeof window !== 'undefined' && 
-      publicRoutes.some(route => window.location.pathname.includes(route));
+    const currentUrl = this.router.url;
+    const isPublicRoute = currentUrl === '/' || publicRoutes.some(route => currentUrl.includes(route));
     
-    // Skip validate call on public routes (signin/signup) unless forceCheck is true
+    // Skip validate call on public routes (signin/signup) or root path unless forceCheck is true
     if (isPublicRoute && !forceCheck) {
+      this._isAuthenticated.set(false);
+      this._loading.set(false);
+      // Only clear user on public routes if explicitly cleared (after logout)
+      if (this.userState.isExplicitlyCleared()) {
+        this.userState.clearUser();
+      }
+      return;
+    }
+    
+    // Don't check if user was explicitly cleared (after logout)
+    if (this.userState.isExplicitlyCleared()) {
       this._isAuthenticated.set(false);
       this._loading.set(false);
       return;
@@ -39,11 +52,21 @@ export class AuthStateService {
       }));
       this._isAuthenticated.set(true);
       // Preflight: Load user data once authentication is confirmed
-      this.userState.loadUser();
+      // Only load if not on a public route
+      if (!isPublicRoute) {
+        // Ensure user is loaded - loadUser will skip if already loaded
+        await this.userState.loadUser();
+      }
     } catch (error: any) {
-      // For now, we'll set to false. Token renewal can be added later if needed
-      this._isAuthenticated.set(false);
-      this.userState.clearUser();
+      // Only clear user on actual auth failures (401/403), not on network errors
+      if (error.status === 401 || error.status === 403) {
+        this._isAuthenticated.set(false);
+        this.userState.clearUser();
+      } else {
+        // For other errors, don't clear user - might be a temporary network issue
+        // Just set loading to false
+        console.error('Auth check error:', error);
+      }
     } finally {
       this._loading.set(false);
     }

@@ -5,6 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { BrandService } from '../../services/brand.service';
+import { AuthStateService } from '../../services/auth-state.service';
+import { UserStateService } from '../../services/user-state.service';
 import { Brand } from '../../models/user.models';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { BrandAddDialogComponent } from '../brand-add/brand-add-dialog.component';
@@ -21,16 +23,29 @@ export class BrandSelectionComponent implements OnInit {
   private router = inject(Router);
   private brandService = inject(BrandService);
   private dialog = inject(MatDialog);
+  private authState = inject(AuthStateService);
+  private userState = inject(UserStateService);
 
   brands = signal<Brand[]>([]);
   isLoading = signal(true);
   error = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.loadBrands();
+    // Only load brands if user is authenticated
+    if (this.authState.isAuthenticated() && !this.userState.isExplicitlyCleared()) {
+      this.loadBrands();
+    } else {
+      this.isLoading.set(false);
+    }
   }
 
   loadBrands(): void {
+    // Double check authentication before making the call
+    if (!this.authState.isAuthenticated() || this.userState.isExplicitlyCleared()) {
+      this.isLoading.set(false);
+      return;
+    }
+
     this.isLoading.set(true);
     this.error.set(null);
 

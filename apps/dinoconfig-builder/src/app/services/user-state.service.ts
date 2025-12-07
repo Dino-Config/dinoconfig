@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Router, NavigationEnd } from '@angular/router';
+import { firstValueFrom, filter } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { User } from '../models/user.models';
 
@@ -9,6 +10,7 @@ import { User } from '../models/user.models';
 })
 export class UserStateService {
   private http = inject(HttpClient);
+  private router = inject(Router);
   private readonly apiUrl = environment.apiUrl;
 
   // Signals for user state
@@ -24,12 +26,28 @@ export class UserStateService {
 
   // Computed signals
   readonly isUserLoaded = computed(() => this._user() !== null);
+  readonly isExplicitlyCleared = computed(() => this._explicitlyCleared());
 
   /**
    * Preflight call - loads user data once at app initialization
    * Should be called after authentication is confirmed
    */
   async loadUser(forceRefresh: boolean = false): Promise<void> {
+    // Don't load user on public routes (signin, signup, etc.) or root path - check this FIRST
+    const publicRoutes = ['/signin', '/signup', '/forgot-password', '/verify-email'];
+    const currentUrl = this.router.url;
+    const isPublicRoute = currentUrl === '/' || publicRoutes.some(route => currentUrl.includes(route));
+    
+    if (isPublicRoute && !forceRefresh) {
+      // Only set explicitly cleared if we're actually on a public route and not forcing
+      // Don't set it if we're just navigating between protected routes
+      if (this._explicitlyCleared()) {
+        return;
+      }
+      // Don't set explicitly cleared here - only on actual logout
+      return;
+    }
+
     // Skip if already loading
     if (this._loading() && !forceRefresh) {
       return;
@@ -103,9 +121,20 @@ export class UserStateService {
   }
 
   constructor() {
-    // Watch for authentication changes and load user when authenticated
-    // Use effect-like behavior by subscribing to auth state changes
-    // Note: In Angular, we'll trigger this from AuthStateService instead
+    // Watch for navigation to protected routes and ensure user is loaded
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      const publicRoutes = ['/signin', '/signup', '/forgot-password', '/verify-email'];
+      const currentUrl = this.router.url;
+      const isPublicRoute = currentUrl === '/' || publicRoutes.some(route => currentUrl.includes(route));
+      
+      // If we're on a protected route and user is not loaded (and not explicitly cleared), load it
+      // This ensures user data persists during navigation
+      if (!isPublicRoute && !this._user() && !this._explicitlyCleared() && !this._loading()) {
+        this.loadUser();
+      }
+    });
   }
 }
 

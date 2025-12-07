@@ -8,145 +8,173 @@
   [showOverflow]="true"
 >
   @if (error()) {
-    <div class="bg-red-50 border border-red-200 text-red-600 py-3 px-4 rounded-lg mb-6 text-sm leading-relaxed">
+    <div class="error-message">
       {{ error() }}
     </div>
   }
 
-  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <mat-form-field appearance="outline">
-        <mat-label>First Name</mat-label>
-        <input matInput
+  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="auth-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">First Name</label>
+        <input
           type="text"
           formControlName="firstName"
           placeholder="Enter your first name"
-          required
+          class="form-input"
+          [class.error]="getFieldError('firstName') && signupForm.get('firstName')?.touched"
           autocomplete="given-name"
         />
-        @if (getFieldError('firstName')) {
-          <mat-error>{{ getFieldError('firstName') }}</mat-error>
+        @if (getFieldError('firstName') && signupForm.get('firstName')?.touched) {
+          <span class="error-text">{{ getFieldError('firstName') }}</span>
         }
-      </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Last Name</mat-label>
-        <input matInput
+      <div class="form-group">
+        <label class="form-label">Last Name</label>
+        <input
           type="text"
           formControlName="lastName"
           placeholder="Enter your last name"
-          required
+          class="form-input"
+          [class.error]="getFieldError('lastName') && signupForm.get('lastName')?.touched"
           autocomplete="family-name"
         />
-        @if (getFieldError('lastName')) {
-          <mat-error>{{ getFieldError('lastName') }}</mat-error>
+        @if (getFieldError('lastName') && signupForm.get('lastName')?.touched) {
+          <span class="error-text">{{ getFieldError('lastName') }}</span>
         }
-      </mat-form-field>
+      </div>
     </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Company</mat-label>
-      <input matInput
+    <div class="form-group">
+      <label class="form-label">Company</label>
+      <input
         type="text"
         formControlName="company"
         placeholder="Enter your company name"
-        required
+        class="form-input"
+        [class.error]="getFieldError('company') && signupForm.get('company')?.touched"
         autocomplete="organization"
       />
-      @if (getFieldError('company')) {
-        <mat-error>{{ getFieldError('company') }}</mat-error>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Email</mat-label>
-      <input matInput
-        type="email"
-        formControlName="email"
-        placeholder="Enter your email address"
-        required
-        autocomplete="email"
-      />
-      @if (getFieldError('email')) {
-        <mat-error>{{ getFieldError('email') }}</mat-error>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Password</mat-label>
-      <input matInput
-        [type]="showPassword() ? 'text' : 'password'"
-        formControlName="password"
-        placeholder="Create a strong password"
-        required
-        autocomplete="new-password"
-      />
-      <button mat-icon-button matSuffix
-        type="button"
-        (click)="togglePasswordVisibility()"
-        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-      >
-        @if (showPassword()) {
-          <mat-icon>visibility_off</mat-icon>
-        } @else {
-          <mat-icon>visibility</mat-icon>
-        }
-      </button>
-      @if (getFieldError('password')) {
-        <mat-error>{{ getFieldError('password') }}</mat-error>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Confirm Password</mat-label>
-      <input matInput
-        [type]="showConfirmPassword() ? 'text' : 'password'"
-        formControlName="confirmPassword"
-        placeholder="Confirm your password"
-        required
-        autocomplete="new-password"
-      />
-      <button mat-icon-button matSuffix
-        type="button"
-        (click)="toggleConfirmPasswordVisibility()"
-        [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
-      >
-        @if (showConfirmPassword()) {
-          <mat-icon>visibility_off</mat-icon>
-        } @else {
-          <mat-icon>visibility</mat-icon>
-        }
-      </button>
-      @if (getPasswordMismatchError()) {
-        <mat-error>{{ getPasswordMismatchError() }}</mat-error>
-      }
-      @if (getFieldError('confirmPassword')) {
-        <mat-error>{{ getFieldError('confirmPassword') }}</mat-error>
-      }
-    </mat-form-field>
-
-    <div class="flex flex-col gap-2">
-      <mat-checkbox formControlName="agreeToTerms">
-        <span class="text-sm">
-          I agree to the
-          <a href="#" class="text-blue-500 no-underline font-medium transition-colors hover:text-blue-600 hover:underline">Terms of Service</a>
-          and
-          <a href="#" class="text-blue-500 no-underline font-medium transition-colors hover:text-blue-600 hover:underline">Privacy Policy</a>
-        </span>
-      </mat-checkbox>
-      @if (getFieldError('agreeToTerms')) {
-        <span class="text-xs text-red-600 -mt-1">{{ getFieldError('agreeToTerms') }}</span>
+      @if (getFieldError('company') && signupForm.get('company')?.touched) {
+        <span class="error-text">{{ getFieldError('company') }}</span>
       }
     </div>
 
-    <button mat-raised-button
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input
+        type="email"
+        formControlName="email"
+        placeholder="Enter your email address"
+        class="form-input"
+        [class.error]="getFieldError('email') && signupForm.get('email')?.touched"
+        autocomplete="email"
+      />
+      @if (getFieldError('email') && signupForm.get('email')?.touched) {
+        <span class="error-text">{{ getFieldError('email') }}</span>
+      }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="password-input-wrapper">
+        <input
+          [type]="showPassword() ? 'text' : 'password'"
+          formControlName="password"
+          placeholder="Create a strong password"
+          class="form-input"
+          [class.error]="getFieldError('password') && signupForm.get('password')?.touched"
+          autocomplete="new-password"
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        >
+          @if (showPassword()) {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          } @else {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          }
+        </button>
+      </div>
+      @if (getFieldError('password') && signupForm.get('password')?.touched) {
+        <span class="error-text">{{ getFieldError('password') }}</span>
+      }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Confirm Password</label>
+      <div class="password-input-wrapper">
+        <input
+          [type]="showConfirmPassword() ? 'text' : 'password'"
+          formControlName="confirmPassword"
+          placeholder="Confirm your password"
+          class="form-input"
+          [class.error]="(getPasswordMismatchError() || getFieldError('confirmPassword')) && signupForm.get('confirmPassword')?.touched"
+          autocomplete="new-password"
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="toggleConfirmPasswordVisibility()"
+          [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+        >
+          @if (showConfirmPassword()) {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          } @else {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          }
+        </button>
+      </div>
+      @if (getPasswordMismatchError() && signupForm.get('confirmPassword')?.touched) {
+        <span class="error-text">{{ getPasswordMismatchError() }}</span>
+      }
+      @if (getFieldError('confirmPassword') && signupForm.get('confirmPassword')?.touched) {
+        <span class="error-text">{{ getFieldError('confirmPassword') }}</span>
+      }
+    </div>
+
+    <div class="checkbox-group">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          formControlName="agreeToTerms"
+          class="checkbox-input"
+        />
+        <span class="checkbox-text">
+          I agree to the
+          <a href="#" class="checkbox-link">Terms of Service</a>
+          and
+          <a href="#" class="checkbox-link">Privacy Policy</a>
+        </span>
+      </label>
+      @if (getFieldError('agreeToTerms') && signupForm.get('agreeToTerms')?.touched) {
+        <span class="error-text">{{ getFieldError('agreeToTerms') }}</span>
+      }
+    </div>
+
+    <button
       type="submit"
-      color="primary"
-      class="w-full mt-2"
+      class="btn btn-primary"
       [disabled]="isLoading() || signupForm.invalid"
     >
       @if (isLoading()) {
-        <mat-spinner diameter="16" class="inline-block mr-2"></mat-spinner>
+        <span class="spinner"></span>
         <span>Creating account...</span>
       } @else {
         Create Account
@@ -154,12 +182,10 @@
     </button>
   </form>
 
-  <div class="mt-8 text-center text-sm text-slate-500">
+  <div class="auth-footer">
     <p>
       Already have an account?
-      <a routerLink="/signin" class="text-blue-500 no-underline font-semibold transition-colors hover:text-blue-600 hover:underline">
-        Sign in
-      </a>
+      <a routerLink="/signin" class="auth-link">Sign in</a>
     </p>
   </div>
 </dc-auth-layout>
