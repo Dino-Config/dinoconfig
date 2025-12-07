@@ -73,12 +73,7 @@ export class LeftNavigationComponent implements OnInit {
   }
 
   goBuilder(): void {
-    const lastBrandId = localStorage.getItem('lastBrandId');
-    if (!lastBrandId) {
-      this.router.navigate(['/brands']);
-      return;
-    }
-    this.router.navigate(['/brands', lastBrandId, 'builder']);
+    this.router.navigate(['/brands']);
   }
 
   goProfile(): void {

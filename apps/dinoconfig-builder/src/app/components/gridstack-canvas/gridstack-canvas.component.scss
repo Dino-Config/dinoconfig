@@ -1,11 +1,13 @@
 .gridstack-canvas-wrapper {
   position: relative;
-  min-height: 600px;
+  min-height: 650px;
+  max-height: 650px;
   background: #f9fafb;
   border-radius: 12px;
   border: 2px dashed #d1d5db;
   padding: 20px;
   transition: all 0.2s ease;
+  overflow-y: auto;
 
   &.dragging-over {
     background: #eff6ff;

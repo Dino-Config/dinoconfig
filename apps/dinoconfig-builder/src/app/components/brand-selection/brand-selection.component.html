@@ -4,9 +4,10 @@
       <dc-spinner text="Loading your brands..." size="large" [fullHeight]="true"></dc-spinner>
     } @else if (error()) {
       <div class="error-state">
+        <img src="/assets/dino-think.svg" alt="Error" class="error-icon" />
         <h2>Error loading brands</h2>
         <p>{{ error() }}</p>
-        <button mat-raised-button color="primary" (click)="loadBrands()">
+        <button class="btn btn-primary" (click)="loadBrands()">
           Try Again
         </button>
       </div>
@@ -18,10 +19,13 @@
 
       @if (brands().length === 0) {
         <div class="empty-state">
-          <div class="empty-icon">🏢</div>
+          <img src="/assets/dino-sad.svg" alt="No brands" class="empty-icon-svg" />
           <h2>No brands yet</h2>
           <p>Create your first brand to get started with building configurations</p>
-          <button mat-raised-button color="primary" (click)="handleCreateNewBrand()">
+          <button class="btn btn-primary" (click)="handleCreateNewBrand()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
             Create Your First Brand
           </button>
         </div>
@@ -52,7 +56,10 @@
                 </div>
               </div>
               <div class="brand-actions">
-                <button mat-raised-button color="primary" class="select-btn">
+                <button class="btn btn-select">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M6 12l4-4M10 8l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
                   Select Brand
                 </button>
               </div>
@@ -61,8 +68,10 @@
         </div>
 
         <div class="create-new-section">
-          <button mat-raised-button color="primary" (click)="handleCreateNewBrand()">
-            <mat-icon>add</mat-icon>
+          <button class="btn btn-primary" (click)="handleCreateNewBrand()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
             Create New Brand
           </button>
         </div>

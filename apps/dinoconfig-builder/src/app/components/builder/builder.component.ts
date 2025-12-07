@@ -18,6 +18,7 @@ import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dra
 import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
 import { InputDialogComponent } from '../shared/input-dialog/input-dialog.component';
 import { NotificationService } from '../../services/notification.service';
+import { FormElementPaletteComponent, PaletteItem } from '../form-element-palette/form-element-palette.component';
 
 @Component({
   selector: 'dc-builder',
@@ -29,7 +30,8 @@ import { NotificationService } from '../../services/notification.service';
     VersionSelectorComponent,
     SpinnerComponent,
     SubscriptionLimitWarningComponent,
-    ConfigBuilderPanelDragDropComponent
+    ConfigBuilderPanelDragDropComponent,
+    FormElementPaletteComponent
   ],
   templateUrl: './builder.component.html',
   styleUrl: './builder.component.scss'
@@ -72,37 +74,13 @@ export class BuilderComponent implements OnInit {
     this.route.params.subscribe(params => {
       const brandId = params['brandId'] ? parseInt(params['brandId']) : null;
       if (brandId) {
-        this.setLastBrandId(brandId);
         this.brandId.set(brandId);
       } else {
-        const lastBrandId = this.getLastBrandId();
-        if (lastBrandId) {
-          this.router.navigate(['/brands', lastBrandId, 'builder']);
-        } else {
-          this.router.navigate(['/brands']);
-        }
+        this.router.navigate(['/brands']);
       }
     });
 
     this.loadSubscription();
-  }
-
-  private setLastBrandId(brandId: number): void {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('lastBrandId', String(brandId));
-      }
-    } catch (_) {
-      // Ignore localStorage errors
-    }
-  }
-
-  private getLastBrandId(): string | null {
-    try {
-      return typeof window !== 'undefined' ? localStorage.getItem('lastBrandId') : null;
-    } catch (_) {
-      return null;
-    }
   }
 
   private loadSubscription(): void {
@@ -326,6 +304,13 @@ export class BuilderComponent implements OnInit {
 
   onFormDataChange(formData: Record<string, any>): void {
     this.formData.set(formData);
+  }
+
+  paletteItemToAdd = signal<PaletteItem | null>(null);
+
+  onAddElement(item: PaletteItem): void {
+    this.paletteItemToAdd.set(item);
+    setTimeout(() => this.paletteItemToAdd.set(null), 0);
   }
 
   onConfigUpdated(data: { config: Config; versions: Config[]; previousConfigId: number }): void {

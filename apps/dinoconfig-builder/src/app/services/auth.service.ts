@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, switchMap } from 'rxjs';
+import { Observable, tap, switchMap, from, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { LoginRequest, SignupRequest, AuthResponse } from '../models/auth.models';
 import { AuthStateService } from './auth-state.service';
@@ -21,13 +21,15 @@ export class AuthService {
       { email, password },
       { withCredentials: true }
     ).pipe(
-      tap((response) => {
+      switchMap((response) => {
         // Store user data from login response if available
         if (response.user) {
           this.userState.setUser(response.user);
         }
-        // Trigger auth state refresh after successful login
-        this.authState.refreshAuth(true);
+        // Wait for auth state refresh to complete before proceeding
+        return from(this.authState.refreshAuth(true)).pipe(
+          switchMap(() => of(response))
+        );
       })
     );
   }
@@ -46,13 +48,15 @@ export class AuthService {
           { withCredentials: true }
         );
       }),
-      tap((response) => {
+      switchMap((response) => {
         // Store user data from login response if available
         if (response.user) {
           this.userState.setUser(response.user);
         }
-        // Trigger auth state refresh after successful signup/login
-        this.authState.refreshAuth(true);
+        // Wait for auth state refresh to complete before proceeding
+        return from(this.authState.refreshAuth(true)).pipe(
+          switchMap(() => of(response))
+        );
       })
     );
   }

@@ -2,10 +2,6 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatError } from '@angular/material/form-field';
 
 @Component({
   selector: 'dc-config-modal',
@@ -13,11 +9,7 @@ import { MatError } from '@angular/material/form-field';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatError
+    MatDialogModule
   ],
   templateUrl: './config-modal.component.html',
   styleUrl: './config-modal.component.scss'

@@ -22,6 +22,7 @@ export class ConfigBuilderPanelDragDropComponent {
   selectedConfig = input<Config | null>(null);
   brandId = input<number | null>(null);
   formData = input<Record<string, any>>({});
+  paletteItem = input<PaletteItem | null>(null);
   
   // Signal-based outputs
   formDataChange = output<Record<string, any>>();
@@ -49,6 +50,14 @@ export class ConfigBuilderPanelDragDropComponent {
         this.loadGridFields(config);
       } else {
         this.gridFields.set([]);
+      }
+    });
+
+    // Effect to handle palette items from parent
+    effect(() => {
+      const item = this.paletteItem();
+      if (item) {
+        this.onAddElement(item);
       }
     });
   }
