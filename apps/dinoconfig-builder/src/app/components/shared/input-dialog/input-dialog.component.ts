@@ -36,7 +36,7 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
       </div>
       <div class="dialog-actions">
         <button class="btn btn-cancel" (click)="onCancel()">Cancel</button>
-        <button class="btn btn-confirm" (click)="onConfirm()" [disabled]="!inputValue?.trim()">Confirm</button>
+        <button class="btn btn-confirm" (click)="onConfirm()" [disabled]="!inputValue.trim()">Confirm</button>
       </div>
     </div>
   `,
@@ -256,7 +256,7 @@ export class InputDialogComponent implements AfterViewInit {
   }
 
   onConfirm(): void {
-    if (this.inputValue?.trim()) {
+    if (this.inputValue.trim()) {
       this.dialogRef.close(this.inputValue.trim());
     }
   }
