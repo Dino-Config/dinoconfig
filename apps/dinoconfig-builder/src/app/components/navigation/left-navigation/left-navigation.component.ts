@@ -1,9 +1,9 @@
-import { Component, input, signal, inject, OnInit } from '@angular/core';
+import { Component, input, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { UserService } from '../../../services/user.service';
+import { UserStateService } from '../../../services/user-state.service';
 import { SubscriptionService } from '../../../services/subscription.service';
 import { AuthService } from '../../../services/auth.service';
 import { environment } from '../../../../environments/environment';
@@ -31,21 +31,21 @@ import { NavMenuItemComponent } from '../../shared/nav-menu-item/nav-menu-item.c
 })
 export class LeftNavigationComponent implements OnInit {
   router = inject(Router);
-  private userService = inject(UserService);
+  private userState = inject(UserStateService);
   private subscriptionService = inject(SubscriptionService);
   private authService = inject(AuthService);
 
   isCollapsed = input<boolean>(false);
   onToggle = input<() => void>(() => {});
 
-  user = signal<User | null>(null);
+  user = this.userState.user;
   subscription = signal<SubscriptionStatus | null>(null);
-  loading = signal<boolean>(true);
+  loading = computed(() => this.userState.loading());
 
   currentPath = signal<string>('');
 
   ngOnInit(): void {
-    this.loadUser();
+    // User is loaded automatically by UserStateService preflight
     this.loadSubscription();
 
     this.router.events.pipe(
@@ -55,15 +55,6 @@ export class LeftNavigationComponent implements OnInit {
     });
     
     this.currentPath.set(this.router.url);
-  }
-
-  private loadUser(): void {
-    this.userService.getUser().pipe(
-      catchError(() => of(null))
-    ).subscribe(user => {
-      this.user.set(user);
-      this.loading.set(false);
-    });
   }
 
   private loadSubscription(): void {

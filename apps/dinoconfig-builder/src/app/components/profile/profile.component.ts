@@ -1,9 +1,9 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { UserService } from '../../services/user.service';
+import { UserStateService } from '../../services/user-state.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { User } from '../../models/user.models';
 import { SubscriptionStatus } from '../../models/subscription.models';
@@ -24,37 +24,21 @@ import { catchError, of } from 'rxjs';
 })
 export class ProfileComponent implements OnInit {
   private router = inject(Router);
-  private userService = inject(UserService);
+  private userState = inject(UserStateService);
   private subscriptionService = inject(SubscriptionService);
 
-  user = signal<User | null>(null);
+  user = this.userState.user;
   subscription = signal<SubscriptionStatus | null>(null);
-  isLoading = signal(true);
+  isLoading = computed(() => this.userState.loading());
   isLoadingSubscription = signal(true);
-  error = signal<string | null>(null);
+  error = computed(() => this.userState.error());
   
   expandedSections = signal<Set<string>>(new Set(['personal', 'address', 'account', 'subscription', 'brands']));
 
   ngOnInit(): void {
-    this.loadUser();
+    // User is loaded automatically by UserStateService preflight
+    // Only load subscription, user data comes from state
     this.loadSubscription();
-  }
-
-  loadUser(): void {
-    this.isLoading.set(true);
-    this.error.set(null);
-
-    this.userService.getUser().pipe(
-      catchError((err: any) => {
-        this.error.set(err.error?.message || 'Failed to load profile information');
-        return of(null);
-      })
-    ).subscribe(data => {
-      if (data) {
-        this.user.set(data);
-      }
-      this.isLoading.set(false);
-    });
   }
 
   loadSubscription(): void {
@@ -78,7 +62,7 @@ export class ProfileComponent implements OnInit {
   }
 
   refreshUser(): void {
-    this.loadUser();
+    this.userState.refreshUser();
   }
 
   toggleSection(section: string): void {

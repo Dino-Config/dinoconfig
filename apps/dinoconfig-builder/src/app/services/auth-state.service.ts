@@ -2,12 +2,14 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { UserStateService } from './user-state.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthStateService {
   private http = inject(HttpClient);
+  private userState = inject(UserStateService);
   private readonly apiUrl = environment.apiUrl;
 
   // Signals for auth state
@@ -36,9 +38,12 @@ export class AuthStateService {
         withCredentials: true 
       }));
       this._isAuthenticated.set(true);
+      // Preflight: Load user data once authentication is confirmed
+      this.userState.loadUser();
     } catch (error: any) {
       // For now, we'll set to false. Token renewal can be added later if needed
       this._isAuthenticated.set(false);
+      this.userState.clearUser();
     } finally {
       this._loading.set(false);
     }
@@ -53,6 +58,16 @@ export class AuthStateService {
 
   async refreshAuth(forceCheck: boolean = false): Promise<void> {
     await this.checkAuthStatus(forceCheck);
+  }
+
+  /**
+   * Set logout state without making API calls
+   * Used when logout is explicitly called
+   */
+  setLoggedOut(): void {
+    this._isAuthenticated.set(false);
+    this._loading.set(false);
+    this.userState.clearUser();
   }
 }
 
