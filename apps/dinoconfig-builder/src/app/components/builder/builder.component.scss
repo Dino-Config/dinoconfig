@@ -70,6 +70,20 @@
 
     @media (max-width: 900px) {
       grid-template-columns: 1fr;
+      padding: 16px;
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      padding: 12px;
+      gap: 12px;
+    }
+  }
+
+  .limit-warning-container {
+    @media (max-width: 768px) {
+      padding: 0 12px;
+      margin-top: 12px;
     }
   }
 

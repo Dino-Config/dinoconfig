@@ -149,3 +149,32 @@
   }
 }
 
+@media (max-width: 768px) {
+  .gridstack-canvas-wrapper {
+    min-height: 400px;
+    max-height: 500px;
+    padding: 12px;
+    border-radius: 10px;
+
+    .canvas-empty-state {
+      h4 {
+        font-size: 16px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+
+      svg {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 12px;
+      }
+    }
+
+    .grid-stack {
+      min-height: 300px;
+    }
+  }
+}
+
