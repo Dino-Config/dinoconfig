@@ -137,5 +137,8 @@
   },
   "nx": {
     "includedScripts": []
+  },
+  "overrides": {
+    "ora": "^5.4.1"
   }
 }
