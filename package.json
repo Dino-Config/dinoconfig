@@ -137,5 +137,13 @@
   },
   "nx": {
     "includedScripts": []
+  },
+  "overrides": {
+    "@angular-devkit/build-angular": {
+      "ora": "5.4.1"
+    },
+    "@angular-devkit/schematics": {
+      "ora": "5.4.1"
+    }
   }
 }
