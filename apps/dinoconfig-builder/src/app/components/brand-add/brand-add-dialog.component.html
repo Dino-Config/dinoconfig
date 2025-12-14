@@ -1,84 +1,121 @@
 <div class="brand-add-dialog">
-  <div class="brand-add-container">
-    <div class="header">
-      <h1>Add New Brand</h1>
-      <p>Create a new brand to organize and manage your configurations</p>
+  <div class="dialog-header">
+    <div class="header-gradient"></div>
+    <div class="header-content">
+      <div class="icon-wrapper">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h2 class="dialog-title">Add New Brand</h2>
+        <p class="dialog-subtitle">Create a new brand to organize and manage your configurations</p>
+      </div>
     </div>
+  </div>
 
+  <div class="dialog-content">
     @if (limitReached() && subscription()) {
-      <dc-subscription-limit-warning 
-        [message]="error() || 'You\'ve reached your brand limit'"
-        [currentTier]="subscription()!.tier"
-      ></dc-subscription-limit-warning>
-    }
-
-    <form [formGroup]="brandForm" (ngSubmit)="onSubmit()" class="brand-form flex flex-col gap-6">
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Brand Name</mat-label>
-        <input matInput
+      <div class="limit-reached-content">
+        <dc-subscription-limit-warning 
+          [message]="error() || 'You\'ve reached your brand limit'"
+          [currentTier]="subscription()!.tier"
+        ></dc-subscription-limit-warning>
+        
+        <div class="dialog-actions">
+          <button
+            type="button"
+            class="btn btn-cancel"
+            (click)="onCancel()"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    } @else {
+      <form [formGroup]="brandForm" (ngSubmit)="onSubmit()" class="brand-form">
+      <div class="form-group">
+        <label class="form-label">
+          Brand Name <span class="required">*</span>
+        </label>
+        <input
           type="text"
+          class="form-input"
           formControlName="name"
           placeholder="Enter brand name"
-          required
+          [class.error]="brandForm.get('name')?.hasError('required') && brandForm.get('name')?.touched"
         />
         @if (brandForm.get('name')?.hasError('required') && brandForm.get('name')?.touched) {
-          <mat-error>Brand name is required</mat-error>
+          <span class="error-message">Brand name is required</span>
         }
-      </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Description</mat-label>
-        <textarea matInput
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea
+          class="form-textarea"
           formControlName="description"
           placeholder="Enter brand description (optional)"
           rows="3"
         ></textarea>
-      </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Logo URL</mat-label>
-        <input matInput
+      <div class="form-group">
+        <label class="form-label">Logo URL</label>
+        <input
           type="url"
+          class="form-input"
           formControlName="logo"
           placeholder="https://example.com/logo.png"
         />
-      </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Website URL</mat-label>
-        <input matInput
+      <div class="form-group">
+        <label class="form-label">Website URL</label>
+        <input
           type="url"
+          class="form-input"
           formControlName="website"
           placeholder="https://example.com"
         />
-      </mat-form-field>
+      </div>
 
       @if (error() && !limitReached()) {
-        <div class="bg-red-50 border border-red-200 text-red-600 py-3 px-4 rounded-lg mb-6 text-sm">
+        <div class="error-banner">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 6v4M10 14h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
           {{ error() }}
         </div>
       }
 
-      <div class="form-actions">
-        <button mat-stroked-button
+      <div class="dialog-actions">
+        <button
           type="button"
+          class="btn btn-cancel"
           (click)="onCancel()"
-          [disabled]="isLoading()">
-          Skip for now
+          [disabled]="isLoading()"
+        >
+          Cancel
         </button>
-        <button mat-raised-button
+        <button
           type="submit"
-          color="primary"
-          [disabled]="isLoading() || brandForm.invalid">
+          class="btn btn-confirm"
+          [disabled]="isLoading() || brandForm.invalid"
+        >
           @if (isLoading()) {
-            <mat-icon>
-                <mat-spinner diameter="16" class="inline-block mr-2"></mat-spinner>
-            </mat-icon> 
+            <svg class="spinner" width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="37.7" stroke-dashoffset="9.4">
+                <animate attributeName="stroke-dasharray" dur="1.5s" values="0 37.7;18.85 18.85;0 37.7;0 37.7" repeatCount="indefinite"/>
+                <animate attributeName="stroke-dashoffset" dur="1.5s" values="0;-9.4;-18.85;-28.3" repeatCount="indefinite"/>
+              </circle>
+            </svg>
           }
           Create Brand
         </button>
       </div>
-    </form>
+      </form>
+    }
   </div>
 </div>
 

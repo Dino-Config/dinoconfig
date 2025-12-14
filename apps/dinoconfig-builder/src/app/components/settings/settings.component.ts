@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -11,6 +12,7 @@ import { SubscriptionService } from '../../services/subscription.service';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { ApiKeyList, CreateApiKeyRequest } from '../../models/api-key.models';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
+import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
 import { catchError, of, filter } from 'rxjs';
 
 interface Notification {
@@ -42,6 +44,7 @@ export class SettingsComponent implements OnInit {
   private router = inject(Router);
   private apiKeyService = inject(ApiKeyService);
   private subscriptionService = inject(SubscriptionService);
+  private dialog = inject(MatDialog);
 
   subscription = signal<SubscriptionStatus | null>(null);
   isLoadingSubscription = signal(true);
@@ -185,34 +188,42 @@ export class SettingsComponent implements OnInit {
   }
 
   revokeApiKey(id: number, name: string): void {
-    if (!confirm(`Are you sure you want to revoke "${name}"? This action cannot be undone and will break any applications using this key.`)) {
-      return;
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: { message: `Are you sure you want to revoke "${name}"? This action cannot be undone and will break any applications using this key.` }
+    });
 
-    this.apiKeyService.revokeApiKey(id).pipe(
-      catchError(() => {
-        this.showNotification('error', 'Failed to revoke API key. Please try again.');
-        return of(null);
-      })
-    ).subscribe(() => {
-      this.loadApiKeys();
-      this.showNotification('success', 'API key revoked successfully.');
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) return;
+
+      this.apiKeyService.revokeApiKey(id).pipe(
+        catchError(() => {
+          this.showNotification('error', 'Failed to revoke API key. Please try again.');
+          return of(null);
+        })
+      ).subscribe(() => {
+        this.loadApiKeys();
+        this.showNotification('success', 'API key revoked successfully.');
+      });
     });
   }
 
   deleteApiKey(id: number, name: string): void {
-    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
-      return;
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: { message: `Are you sure you want to delete "${name}"? This action cannot be undone.` }
+    });
 
-    this.apiKeyService.deleteApiKey(id).pipe(
-      catchError(() => {
-        this.showNotification('error', 'Failed to delete API key. Please try again.');
-        return of(null);
-      })
-    ).subscribe(() => {
-      this.loadApiKeys();
-      this.showNotification('success', 'API key deleted successfully.');
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) return;
+
+      this.apiKeyService.deleteApiKey(id).pipe(
+        catchError(() => {
+          this.showNotification('error', 'Failed to delete API key. Please try again.');
+          return of(null);
+        })
+      ).subscribe(() => {
+        this.loadApiKeys();
+        this.showNotification('success', 'API key deleted successfully.');
+      });
     });
   }
 

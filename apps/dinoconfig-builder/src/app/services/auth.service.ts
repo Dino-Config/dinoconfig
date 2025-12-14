@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, switchMap } from 'rxjs';
+import { Observable, tap, switchMap, from, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { LoginRequest, SignupRequest, AuthResponse } from '../models/auth.models';
 import { AuthStateService } from './auth-state.service';
+import { UserStateService } from './user-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +12,7 @@ import { AuthStateService } from './auth-state.service';
 export class AuthService {
   private http = inject(HttpClient);
   private authState = inject(AuthStateService);
+  private userState = inject(UserStateService);
   private readonly apiUrl = environment.apiUrl;
 
   login(email: string, password: string): Observable<AuthResponse> {
@@ -19,9 +21,15 @@ export class AuthService {
       { email, password },
       { withCredentials: true }
     ).pipe(
-      tap(() => {
-        // Trigger auth state refresh after successful login
-        this.authState.refreshAuth(true);
+      switchMap((response) => {
+        // Store user data from login response if available
+        if (response.user) {
+          this.userState.setUser(response.user);
+        }
+        // Wait for auth state refresh to complete before proceeding
+        return from(this.authState.refreshAuth(true)).pipe(
+          switchMap(() => of(response))
+        );
       })
     );
   }
@@ -40,9 +48,15 @@ export class AuthService {
           { withCredentials: true }
         );
       }),
-      tap(() => {
-        // Trigger auth state refresh after successful signup/login
-        this.authState.refreshAuth(true);
+      switchMap((response) => {
+        // Store user data from login response if available
+        if (response.user) {
+          this.userState.setUser(response.user);
+        }
+        // Wait for auth state refresh to complete before proceeding
+        return from(this.authState.refreshAuth(true)).pipe(
+          switchMap(() => of(response))
+        );
       })
     );
   }
@@ -54,7 +68,12 @@ export class AuthService {
   logout(): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/logout`, {}, {
       withCredentials: true
-    });
+    }).pipe(
+      tap(() => {
+        // Set logout state without making additional API calls
+        this.authState.setLoggedOut();
+      })
+    );
   }
 
   sendVerificationEmail(userId: string): Observable<any> {

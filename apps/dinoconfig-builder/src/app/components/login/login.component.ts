@@ -2,13 +2,6 @@ import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatError } from '@angular/material/form-field';
 import { AuthService } from '../../services/auth.service';
 import { AuthLayoutComponent } from '../shared/auth-layout/auth-layout.component';
 
@@ -20,13 +13,6 @@ import { AuthLayoutComponent } from '../shared/auth-layout/auth-layout.component
     ReactiveFormsModule,
     RouterModule,
     AuthLayoutComponent,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatCheckboxModule,
-    MatProgressSpinnerModule,
-    MatError,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
@@ -43,8 +29,7 @@ export class LoginComponent {
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
-    rememberMe: [false]
+    password: ['', [Validators.required]]
   });
 
   onSubmit(): void {

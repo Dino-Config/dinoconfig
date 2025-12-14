@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { ConfigService } from '../../services/config.service';
 import { BrandService } from '../../services/brand.service';
 import { Config } from '../../models/config.models';
@@ -14,6 +15,10 @@ import { SubscriptionService } from '../../services/subscription.service';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { catchError, of } from 'rxjs';
 import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dragdrop/config-builder-panel-dragdrop.component';
+import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
+import { InputDialogComponent } from '../shared/input-dialog/input-dialog.component';
+import { NotificationService } from '../../services/notification.service';
+import { FormElementPaletteComponent, PaletteItem } from '../form-element-palette/form-element-palette.component';
 
 @Component({
   selector: 'dc-builder',
@@ -25,7 +30,8 @@ import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dra
     VersionSelectorComponent,
     SpinnerComponent,
     SubscriptionLimitWarningComponent,
-    ConfigBuilderPanelDragDropComponent
+    ConfigBuilderPanelDragDropComponent,
+    FormElementPaletteComponent
   ],
   templateUrl: './builder.component.html',
   styleUrl: './builder.component.scss'
@@ -36,6 +42,8 @@ export class BuilderComponent implements OnInit {
   private configService = inject(ConfigService);
   private brandService = inject(BrandService);
   private subscriptionService = inject(SubscriptionService);
+  private dialog = inject(MatDialog);
+  private notificationService = inject(NotificationService);
 
   brand = signal<Brand | null>(null);
   configs = signal<Config[]>([]);
@@ -66,37 +74,13 @@ export class BuilderComponent implements OnInit {
     this.route.params.subscribe(params => {
       const brandId = params['brandId'] ? parseInt(params['brandId']) : null;
       if (brandId) {
-        this.setLastBrandId(brandId);
         this.brandId.set(brandId);
       } else {
-        const lastBrandId = this.getLastBrandId();
-        if (lastBrandId) {
-          this.router.navigate(['/brands', lastBrandId, 'builder']);
-        } else {
-          this.router.navigate(['/brands']);
-        }
+        this.router.navigate(['/brands']);
       }
     });
 
     this.loadSubscription();
-  }
-
-  private setLastBrandId(brandId: number): void {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('lastBrandId', String(brandId));
-      }
-    } catch (_) {
-      // Ignore localStorage errors
-    }
-  }
-
-  private getLastBrandId(): string | null {
-    try {
-      return typeof window !== 'undefined' ? localStorage.getItem('lastBrandId') : null;
-    } catch (_) {
-      return null;
-    }
   }
 
   private loadSubscription(): void {
@@ -199,10 +183,11 @@ export class BuilderComponent implements OnInit {
         const errorMessage = err.error?.message || err.message || 'Failed to create config';
         this.limitErrorMessage.set(errorMessage);
 
-        // Check if it's a subscription limit error
         if (err.status === 403 && errorMessage.includes('maximum number of configs')) {
           this.limitReached.set(true);
         }
+        
+        this.notificationService.show(errorMessage, 'error');
         return of(null);
       })
     ).subscribe(response => {
@@ -212,6 +197,7 @@ export class BuilderComponent implements OnInit {
         this.selectedConfig.set(response);
         this.limitReached.set(false);
         this.limitErrorMessage.set('');
+        this.notificationService.show(`Configuration "${name}" created successfully`, 'success');
       }
     });
   }
@@ -220,20 +206,27 @@ export class BuilderComponent implements OnInit {
     const brandId = this.brandId();
     if (!brandId) return;
 
-    if (!confirm('Are you sure you want to delete this configuration? This action cannot be undone.')) {
-      return;
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: { message: 'Are you sure you want to delete this configuration? This action cannot be undone.' }
+    });
 
-    this.configService.deleteConfig(brandId, id).pipe(
-      catchError((err: any) => {
-        console.error('Failed to delete config:', err);
-        return of(null);
-      })
-    ).subscribe(() => {
-      this.configs.set(this.configs().filter(c => c.id !== id));
-      if (this.selectedId() === id) {
-        this.selectedId.set(null);
-        this.selectedConfig.set(null);
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const configName = this.configs().find(c => c.id === id)?.name || 'Configuration';
+        this.configService.deleteConfig(brandId, id).pipe(
+          catchError((err: any) => {
+            const errorMessage = err.error?.message || err.message || 'Failed to delete configuration';
+            this.notificationService.show(errorMessage, 'error');
+            return of(null);
+          })
+        ).subscribe(() => {
+          this.configs.set(this.configs().filter(c => c.id !== id));
+          if (this.selectedId() === id) {
+            this.selectedId.set(null);
+            this.selectedConfig.set(null);
+          }
+          this.notificationService.show(`Configuration "${configName}" deleted successfully`, 'success');
+        });
       }
     });
   }
@@ -242,24 +235,35 @@ export class BuilderComponent implements OnInit {
     const config = this.configs().find(c => c.id === id);
     if (!config) return;
 
-    const newName = prompt('Enter new config name:', config.name);
-    if (!newName || newName.trim() === '') return;
-
-    const brandId = this.brandId();
-    if (!brandId) return;
-
-    this.configService.updateConfigName(brandId, id, newName.trim()).pipe(
-      catchError((err: any) => {
-        console.error('Failed to rename config:', err);
-        return of(null);
-      })
-    ).subscribe(updatedConfig => {
-      if (updatedConfig) {
-        this.configs.set(this.configs().map(c => c.id === id ? updatedConfig : c));
-        if (this.selectedId() === id) {
-          this.selectedConfig.set(updatedConfig);
-        }
+    const dialogRef = this.dialog.open(InputDialogComponent, {
+      data: {
+        title: 'Rename Configuration',
+        label: 'Configuration Name',
+        defaultValue: config.name
       }
+    });
+
+    dialogRef.afterClosed().subscribe(newName => {
+      if (!newName || newName.trim() === '') return;
+
+      const brandId = this.brandId();
+      if (!brandId) return;
+
+      this.configService.updateConfigName(brandId, id, newName.trim()).pipe(
+        catchError((err: any) => {
+          const errorMessage = err.error?.message || err.message || 'Failed to rename configuration';
+          this.notificationService.show(errorMessage, 'error');
+          return of(null);
+        })
+      ).subscribe(updatedConfig => {
+        if (updatedConfig) {
+          this.configs.set(this.configs().map(c => c.id === id ? updatedConfig : c));
+          if (this.selectedId() === id) {
+            this.selectedConfig.set(updatedConfig);
+          }
+          this.notificationService.show(`Configuration renamed to "${newName.trim()}" successfully`, 'success');
+        }
+      });
     });
   }
 
@@ -295,12 +299,18 @@ export class BuilderComponent implements OnInit {
   }
 
   onNotification(notification: { type: 'success' | 'error' | 'warning' | 'info'; message: string }): void {
-    // TODO: Implement notification service if needed
-    console.log('Notification:', notification);
+    this.notificationService.show(notification.message, notification.type);
   }
 
   onFormDataChange(formData: Record<string, any>): void {
     this.formData.set(formData);
+  }
+
+  paletteItemToAdd = signal<PaletteItem | null>(null);
+
+  onAddElement(item: PaletteItem): void {
+    this.paletteItemToAdd.set(item);
+    setTimeout(() => this.paletteItemToAdd.set(null), 0);
   }
 
   onConfigUpdated(data: { config: Config; versions: Config[]; previousConfigId: number }): void {
