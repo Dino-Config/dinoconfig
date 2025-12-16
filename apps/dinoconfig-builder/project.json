@@ -31,6 +31,12 @@
       },
       "configurations": {
         "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/dinoconfig-builder/src/environments/environment.ts",
+              "with": "apps/dinoconfig-builder/src/environments/environment.prod.ts"
+            }
+          ],
           "budgets": [
             {
               "type": "initial",
