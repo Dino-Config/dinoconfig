@@ -24,7 +24,8 @@
             "glob": "**/*",
             "input": "apps/dinoconfig-builder/src/assets",
             "output": "assets"
-          }
+          },
+          "apps/dinoconfig-builder/src/_redirects"
         ],
         "styles": ["apps/dinoconfig-builder/src/styles.scss"]
       },
@@ -42,7 +43,8 @@
               "maximumError": "20kb"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "deployUrl": "/"
         },
         "development": {
           "optimization": false,
