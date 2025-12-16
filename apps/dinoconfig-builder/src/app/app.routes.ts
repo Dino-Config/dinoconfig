@@ -29,7 +29,13 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'brands/:brandId/builder',
-        loadComponent: () => import('./components/builder/builder.component').then(m => m.BuilderComponent)
+        loadComponent: () => import('./components/builder/builder.component').then(m => m.BuilderComponent),
+        children: [
+          {
+            path: 'configs/:configId',
+            loadComponent: () => import('./components/config-view/config-view.component').then(m => m.ConfigViewComponent)
+          }
+        ]
       },
       {
         path: 'profile',
@@ -37,27 +43,31 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'settings',
-        loadComponent: () => import('./components/settings/settings.component').then(m => m.SettingsComponent)
-      },
-      {
-        path: 'settings/sdk',
-        loadComponent: () => import('./components/settings/settings.component').then(m => m.SettingsComponent)
-      },
-      {
-        path: 'settings/features',
-        loadComponent: () => import('./components/settings/settings.component').then(m => m.SettingsComponent)
+        loadComponent: () => import('./components/settings/settings.component').then(m => m.SettingsComponent),
+        children: [
+          {
+            path: 'sdk',
+            loadComponent: () => import('./components/settings/settings.component').then(m => m.SettingsComponent)
+          },
+          {
+            path: 'features',
+            loadComponent: () => import('./components/settings/settings.component').then(m => m.SettingsComponent)
+          }
+        ]
       },
       {
         path: 'subscription',
-        loadComponent: () => import('./components/subscription/subscription.component').then(m => m.SubscriptionComponent)
-      },
-      {
-        path: 'subscription/success',
-        loadComponent: () => import('./components/subscription-success/subscription-success.component').then(m => m.SubscriptionSuccessComponent)
-      },
-      {
-        path: 'subscription/cancel',
-        loadComponent: () => import('./components/subscription-cancel/subscription-cancel.component').then(m => m.SubscriptionCancelComponent)
+        loadComponent: () => import('./components/subscription/subscription.component').then(m => m.SubscriptionComponent),
+        children: [
+          {
+            path: 'success',
+            loadComponent: () => import('./components/subscription-success/subscription-success.component').then(m => m.SubscriptionSuccessComponent)
+          },
+          {
+            path: 'cancel',
+            loadComponent: () => import('./components/subscription-cancel/subscription-cancel.component').then(m => m.SubscriptionCancelComponent)
+          }
+        ]
       },
       {
         path: '',

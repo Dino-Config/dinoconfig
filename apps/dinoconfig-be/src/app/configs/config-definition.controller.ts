@@ -15,6 +15,7 @@ import { ConfigDefinitionService } from './config-definition.service';
 import { BrandsService } from '../brands/brand.service';
 import { ConfigsService } from './config.service';
 import { UsersService } from '../users/user.service';
+import { UpdateConfigDefinitionDto } from './dto/update-config-definition.dto';
 
 @Controller('brands')
 @UseGuards(UserAuthGuard)
@@ -40,77 +41,47 @@ export class ConfigDefinitionController {
 
   /**
    * Get all config definitions for the sidebar
-   * Returns definitions with their latest/active config info
+   * Returns only definition info (id, name) - no config data loaded
+   * Config data is loaded on demand when a specific config is selected
    */
   @Get(':brandId/config-definitions')
   async findAll(
     @Request() req,
     @Param('brandId') brandId: string,
   ) {
-    const brand = await this.getBrandForUser(req.user.auth0Id, parseInt(brandId));
-    const definitions = await this.configDefinitionService.findAll(brand, req.user.company);
-    
-    // Load active config for each definition to return as Config objects for compatibility
-    const configsWithDefinitions = await Promise.all(
-      definitions.map(async (def) => {
-        try {
-          const activeConfig = await this.configsService.getActiveConfig(
-            req.user.auth0Id,
-            parseInt(brandId),
-            def.name,
-            req.user.company,
-          );
-          return activeConfig || null;
-        } catch {
-          return null;
-        }
-      })
-    );
-
-    // Filter out nulls and return as Config array (with virtual properties)
-    return configsWithDefinitions.filter((c): c is NonNullable<typeof c> => c !== null);
+    return await this.configDefinitionService.findAll(parseInt(brandId), req.user.auth0Id, req.user.company);
   }
 
   /**
-   * Update config definition name via config ID
-   * This is used when renaming from the config editor
+   * Update config definition by definition ID (partial update)
    */
-  @Patch(':brandId/configs/:configId/name')
-  async updateConfigName(
+  @Patch(':brandId/config-definitions/:configDefinitionId')
+  async updateConfigDefinition(
     @Request() req,
     @Param('brandId') brandId: string,
-    @Param('configId') configId: string,
-    @Body() dto: { name: string },
+    @Param('configDefinitionId') configDefinitionId: string,
+    @Body() dto: UpdateConfigDefinitionDto,
   ) {
-    const config = await this.configsService.findOneByBrandAndCompanyId(
-      req.user.auth0Id,
-      parseInt(brandId),
-      parseInt(configId),
-      req.user.company,
-    );
-
-    if (!config.definition) {
-      throw new NotFoundException('Config definition not found');
-    }
-
     const brand = await this.getBrandForUser(req.user.auth0Id, parseInt(brandId));
 
-    await this.configDefinitionService.updateName(
-      config.definition.id,
-      dto.name,
+    const updatedDefinition = await this.configDefinitionService.update(
+      parseInt(configDefinitionId),
+      dto,
       brand,
       req.user.company,
     );
 
-    // Reload config with updated definition
-    const reloadedConfig = await this.configsService.findOneByBrandAndCompanyId(
-      req.user.auth0Id,
-      parseInt(brandId),
-      parseInt(configId),
-      req.user.company,
-    );
-
-    return reloadedConfig;
+    // Return updated definition in the same format as findAll
+    return {
+      id: updatedDefinition.id,
+      name: updatedDefinition.name,
+      definition: {
+        id: updatedDefinition.id,
+        name: updatedDefinition.name,
+        company: updatedDefinition.company,
+      },
+      company: updatedDefinition.company,
+    };
   }
 
   /**
