@@ -3,20 +3,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 24px 32px;
+  background: linear-gradient(135deg, #f0f4f8 0%, #f7f9fc 50%, #fafbfd 100%);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
 
   .brand-selection-container {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 25%, rgba(255, 255, 255, 0.5) 100%);
+    background: white;
     border-radius: 16px;
-    padding: 40px;
-    max-width: 1000px;
+    padding: 48px;
+    max-width: 1200px;
     width: 100%;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 1;
   }
 
   .header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 48px;
 
     h1 {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -25,12 +42,13 @@
       background-clip: text;
       font-size: 2.5rem;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin: 0 0 8px 0;
     }
 
     p {
-      color: #718096;
+      color: #6b7280;
       font-size: 1rem;
+      margin: 0;
     }
   }
 
@@ -38,15 +56,23 @@
     text-align: center;
     padding: 60px 20px;
 
+    .error-icon {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 24px;
+      opacity: 0.6;
+    }
+
     h2 {
-      color: #e53e3e;
+      color: #dc2626;
       font-size: 1.5rem;
-      margin-bottom: 16px;
+      font-weight: 600;
+      margin: 0 0 16px 0;
     }
 
     p {
-      color: #718096;
-      margin-bottom: 24px;
+      color: #6b7280;
+      margin: 0 0 24px 0;
     }
   }
 
@@ -54,21 +80,24 @@
     text-align: center;
     padding: 80px 20px;
 
-    .empty-icon {
-      font-size: 4rem;
-      margin-bottom: 24px;
+    .empty-icon-svg {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 24px;
+      opacity: 0.5;
     }
 
     h2 {
-      color: #2d3748;
+      color: #374151;
       font-size: 2rem;
-      margin-bottom: 16px;
+      font-weight: 600;
+      margin: 0 0 16px 0;
     }
 
     p {
-      color: #718096;
+      color: #6b7280;
       font-size: 1.1rem;
-      margin-bottom: 32px;
+      margin: 0 0 32px 0;
       max-width: 400px;
       margin-left: auto;
       margin-right: auto;
@@ -78,25 +107,25 @@
   .brands-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 64px 24px;
-    margin-bottom: 80px;
+    gap: 24px;
+    margin-bottom: 48px;
   }
 
   .brand-card {
     background: white;
-    border: 2px solid #e2e8f0;
+    border: 1.5px solid #e5e7eb;
     border-radius: 12px;
     padding: 24px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
     height: 100%;
 
     &:hover {
-      border-color: #667eea;
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(102, 126, 234, 0.15);
+      border-color: #3b82f6;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
     }
 
     .brand-logo {
@@ -114,7 +143,7 @@
       .default-logo {
         width: 64px;
         height: 64px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -131,33 +160,30 @@
       margin-bottom: 20px;
 
       h3 {
-        color: #2d3748;
+        color: #111827;
         font-size: 1.3rem;
         font-weight: 600;
-        margin-bottom: 8px;
+        margin: 0 0 8px 0;
       }
 
       .brand-description {
-        color: #718096;
+        color: #6b7280;
         font-size: 0.95rem;
         line-height: 1.5;
-        margin-bottom: 12px;
+        margin: 0 0 12px 0;
       }
 
       .brand-meta {
         .created-date {
-          color: #a0aec0;
+          color: #9ca3af;
           font-size: 0.85rem;
         }
       }
     }
 
     .brand-actions {
-      .select-btn {
+      .btn-select {
         width: 100%;
-        padding: 12px;
-        font-size: 1rem;
-        font-weight: 600;
       }
     }
   }
@@ -166,8 +192,58 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding-top: 24px;
-    border-top: 1px solid #e2e8f0;
+    padding-top: 32px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+
+    &:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    &.btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+
+      &:hover:not(:disabled) {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+        transform: translateY(-1px);
+      }
+    }
+
+    &.btn-select {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+
+      &:hover:not(:disabled) {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+        transform: translateY(-1px);
+      }
+    }
   }
 }
 

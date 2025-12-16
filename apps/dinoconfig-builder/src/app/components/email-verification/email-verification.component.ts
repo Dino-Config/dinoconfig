@@ -1,7 +1,7 @@
 import { Component, signal, effect, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { UserService } from '../../services/user.service';
+import { UserStateService } from '../../services/user-state.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
@@ -15,10 +15,10 @@ import { firstValueFrom } from 'rxjs';
 })
 export class EmailVerificationComponent implements OnInit, OnDestroy {
   private router = inject(Router);
-  private userService = inject(UserService);
+  private userState = inject(UserStateService);
   private authService = inject(AuthService);
 
-  user = signal<any>(null);
+  user = this.userState.user;
   isResending = signal(false);
   resendSuccess = signal(false);
   resendError = signal<string | null>(null);
@@ -42,7 +42,9 @@ export class EmailVerificationComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadUser();
+    // User is loaded automatically by UserStateService preflight
+    // Refresh to ensure we have the latest data
+    this.userState.refreshUser();
     this.startCooldownTimer();
     this.startAutoCheck();
   }
@@ -103,20 +105,10 @@ export class EmailVerificationComponent implements OnInit, OnDestroy {
 
   private async checkVerificationStatus(): Promise<void> {
     try {
-      const user = await firstValueFrom(this.userService.getUser());
-      this.user.set(user);
+      await this.userState.refreshUser();
       this.autoCheckCount.update(count => count + 1);
     } catch (error) {
       console.error('Auto-check verification failed:', error);
-    }
-  }
-
-  async loadUser(): Promise<void> {
-    try {
-      const user = await firstValueFrom(this.userService.getUser());
-      this.user.set(user);
-    } catch (error) {
-      console.error('Failed to load user:', error);
     }
   }
 
@@ -148,7 +140,7 @@ export class EmailVerificationComponent implements OnInit, OnDestroy {
       );
       this.resendSuccess.set(true);
 
-      await this.loadUser();
+      await this.userState.refreshUser();
 
       const newCooldownEndTime = Date.now() + (60 * 1000);
       localStorage.setItem('verificationEmailCooldown', newCooldownEndTime.toString());
@@ -168,7 +160,7 @@ export class EmailVerificationComponent implements OnInit, OnDestroy {
     this.resendError.set(null);
 
     try {
-      await this.loadUser();
+      await this.userState.refreshUser();
 
       setTimeout(() => {
         const user = this.user();
@@ -191,10 +183,10 @@ export class EmailVerificationComponent implements OnInit, OnDestroy {
 
       await firstValueFrom(this.authService.logout());
 
-      window.location.href = environment.homeUrl;
+      window.location.href = `${environment.homeUrl}/signin`;
     } catch (error) {
       console.error('Logout error:', error);
-      window.location.href = environment.homeUrl;
+      window.location.href = `${environment.homeUrl}/signin`;
     }
   }
 
