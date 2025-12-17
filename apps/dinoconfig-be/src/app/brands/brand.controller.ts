@@ -17,7 +17,6 @@ export class BrandsController {
   ) {}
 
   @Get()
-  @Header('Cache-Control', 'public, max-age=120, must-revalidate, immutable')
   async findAll(@Req() req) {
     const company = brandHeaderExtractor(req);
     if (!company) {

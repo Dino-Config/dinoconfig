@@ -1,0 +1,25 @@
+<div class="brand-card" (click)="selected.emit(brand().id)">
+  <div class="brand-card-content">
+    <div class="brand-logo-wrapper">
+      @if (brand().logo) {
+        <img [src]="brand().logo" [alt]="brand().name + ' logo'" class="brand-logo-img" />
+      } @else {
+        <div class="brand-logo-placeholder">
+          {{ brand().name.charAt(0).toUpperCase() }}
+        </div>
+      }
+    </div>
+    <div class="brand-details">
+      <h3 class="brand-name">{{ brand().name }}</h3>
+      @if (brand().description) {
+        <p class="brand-description">{{ brand().description }}</p>
+      }
+    </div>
+    <div class="brand-action-icon">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
