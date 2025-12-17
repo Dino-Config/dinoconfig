@@ -2,21 +2,37 @@
   <button class="btn back-button" (click)="goBack()">
     <mat-icon>chevron_left</mat-icon>
   </button>
-  <div class="brand-info">
+  <div class="brand-header-switcher">
     @if (brand()) {
-      <div class="brand-field">
-        <span class="field-label">Brand name:</span>
-        <div class="field-value">
-          <h1>{{ brand()!.name }}</h1>
-        </div>
-      </div>
-      @if (brand()!.description) {
+      <div class="brand-info">
         <div class="brand-field">
-          <span class="field-label">Description:</span>
+          <span class="field-label">Brand name:</span>
           <div class="field-value">
-            <p>{{ brand()!.description }}</p>
+            <button class="brand-name-btn" (click)="toggleDropdown()">
+              <h1>{{ brand()!.name }}</h1>
+              <mat-icon class="chevron-icon" [class.rotated]="isDropdownOpen()">expand_more</mat-icon>
+            </button>
           </div>
         </div>
+        @if (brand()!.description) {
+          <div class="brand-field">
+            <span class="field-label">Description:</span>
+            <div class="field-value">
+              <p>{{ brand()!.description }}</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (isDropdownOpen()) {
+        <dc-brand-switcher-dropdown
+          [brands]="brands()"
+          [isLoading]="isLoading()"
+          [selectedBrandId]="brand()?.id ?? null"
+          [searchQuery]="searchQuery()"
+          (searchQueryChange)="onSearchQueryChange($event)"
+          (brandSelected)="onBrandSelected($event)"
+        ></dc-brand-switcher-dropdown>
       }
     }
   </div>

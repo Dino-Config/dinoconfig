@@ -67,9 +67,7 @@ export class AppLayoutComponent {
     effect(() => {
       const path = this.currentPath();
       if (path === '/subscription/success') {
-        setTimeout(() => {
-          this.limitViolationService.refreshViolations();
-        }, 2000);
+        this.limitViolationService.refreshViolations();
       }
     });
   }

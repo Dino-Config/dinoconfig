@@ -12,14 +12,26 @@
         </button>
       </div>
     } @else {
-      <div class="header">
-        <h1>Select Your Brand</h1>
-        <p>Choose a brand to start building configurations</p>
+      <div class="header-section">
+        <div class="header-content">
+          <h1>Your Brands</h1>
+          <p>Select a brand to start building configurations</p>
+        </div>
+        @if (!!brands().length) {
+          <button class="btn-create-header" (click)="handleCreateNewBrand()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            New Brand
+          </button>
+        }
       </div>
 
       @if (brands().length === 0) {
         <div class="empty-state">
-          <img src="/assets/dino-sad.svg" alt="No brands" class="empty-icon-svg" />
+          <div class="empty-icon-wrapper">
+            <img src="/assets/dino-sad.svg" alt="No brands" class="empty-icon-svg" />
+          </div>
           <h2>No brands yet</h2>
           <p>Create your first brand to get started with building configurations</p>
           <button class="btn btn-primary" (click)="handleCreateNewBrand()">
@@ -33,47 +45,30 @@
         <div class="brands-grid">
           @for (brand of brands(); track brand.id) {
             <div class="brand-card" (click)="handleBrandSelect(brand.id)">
-              <div class="brand-logo">
-                @if (brand.logo) {
-                  <img [src]="brand.logo" [alt]="brand.name + ' logo'" />
-                } @else {
-                  <div class="default-logo">
-                    {{ brand.name.charAt(0).toUpperCase() }}
-                  </div>
-                }
-              </div>
-              <div class="brand-info">
-                <h3>{{ brand.name }}</h3>
-                @if (brand.description) {
-                  <p class="brand-description">{{ brand.description }}</p>
-                }
-                <div class="brand-meta">
-                  @if (brand.createdAt) {
-                    <span class="created-date">
-                      Created {{ formatDate(brand.createdAt) }}
-                    </span>
+              <div class="brand-card-content">
+                <div class="brand-logo-wrapper">
+                  @if (brand.logo) {
+                    <img [src]="brand.logo" [alt]="brand.name + ' logo'" class="brand-logo-img" />
+                  } @else {
+                    <div class="brand-logo-placeholder">
+                      {{ brand.name.charAt(0).toUpperCase() }}
+                    </div>
                   }
                 </div>
-              </div>
-              <div class="brand-actions">
-                <button class="btn btn-select">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M6 12l4-4M10 8l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <div class="brand-details">
+                  <h3 class="brand-name">{{ brand.name }}</h3>
+                  @if (brand.description) {
+                    <p class="brand-description">{{ brand.description }}</p>
+                  }
+                </div>
+                <div class="brand-action-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
-                  Select Brand
-                </button>
+                </div>
               </div>
             </div>
           }
-        </div>
-
-        <div class="create-new-section">
-          <button class="btn btn-primary" (click)="handleCreateNewBrand()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Create New Brand
-          </button>
         </div>
       }
     }

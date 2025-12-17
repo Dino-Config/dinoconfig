@@ -73,6 +73,23 @@ export class LeftNavigationComponent implements OnInit {
   }
 
   goBuilder(): void {
+    // Check if there's a selected brand in localStorage
+    try {
+      const selectedBrandId = localStorage.getItem('selectedBrandId');
+      if (selectedBrandId) {
+        const brandId = parseInt(selectedBrandId, 10);
+        if (!isNaN(brandId)) {
+          // Navigate directly to the builder for the selected brand
+          this.router.navigate(['/brands', brandId, 'builder']);
+          return;
+        }
+      }
+    } catch (e) {
+      // If localStorage access fails, fall through to default navigation
+      console.warn('Failed to read selectedBrandId from localStorage:', e);
+    }
+    
+    // No selected brand or error reading localStorage - go to brand selection
     this.router.navigate(['/brands']);
   }
 

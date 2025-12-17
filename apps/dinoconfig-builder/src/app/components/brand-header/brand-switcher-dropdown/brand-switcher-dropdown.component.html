@@ -1,0 +1,59 @@
+<div class="brand-switcher-dropdown">
+  <div class="search-container">
+    <mat-icon class="search-icon">search</mat-icon>
+    <input 
+      type="text" 
+      class="search-input"
+      placeholder="Search brands..."
+      [value]="searchQuerySignal()"
+      (input)="onSearchChange($any($event.target).value)"
+      (click)="$event.stopPropagation()"
+      autofocus
+    />
+    @if (searchQuerySignal()) {
+      <button class="clear-search" (click)="clearSearch(); $event.stopPropagation()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </div>
+
+  <div class="brands-list">
+    @if (isLoading()) {
+      <div class="dropdown-loading">
+        <span>Loading brands...</span>
+      </div>
+    } @else if (filteredBrands().length === 0) {
+      <div class="dropdown-empty">
+        <span>{{ searchQuerySignal() ? 'No brands found' : 'No brands available' }}</span>
+      </div>
+    } @else {
+      @for (b of filteredBrands(); track b.id) {
+        <button 
+          class="brand-item"
+          [class.selected]="selectedBrandId() === b.id"
+          (click)="onBrandSelect(b)"
+        >
+          <div class="brand-item-content">
+            @if (b.logo) {
+              <img [src]="b.logo" [alt]="b.name" class="brand-item-logo" />
+            } @else {
+              <div class="brand-item-placeholder">
+                {{ b.name.charAt(0).toUpperCase() }}
+              </div>
+            }
+            <div class="brand-item-info">
+              <span class="brand-item-name">{{ b.name }}</span>
+              @if (b.description) {
+                <span class="brand-item-desc">{{ b.description }}</span>
+              }
+            </div>
+          </div>
+          @if (selectedBrandId() === b.id) {
+            <mat-icon class="check-icon">check</mat-icon>
+          }
+        </button>
+      }
+    }
+  </div>
+</div>
+

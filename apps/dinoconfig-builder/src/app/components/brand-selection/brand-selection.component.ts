@@ -93,6 +93,12 @@ export class BrandSelectionComponent implements OnInit {
   }
 
   handleBrandSelect(brandId: number): void {
+    // Store selected brand ID in localStorage
+    try {
+      localStorage.setItem('selectedBrandId', String(brandId));
+    } catch (e) {
+      console.warn('Failed to save selectedBrandId to localStorage:', e);
+    }
     this.router.navigate(['/brands', brandId, 'builder']);
   }
 
