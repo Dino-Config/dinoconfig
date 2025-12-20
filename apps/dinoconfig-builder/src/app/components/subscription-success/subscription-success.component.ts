@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { SubscriptionService } from '../../services/subscription.service';
+import { LimitViolationService } from '../../services/limit-violation.service';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { catchError, of } from 'rxjs';
@@ -22,6 +23,7 @@ export class SubscriptionSuccessComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private subscriptionService = inject(SubscriptionService);
+  private limitViolationService = inject(LimitViolationService);
 
   subscription = signal<SubscriptionStatus | null>(null);
   loading = signal<boolean>(true);
@@ -73,6 +75,8 @@ export class SubscriptionSuccessComponent implements OnInit {
           currentPeriodEnd: data.currentPeriodEnd,
           isActive: data.isActive
         });
+        // Refresh the limit violation service to update the left navigation
+        this.limitViolationService.refreshViolations();
       }
       this.loading.set(false);
     });
@@ -97,6 +101,7 @@ export class SubscriptionSuccessComponent implements OnInit {
           'Up to 20 brands',
           'Up to 20 configs per brand',
           'All SDKs & APIs',
+          'Advanced targeting',
           'Priority support',
           'Version history',
           'Team collaboration',
@@ -106,6 +111,7 @@ export class SubscriptionSuccessComponent implements OnInit {
         return [
           'Unlimited brands & configs',
           'Everything in Pro',
+          'SAML SSO',
           'Custom integrations',
           'Dedicated support',
           'On-premise option'
