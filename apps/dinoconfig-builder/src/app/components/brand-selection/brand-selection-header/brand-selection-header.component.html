@@ -1,0 +1,15 @@
+<div class="header-section">
+  <div class="header-content">
+    <h1>Your Brands</h1>
+    <p>Select a brand to start building configurations</p>
+  </div>
+  @if (hasBrands()) {
+    <button class="btn-create-header" (click)="createBrand.emit()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      New Brand
+    </button>
+  }
+</div>
+

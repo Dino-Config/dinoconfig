@@ -1,0 +1,11 @@
+<div class="error-state">
+  <img src="/assets/dino-think.svg" alt="Error" class="error-icon" />
+  <h2>Error loading brands</h2>
+  <p>{{ message() }}</p>
+  @if (showRetry()) {
+    <button class="btn btn-primary" (click)="retry.emit()">
+      {{ retryButtonText() }}
+    </button>
+  }
+</div>
+

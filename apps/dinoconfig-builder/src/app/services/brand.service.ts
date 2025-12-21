@@ -14,19 +14,9 @@ export class BrandService {
   private readonly apiUrl = environment.apiUrl;
 
   getBrands(): Observable<Brand[]> {
-    return this.http.get<Brand[] | { brands: Brand[] }>(`${this.apiUrl}/brands`, {
+    return this.http.get<Brand[]>(`${this.apiUrl}/brands`, {
       withCredentials: true
-    }).pipe(
-      map(data => {
-        if (Array.isArray(data)) {
-          return data;
-        } else if ('brands' in data && Array.isArray(data.brands)) {
-          return data.brands;
-        } else {
-          return [];
-        }
-      })
-    );
+    });
   }
 
   getBrand(brandId: number): Observable<Brand> {
@@ -42,12 +32,7 @@ export class BrandService {
   }
 
   createBrand(brandData: CreateBrandRequest): Observable<Brand> {
-    return this.http.post<Brand>(`${this.apiUrl}/brands`, {
-      name: brandData.name,
-      description: brandData.description || undefined,
-      logo: brandData.logo || undefined,
-      website: brandData.website || undefined,
-    }, {
+    return this.http.post<Brand>(`${this.apiUrl}/brands`, brandData, {
       withCredentials: true
     });
   }

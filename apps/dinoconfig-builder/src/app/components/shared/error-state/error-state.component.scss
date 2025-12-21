@@ -1,0 +1,50 @@
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+
+  .error-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 24px;
+    opacity: 0.6;
+  }
+
+  h2 {
+    color: #dc2626;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+  }
+
+  p {
+    color: #6b7280;
+    margin: 0 0 24px 0;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+
+    &.btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+
+      &:hover:not(:disabled) {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+

@@ -3,77 +3,31 @@
     @if (isLoading()) {
       <dc-spinner text="Loading your brands..." size="large" [fullHeight]="true"></dc-spinner>
     } @else if (error()) {
-      <div class="error-state">
-        <img src="/assets/dino-think.svg" alt="Error" class="error-icon" />
-        <h2>Error loading brands</h2>
-        <p>{{ error() }}</p>
-        <button class="btn btn-primary" (click)="loadBrands()">
-          Try Again
-        </button>
-      </div>
-    } @else {
-      <div class="header">
-        <h1>Select Your Brand</h1>
-        <p>Choose a brand to start building configurations</p>
-      </div>
+      <dc-error-state
+        [message]="error()!"
+        (retry)="loadBrands()"
+      ></dc-error-state>
+    } @else if (showContent()) {
+      <dc-brand-selection-header
+        [hasBrands]="hasBrands()"
+        (createBrand)="handleCreateNewBrand()"
+      ></dc-brand-selection-header>
 
-      @if (brands().length === 0) {
-        <div class="empty-state">
-          <img src="/assets/dino-sad.svg" alt="No brands" class="empty-icon-svg" />
-          <h2>No brands yet</h2>
-          <p>Create your first brand to get started with building configurations</p>
-          <button class="btn btn-primary" (click)="handleCreateNewBrand()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Create Your First Brand
-          </button>
-        </div>
+      @if (!hasBrands()) {
+        <dc-empty-state
+          title="No brands yet"
+          message="Create your first brand to get started with building configurations"
+          buttonText="Create Your First Brand"
+          (buttonClick)="handleCreateNewBrand()"
+        ></dc-empty-state>
       } @else {
         <div class="brands-grid">
           @for (brand of brands(); track brand.id) {
-            <div class="brand-card" (click)="handleBrandSelect(brand.id)">
-              <div class="brand-logo">
-                @if (brand.logo) {
-                  <img [src]="brand.logo" [alt]="brand.name + ' logo'" />
-                } @else {
-                  <div class="default-logo">
-                    {{ brand.name.charAt(0).toUpperCase() }}
-                  </div>
-                }
-              </div>
-              <div class="brand-info">
-                <h3>{{ brand.name }}</h3>
-                @if (brand.description) {
-                  <p class="brand-description">{{ brand.description }}</p>
-                }
-                <div class="brand-meta">
-                  @if (brand.createdAt) {
-                    <span class="created-date">
-                      Created {{ formatDate(brand.createdAt) }}
-                    </span>
-                  }
-                </div>
-              </div>
-              <div class="brand-actions">
-                <button class="btn btn-select">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M6 12l4-4M10 8l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  Select Brand
-                </button>
-              </div>
-            </div>
+            <dc-brand-card
+              [brand]="brand"
+              (selected)="handleBrandSelect($event)"
+            ></dc-brand-card>
           }
-        </div>
-
-        <div class="create-new-section">
-          <button class="btn btn-primary" (click)="handleCreateNewBrand()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Create New Brand
-          </button>
         </div>
       }
     }
