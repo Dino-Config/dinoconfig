@@ -1,9 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, switchMap, from, of } from 'rxjs';
+import { Observable, tap, switchMap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { LoginRequest, SignupRequest, AuthResponse } from '../models/auth.models';
-import { AuthStateService } from './auth-state.service';
 import { UserStateService } from './user-state.service';
 
 @Injectable({
@@ -11,7 +10,6 @@ import { UserStateService } from './user-state.service';
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private authState = inject(AuthStateService);
   private userState = inject(UserStateService);
   private readonly apiUrl = environment.apiUrl;
 
@@ -21,23 +19,16 @@ export class AuthService {
       { email, password },
       { withCredentials: true }
     ).pipe(
-      switchMap((response) => {
-        // Store user data from login response if available
+      tap((response) => {
         if (response.user) {
           this.userState.setUser(response.user);
         }
-        // Wait for auth state refresh to complete before proceeding
-        return from(this.authState.refreshAuth(true)).pipe(
-          switchMap(() => of(response))
-        );
       })
     );
   }
 
   signup(userData: SignupRequest): Observable<AuthResponse> {
-    // First signup, then login
     return this.http.post(`${this.apiUrl}/auth/signup`, userData).pipe(
-      // After signup, login automatically using switchMap
       switchMap(() => {
         return this.http.post<AuthResponse>(
           `${this.apiUrl}/auth/login`,
@@ -48,15 +39,10 @@ export class AuthService {
           { withCredentials: true }
         );
       }),
-      switchMap((response) => {
-        // Store user data from login response if available
+      tap((response) => {
         if (response.user) {
           this.userState.setUser(response.user);
         }
-        // Wait for auth state refresh to complete before proceeding
-        return from(this.authState.refreshAuth(true)).pipe(
-          switchMap(() => of(response))
-        );
       })
     );
   }
@@ -70,14 +56,19 @@ export class AuthService {
       withCredentials: true
     }).pipe(
       tap(() => {
-        // Set logout state without making additional API calls
-        this.authState.setLoggedOut();
+        this.userState.clearUser();
       })
     );
   }
 
   sendVerificationEmail(userId: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/send-verification`, { userId }, {
+      withCredentials: true
+    });
+  }
+
+  validate(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/auth/validate`, {
       withCredentials: true
     });
   }

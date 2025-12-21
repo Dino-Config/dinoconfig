@@ -1,10 +1,9 @@
-import { Component, input, inject, signal, OnInit, effect, HostListener } from '@angular/core';
+import { Component, input, inject, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BrandService } from '../../services/brand.service';
-import { AuthStateService } from '../../services/auth-state.service';
 import { Brand } from '../../models/user.models';
 import { BrandSwitcherDropdownComponent } from './brand-switcher-dropdown/brand-switcher-dropdown.component';
 import { catchError, of } from 'rxjs';
@@ -18,9 +17,7 @@ import { catchError, of } from 'rxjs';
 })
 export class BrandHeaderComponent implements OnInit {
   private router = inject(Router);
-  private route = inject(ActivatedRoute);
   private brandService = inject(BrandService);
-  private authState = inject(AuthStateService);
 
   brand = input<Brand | null>(null);
   isDropdownOpen = signal<boolean>(false);
@@ -28,24 +25,12 @@ export class BrandHeaderComponent implements OnInit {
   brands = signal<Brand[]>([]);
   isLoading = signal<boolean>(false);
 
-  constructor() {
-    // Load brands when authenticated
-    effect(() => {
-      const isAuthenticated = this.authState.isAuthenticated();
-      if (isAuthenticated && this.brands().length === 0 && !this.isLoading()) {
-        this.loadBrands();
-      }
-    });
-  }
-
   ngOnInit(): void {
-    if (this.authState.isAuthenticated() && this.brands().length === 0) {
-      this.loadBrands();
-    }
+    this.loadBrands();
   }
 
   loadBrands(): void {
-    if (!this.authState.isAuthenticated() || this.isLoading()) {
+    if (this.isLoading()) {
       return;
     }
 
@@ -62,12 +47,10 @@ export class BrandHeaderComponent implements OnInit {
     const wasOpen = this.isDropdownOpen();
     this.isDropdownOpen.update(open => !open);
     
-    // Load brands if opening and not loaded
-    if (!wasOpen && this.brands().length === 0 && this.authState.isAuthenticated()) {
+    if (!wasOpen && !!this.brands().length) {
       this.loadBrands();
     }
     
-    // Clear search when closing
     if (wasOpen) {
       this.searchQuery.set('');
     }
@@ -80,7 +63,6 @@ export class BrandHeaderComponent implements OnInit {
       return;
     }
     
-    // Store selected brand ID in localStorage
     try {
       localStorage.setItem('selectedBrandId', String(brand.id));
     } catch (e) {

@@ -62,17 +62,12 @@ export class LimitViolationService {
       }
     });
 
-    // Watch for authentication state changes and check violations when authenticated
     effect(() => {
       const isAuthenticated = this.authState.isAuthenticated();
-      const isExplicitlyCleared = this.userState.isExplicitlyCleared();
       
-      // Only check violations if user is authenticated, not explicitly cleared,
-      // not already loading, and we don't already have violations data
-      if (isAuthenticated && !isExplicitlyCleared && !this._loading() && !this._violations()) {
+      if (isAuthenticated && !this._loading() && !this._violations()) {
         this.checkViolations();
-      } else if (!isAuthenticated || isExplicitlyCleared) {
-        // Clear violations when logged out
+      } else if (!isAuthenticated) {
         this._violations.set(null);
         this._showModal.set(false);
       }
@@ -80,8 +75,7 @@ export class LimitViolationService {
   }
 
   checkViolations(): void {
-    // Double check authentication before making the call
-    if (!this.authState.isAuthenticated() || this.userState.isExplicitlyCleared()) {
+    if (!this.authState.isAuthenticated()) {
       this._loading.set(false);
       return;
     }

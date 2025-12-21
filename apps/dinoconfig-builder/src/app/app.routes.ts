@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { emailVerificationGuard } from './guards/email-verification.guard';
+import { authGuard } from './guards/auth.guard';
 
 export const appRoutes: Route[] = [
   {
@@ -21,7 +21,7 @@ export const appRoutes: Route[] = [
   {
     path: '',
     loadComponent: () => import('./components/layout/app-layout/app-layout.component').then(m => m.AppLayoutComponent),
-    canActivate: [emailVerificationGuard],
+    canActivate: [authGuard],
     children: [
       {
         path: 'brands',
