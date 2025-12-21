@@ -1,10 +1,11 @@
-import { Component, signal, inject, OnInit, effect } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ConfigService } from '../../services/config.service';
 import { Config } from '../../models/config.models';
 import { VersionSelectorComponent } from '../version-selector/version-selector.component';
 import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dragdrop/config-builder-panel-dragdrop.component';
+import { LimitViolationService } from '../../services/limit-violation.service';
 import { catchError, of } from 'rxjs';
 
 @Component({
@@ -21,6 +22,7 @@ import { catchError, of } from 'rxjs';
 export class ConfigViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private configService = inject(ConfigService);
+  private limitViolationService = inject(LimitViolationService);
 
   brandId = signal<number | null>(null);
   configId = signal<number | null>(null);
@@ -31,6 +33,13 @@ export class ConfigViewComponent implements OnInit {
   formData = signal<Record<string, any>>({});
   isLoading = signal(true);
   error = signal<string | null>(null);
+
+  canShowVersionSelector = computed(() => {
+    const violations = this.limitViolationService.violations();
+    if (!violations) return false;
+    
+    return violations.features?.['config_versioning'] === true;
+  });
 
   constructor() {
     effect(() => {

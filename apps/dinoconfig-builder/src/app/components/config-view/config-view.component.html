@@ -9,7 +9,7 @@
   </div>
 } @else if (selectedConfig()) {
   <div class="config-view">
-    @if (configVersions().length > 0) {
+    @if (canShowVersionSelector() && !!configVersions().length) {
       <dc-version-selector
         [brandId]="brandId()!"
         [configId]="selectedConfig()!.id"
