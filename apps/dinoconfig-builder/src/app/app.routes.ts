@@ -57,17 +57,15 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'subscription',
-        loadComponent: () => import('./components/subscription/subscription.component').then(m => m.SubscriptionComponent),
-        children: [
-          {
-            path: 'success',
-            loadComponent: () => import('./components/subscription-success/subscription-success.component').then(m => m.SubscriptionSuccessComponent)
-          },
-          {
-            path: 'cancel',
-            loadComponent: () => import('./components/subscription-cancel/subscription-cancel.component').then(m => m.SubscriptionCancelComponent)
-          }
-        ]
+        loadComponent: () => import('./components/subscription/subscription.component').then(m => m.SubscriptionComponent)
+      },
+      {
+        path: 'subscription/success',
+        loadComponent: () => import('./components/subscription-success/subscription-success.component').then(m => m.SubscriptionSuccessComponent)
+      },
+      {
+        path: 'subscription/cancel',
+        loadComponent: () => import('./components/subscription-cancel/subscription-cancel.component').then(m => m.SubscriptionCancelComponent)
       },
       {
         path: '',

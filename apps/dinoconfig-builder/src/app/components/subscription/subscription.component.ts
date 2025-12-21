@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { SubscriptionService } from '../../services/subscription.service';
+import { LimitViolationService } from '../../services/limit-violation.service';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { environment } from '../../../environments/environment';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
@@ -42,6 +43,7 @@ interface Notification {
 export class SubscriptionComponent implements OnInit {
   private router = inject(Router);
   private subscriptionService = inject(SubscriptionService);
+  private limitViolationService = inject(LimitViolationService);
 
   subscription = signal<SubscriptionStatus | null>(null);
   loading = signal<boolean>(true);
@@ -196,6 +198,8 @@ export class SubscriptionComponent implements OnInit {
           currentPeriodEnd: data.currentPeriodEnd,
           isActive: data.isActive
         });
+        // Refresh the limit violation service to update the left navigation
+        this.limitViolationService.refreshViolations();
         this.showNotification('success', `Successfully changed to ${data.newTier} plan!`);
       }
       this.processingTier.set(null);
