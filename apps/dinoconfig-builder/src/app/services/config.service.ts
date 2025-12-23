@@ -20,24 +20,14 @@ export class ConfigService {
     );
   }
 
-  getConfigVersions(brandId: number, configId: number): Observable<Config[]> {
-    return this.http.get<any>(`${this.apiUrl}/brands/${brandId}/configs/${configId}/versions`, {
+  getConfigVersions(brandId: number, configId: number): Observable<{ activeVersion: Config | null; versions: Config[] }> {
+    return this.http.get<{ activeVersion: Config | null; versions: Config[] }>(`${this.apiUrl}/brands/${brandId}/configs/${configId}/versions`, {
       withCredentials: true
     }).pipe(
-      map(data => {
-        if (Array.isArray(data)) {
-          return data;
-        }
-        if (data && typeof data === 'object') {
-          if ('versions' in data && Array.isArray(data.versions)) {
-            return data.versions;
-          }
-          if ('data' in data && Array.isArray(data.data)) {
-            return data.data;
-          }
-        }
-        return [];
-      })
+      map(({ activeVersion, versions }) => ({
+        activeVersion,
+        versions
+      }))
     );
   }
 

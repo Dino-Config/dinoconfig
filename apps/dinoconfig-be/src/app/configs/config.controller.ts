@@ -79,9 +79,9 @@ export class ConfigsController {
   async getConfigVersions(
     @Request() req,
     @Param('brandId') brandId: string,
-    @Param('configDefinitionId') configDefinitionId: number,
+    @Param('configId') configId: string,
   ) {
-    return this.configsService.getConfigVersionsById(req.user.auth0Id, parseInt(brandId), configDefinitionId, req.user.company);
+    return this.configsService.getConfigVersionsById(req.user.auth0Id, parseInt(brandId), parseInt(configId), req.user.company);
   }
 
   @Get(':brandId/configs/:configName/active')

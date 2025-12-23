@@ -75,18 +75,20 @@ export class ConfigViewComponent implements OnInit {
     });
   }
 
-  private loadConfigVersions(brandId: number, configId: number): void {
+  private loadConfigVersions(brandId: number, configId: number, selectVersion?: number): void {
     this.configService.getConfigVersions(brandId, configId).pipe(
       catchError((err: any) => {
         if (err.status === 403) {
-          this.configVersions.set([]);
-          return of([]);
+          return of({ activeVersion: null, versions: [] });
         }
-        return of([]);
+        return of({ activeVersion: null, versions: [] });
       })
-    ).subscribe(versions => {
-      if (!Array.isArray(versions)) {
+    ).subscribe(response => {
+      const { activeVersion, versions } = response;
+      
+      if (!Array.isArray(versions) || versions.length === 0) {
         this.configVersions.set([]);
+        this.activeVersions.set({});
         this.isLoading.set(false);
         return;
       }
@@ -94,24 +96,32 @@ export class ConfigViewComponent implements OnInit {
       const sortedVersions = [...versions].sort((a, b) => b.version - a.version);
       this.configVersions.set(sortedVersions);
       
-      // Extract active versions
+      // Update active versions with the actual active version from response
       const activeVersionsData: Record<string, number> = {};
-      for (const version of sortedVersions) {
-        if (version.name && version.version) {
-          activeVersionsData[version.name] = version.version;
-        }
+      if (activeVersion && activeVersion.name && activeVersion.version) {
+        activeVersionsData[activeVersion.name] = activeVersion.version;
       }
       this.activeVersions.set(activeVersionsData);
       
-      // Set the latest version as selected config
-      if (sortedVersions.length > 0) {
-        const latestVersion = sortedVersions[0];
-        this.selectedConfig.set(latestVersion);
-        this.formData.set(latestVersion.formData || {});
-        if (!this.selectedVersion()) {
-          this.selectedVersion.set(latestVersion.version);
-        }
+      // Set the selected version if provided, otherwise use the active version or latest
+      let versionToSelect: Config | null = null;
+      
+      if (selectVersion) {
+        // Find the specific version to select
+        versionToSelect = sortedVersions.find(v => v.version === selectVersion) || null;
+      } else if (activeVersion && activeVersion.version) {
+        // Use the active version if no specific version was requested
+        versionToSelect = sortedVersions.find(v => v.version === activeVersion.version) || null;
       }
+      
+      // If no specific version found, use the latest
+      if (!versionToSelect) {
+        versionToSelect = sortedVersions[0];
+      }
+      
+      this.selectedConfig.set(versionToSelect);
+      this.formData.set(versionToSelect.formData || {});
+      this.selectedVersion.set(versionToSelect.version);
       
       this.isLoading.set(false);
     });
@@ -135,11 +145,12 @@ export class ConfigViewComponent implements OnInit {
       [selected.name]: version
     }));
 
-    // Reload config versions
+    // Reload config versions and select the newly set active version
     const brandId = this.brandId();
     const configId = this.configId();
     if (brandId && configId) {
-      this.loadConfigVersions(brandId, configId);
+      // Pass the version that was just set as active so it gets selected
+      this.loadConfigVersions(brandId, configId, version);
     }
   }
 

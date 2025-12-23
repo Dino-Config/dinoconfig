@@ -40,10 +40,27 @@ export class VersionSelectorComponent {
   previewVersion = signal<Config | null>(null);
 
   constructor() {
-    // Set the first version as preview by default when versions change
+    // Set the active version as preview by default when versions or activeVersion change
     effect(() => {
       const versions = this.versions();
-      this.previewVersion.set(versions.length > 0 ? versions[0] : null);
+      const activeVersion = this.activeVersion();
+      
+      if (versions.length === 0) {
+        this.previewVersion.set(null);
+        return;
+      }
+      
+      // If there's an active version, find and set it as preview
+      if (activeVersion !== undefined && activeVersion !== null) {
+        const activeVersionConfig = versions.find(v => v.version === activeVersion);
+        if (activeVersionConfig) {
+          this.previewVersion.set(activeVersionConfig);
+          return;
+        }
+      }
+      
+      // Fallback to the first version if no active version found
+      this.previewVersion.set(versions[0]);
     });
   }
 
