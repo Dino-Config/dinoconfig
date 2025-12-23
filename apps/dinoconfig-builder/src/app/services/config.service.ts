@@ -59,9 +59,9 @@ export class ConfigService {
     );
   }
 
-  deleteConfig(brandId: number, configId: number): Observable<void> {
+  deleteConfigDefinition(brandId: number, definitionId: number): Observable<void> {
     return this.http.delete<void>(
-      `${this.apiUrl}/brands/${brandId}/configs/${configId}/definition`,
+      `${this.apiUrl}/brands/${brandId}/config-definitions/${definitionId}`,
       { withCredentials: true }
     );
   }

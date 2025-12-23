@@ -183,7 +183,7 @@ export class BuilderComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         const configName = this.configs().find(c => c.id === id)?.name || 'Configuration';
-        this.configService.deleteConfig(brandId, id).pipe(
+        this.configService.deleteConfigDefinition(brandId, id).pipe(
           catchError((err: any) => {
             const errorMessage = err.error?.message || err.message || 'Failed to delete configuration';
             this.notificationService.show(errorMessage, 'error');
