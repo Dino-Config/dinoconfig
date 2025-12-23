@@ -1,10 +1,11 @@
-import { Component, signal, inject, OnInit, effect } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { ConfigService } from '../../services/config.service';
+import { ConfigService, ConfigVersionsResponse } from '../../services/config.service';
 import { Config } from '../../models/config.models';
 import { VersionSelectorComponent } from '../version-selector/version-selector.component';
 import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dragdrop/config-builder-panel-dragdrop.component';
+import { LimitViolationService } from '../../services/limit-violation.service';
 import { catchError, of } from 'rxjs';
 
 @Component({
@@ -21,16 +22,20 @@ import { catchError, of } from 'rxjs';
 export class ConfigViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private configService = inject(ConfigService);
+  private limitViolationService = inject(LimitViolationService);
 
   brandId = signal<number | null>(null);
   configId = signal<number | null>(null);
   selectedConfig = signal<Config | null>(null);
-  selectedVersion = signal<number | null>(null);
   configVersions = signal<Config[]>([]);
-  activeVersions = signal<Record<string, number>>({});
+  activeVersion = signal<number | null>(null);
   formData = signal<Record<string, any>>({});
   isLoading = signal(true);
   error = signal<string | null>(null);
+
+  canShowVersionSelector = computed(() => 
+    this.limitViolationService.violations()?.features?.['config_versioning'] === true
+  );
 
   constructor() {
     effect(() => {
@@ -66,71 +71,49 @@ export class ConfigViewComponent implements OnInit {
     });
   }
 
-  private loadConfigVersions(brandId: number, configId: number): void {
+  private loadConfigVersions(brandId: number, configId: number, selectVersion?: number): void {
+    const emptyResponse: ConfigVersionsResponse = { activeVersion: null, versions: [] };
+    
     this.configService.getConfigVersions(brandId, configId).pipe(
-      catchError((err: any) => {
-        if (err.status === 403) {
-          this.configVersions.set([]);
-          return of([]);
-        }
-        return of([]);
-      })
-    ).subscribe(versions => {
-      if (!Array.isArray(versions)) {
+      catchError(() => of(emptyResponse))
+    ).subscribe(({ activeVersion, versions }) => {
+      if (!versions?.length) {
         this.configVersions.set([]);
+        this.activeVersion.set(null);
         this.isLoading.set(false);
         return;
       }
       
       const sortedVersions = [...versions].sort((a, b) => b.version - a.version);
       this.configVersions.set(sortedVersions);
+      this.activeVersion.set(activeVersion?.version ?? null);
       
-      // Extract active versions
-      const activeVersionsData: Record<string, number> = {};
-      for (const version of sortedVersions) {
-        if (version.name && version.version) {
-          activeVersionsData[version.name] = version.version;
-        }
-      }
-      this.activeVersions.set(activeVersionsData);
+      // Select version priority: explicit selection > active version > latest
+      const versionToSelect = 
+        sortedVersions.find(v => v.version === (selectVersion ?? activeVersion?.version)) 
+        ?? sortedVersions[0];
       
-      // Set the latest version as selected config
-      if (sortedVersions.length > 0) {
-        const latestVersion = sortedVersions[0];
-        this.selectedConfig.set(latestVersion);
-        this.formData.set(latestVersion.formData || {});
-        if (!this.selectedVersion()) {
-          this.selectedVersion.set(latestVersion.version);
-        }
-      }
-      
+      this.selectedConfig.set(versionToSelect);
+      this.formData.set(versionToSelect.formData ?? {});
       this.isLoading.set(false);
     });
   }
 
   onVersionSelect(version: number): void {
-    this.selectedVersion.set(version);
     const versionConfig = this.configVersions().find(v => v.version === version);
     if (versionConfig) {
       this.selectedConfig.set(versionConfig);
-      this.formData.set(versionConfig.formData || {});
+      this.formData.set(versionConfig.formData ?? {});
     }
   }
 
   onActiveVersionSet(version: number): void {
-    const selected = this.selectedConfig();
-    if (!selected) return;
-
-    this.activeVersions.update(prev => ({
-      ...prev,
-      [selected.name]: version
-    }));
-
-    // Reload config versions
+    this.activeVersion.set(version);
+    
     const brandId = this.brandId();
     const configId = this.configId();
     if (brandId && configId) {
-      this.loadConfigVersions(brandId, configId);
+      this.loadConfigVersions(brandId, configId, version);
     }
   }
 
@@ -138,14 +121,13 @@ export class ConfigViewComponent implements OnInit {
     this.formData.set(formData);
   }
 
-  onConfigUpdated(data: { config: Config; versions: Config[]; previousConfigId: number }): void {
-    this.selectedConfig.set(data.config);
-    this.formData.set(data.config.formData || {});
-    this.configVersions.set(data.versions);
+  onConfigUpdated({ config, versions }: { config: Config; versions: Config[]; previousConfigId: number }): void {
+    this.selectedConfig.set(config);
+    this.formData.set(config.formData ?? {});
+    this.configVersions.set(versions);
   }
 
   onNotification(notification: { type: 'success' | 'error' | 'warning' | 'info'; message: string }): void {
-    // TODO: Implement notification service if needed
     console.log('Notification:', notification);
   }
 }

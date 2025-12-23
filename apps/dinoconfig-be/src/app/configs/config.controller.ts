@@ -75,13 +75,13 @@ export class ConfigsController {
     return this.configsService.findAllConfigsForBrand(req.user.auth0Id, parseInt(brandId), req.user.company);
   }
 
-  @Get(':brandId/configs/:configId/versions')
+  @Get(':brandId/configs/:configDefinitionId/versions')
   async getConfigVersions(
     @Request() req,
     @Param('brandId') brandId: string,
-    @Param('configDefinitionId') configDefinitionId: number,
+    @Param('configDefinitionId') configDefinitionId: string,
   ) {
-    return this.configsService.getConfigVersionsById(req.user.auth0Id, parseInt(brandId), configDefinitionId, req.user.company);
+    return this.configsService.getConfigVersionsById(req.user.auth0Id, parseInt(brandId), parseInt(configDefinitionId), req.user.company);
   }
 
   @Get(':brandId/configs/:configName/active')

@@ -26,10 +26,8 @@ export class VersionSelectorComponent {
   private configService = inject(ConfigService);
 
   brandId = input.required<number>();
-  configId = input.required<number>();
   configName = input.required<string>();
-  selectedVersion = input<number | null>(null);
-  activeVersion = input<number | undefined>(undefined);
+  activeVersion = input<number | null>(null);
   versions = input<Config[]>([]);
 
   versionSelected = output<number>();
@@ -40,20 +38,23 @@ export class VersionSelectorComponent {
   previewVersion = signal<Config | null>(null);
 
   constructor() {
-    // Set the first version as preview by default when versions change
     effect(() => {
       const versions = this.versions();
-      this.previewVersion.set(versions.length > 0 ? versions[0] : null);
+      const active = this.activeVersion();
+      
+      // Find active version or fall back to first/null
+      const selected = versions.find(v => v.version === active) ?? versions[0] ?? null;
+      this.previewVersion.set(selected);
     });
   }
 
 
   onVersionChange(versionNumber: number): void {
     const version = this.versions().find(v => v.version === versionNumber);
-    if (version) {
-      this.previewVersion.set(version);
-      this.versionSelected.emit(versionNumber);
-    }
+    if (!version) return;
+    
+    this.previewVersion.set(version);
+    this.versionSelected.emit(versionNumber);
   }
 
   setActiveVersion(): void {
@@ -61,16 +62,16 @@ export class VersionSelectorComponent {
     if (!preview || this.isSettingActive()) return;
 
     this.isSettingActive.set(true);
+    
     this.configService.setActiveVersion(this.brandId(), this.configName(), preview.version).subscribe({
       next: () => {
         this.activeVersionSet.emit(preview.version);
         this.notification.emit({ type: 'success', message: `Version ${preview.version} set as active` });
-        this.isSettingActive.set(false);
       },
       error: () => {
         this.notification.emit({ type: 'error', message: 'Failed to set active version' });
-        this.isSettingActive.set(false);
-      }
+      },
+      complete: () => this.isSettingActive.set(false)
     });
   }
 

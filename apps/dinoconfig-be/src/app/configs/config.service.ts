@@ -376,7 +376,7 @@ export class ConfigsService {
   }
 
 
-  async getConfigVersionsById(userId: string, brandId: number, configDefinitionId: number, company: string): Promise<Config[]> {    
+  async getConfigVersionsById(userId: string, brandId: number, configDefinitionId: number, company: string): Promise<{ activeVersion: Config | null; versions: Config[] }> {    
     // Get the definition by ID
     const definition = await this.configDefinitionRepo.findOne({
       where: {
@@ -390,8 +390,16 @@ export class ConfigsService {
       throw new NotFoundException(`Config definition with ID "${configDefinitionId}" not found`);
     }
     
-    // Use the definition name to get all versions
-    return this.getConfigVersions(userId, brandId, definition.name, company);
+    // Get all versions
+    const versions = await this.getConfigVersions(userId, brandId, definition.name, company);
+    
+    // Get the active version
+    const activeVersion = await this.getActiveConfig(userId, brandId, definition.name, company);
+    
+    return {
+      activeVersion,
+      versions
+    };
   }
 
   async getActiveConfig(userId: string, brandId: number, configName: string, company: string): Promise<Config | null> {
