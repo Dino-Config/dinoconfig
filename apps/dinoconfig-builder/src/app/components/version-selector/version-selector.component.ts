@@ -26,10 +26,8 @@ export class VersionSelectorComponent {
   private configService = inject(ConfigService);
 
   brandId = input.required<number>();
-  configId = input.required<number>();
   configName = input.required<string>();
-  selectedVersion = input<number | null>(null);
-  activeVersion = input<number | undefined>(undefined);
+  activeVersion = input<number | null>(null);
   versions = input<Config[]>([]);
 
   versionSelected = output<number>();
@@ -40,37 +38,23 @@ export class VersionSelectorComponent {
   previewVersion = signal<Config | null>(null);
 
   constructor() {
-    // Set the active version as preview by default when versions or activeVersion change
     effect(() => {
       const versions = this.versions();
-      const activeVersion = this.activeVersion();
+      const active = this.activeVersion();
       
-      if (versions.length === 0) {
-        this.previewVersion.set(null);
-        return;
-      }
-      
-      // If there's an active version, find and set it as preview
-      if (activeVersion !== undefined && activeVersion !== null) {
-        const activeVersionConfig = versions.find(v => v.version === activeVersion);
-        if (activeVersionConfig) {
-          this.previewVersion.set(activeVersionConfig);
-          return;
-        }
-      }
-      
-      // Fallback to the first version if no active version found
-      this.previewVersion.set(versions[0]);
+      // Find active version or fall back to first/null
+      const selected = versions.find(v => v.version === active) ?? versions[0] ?? null;
+      this.previewVersion.set(selected);
     });
   }
 
 
   onVersionChange(versionNumber: number): void {
     const version = this.versions().find(v => v.version === versionNumber);
-    if (version) {
-      this.previewVersion.set(version);
-      this.versionSelected.emit(versionNumber);
-    }
+    if (!version) return;
+    
+    this.previewVersion.set(version);
+    this.versionSelected.emit(versionNumber);
   }
 
   setActiveVersion(): void {
@@ -78,16 +62,16 @@ export class VersionSelectorComponent {
     if (!preview || this.isSettingActive()) return;
 
     this.isSettingActive.set(true);
+    
     this.configService.setActiveVersion(this.brandId(), this.configName(), preview.version).subscribe({
       next: () => {
         this.activeVersionSet.emit(preview.version);
         this.notification.emit({ type: 'success', message: `Version ${preview.version} set as active` });
-        this.isSettingActive.set(false);
       },
       error: () => {
         this.notification.emit({ type: 'error', message: 'Failed to set active version' });
-        this.isSettingActive.set(false);
-      }
+      },
+      complete: () => this.isSettingActive.set(false)
     });
   }
 

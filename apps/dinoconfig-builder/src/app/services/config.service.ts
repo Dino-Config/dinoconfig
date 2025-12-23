@@ -1,9 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Config, GridFieldConfig } from '../models/config.models';
+
+export interface ConfigVersionsResponse {
+  activeVersion: Config | null;
+  versions: Config[];
+}
 
 @Injectable({
   providedIn: 'root'
@@ -13,28 +17,17 @@ export class ConfigService {
   private readonly apiUrl = environment.apiUrl;
 
   getConfigDefinitions(brandId: number): Observable<Config[]> {
-    return this.http.get<Config[]>(`${this.apiUrl}/brands/${brandId}/config-definitions`, {
-      withCredentials: true
-    }).pipe(
-      map(data => Array.isArray(data) ? data : [])
+    return this.http.get<Config[]>(
+      `${this.apiUrl}/brands/${brandId}/config-definitions`,
+      { withCredentials: true }
     );
   }
 
-  getConfigVersions(brandId: number, configId: number): Observable<{ activeVersion: Config | null; versions: Config[] }> {
-    return this.http.get<{ activeVersion: Config | null; versions: Config[] }>(`${this.apiUrl}/brands/${brandId}/configs/${configId}/versions`, {
-      withCredentials: true
-    }).pipe(
-      map(({ activeVersion, versions }) => ({
-        activeVersion,
-        versions
-      }))
+  getConfigVersions(brandId: number, configId: number): Observable<ConfigVersionsResponse> {
+    return this.http.get<ConfigVersionsResponse>(
+      `${this.apiUrl}/brands/${brandId}/configs/${configId}/versions`,
+      { withCredentials: true }
     );
-  }
-
-  getActiveConfig(brandId: number, configName: string): Observable<Config | null> {
-    return this.http.get<Config | null>(`${this.apiUrl}/brands/${brandId}/configs/${configName}/active`, {
-      withCredentials: true
-    });
   }
 
   setActiveVersion(brandId: number, configName: string, version: number): Observable<void> {

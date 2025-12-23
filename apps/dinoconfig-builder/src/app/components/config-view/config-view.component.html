@@ -9,18 +9,16 @@
   </div>
 } @else if (selectedConfig()) {
   <div class="config-view">
-    @if (canShowVersionSelector() && !!configVersions().length) {
+    @if (canShowVersionSelector() && configVersions().length) {
       <dc-version-selector
         [brandId]="brandId()!"
-        [configId]="selectedConfig()!.id"
         [configName]="selectedConfig()!.name"
-        [selectedVersion]="selectedVersion()"
-        [activeVersion]="activeVersions()[selectedConfig()!.name]"
+        [activeVersion]="activeVersion()"
         [versions]="configVersions()"
         (versionSelected)="onVersionSelect($event)"
         (activeVersionSet)="onActiveVersionSet($event)"
         (notification)="onNotification($event)"
-      ></dc-version-selector>
+      />
     }
     <dc-config-builder-panel-dragdrop
       [selectedConfig]="selectedConfig()"
