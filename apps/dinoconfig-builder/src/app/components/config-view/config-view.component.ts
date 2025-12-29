@@ -130,6 +130,7 @@ export class ConfigViewComponent implements OnInit {
     this.selectedConfig.set(config);
     this.formData.set(config.formData ?? {});
     this.configVersions.set(versions);
+    this.activeVersion.set(config.version);
   }
 
   onNotification(notification: { type: 'success' | 'error' | 'warning' | 'info'; message: string }): void {
