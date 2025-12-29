@@ -6,6 +6,7 @@ import { Config } from '../../models/config.models';
 import { VersionSelectorComponent } from '../version-selector/version-selector.component';
 import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dragdrop/config-builder-panel-dragdrop.component';
 import { LimitViolationService } from '../../services/limit-violation.service';
+import { NotificationService } from '../../services/notification.service';
 import { catchError, of } from 'rxjs';
 
 @Component({
@@ -23,6 +24,7 @@ export class ConfigViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private configService = inject(ConfigService);
   private limitViolationService = inject(LimitViolationService);
+  private notificationService = inject(NotificationService);
 
   brandId = signal<number | null>(null);
   configId = signal<number | null>(null);
@@ -128,7 +130,7 @@ export class ConfigViewComponent implements OnInit {
   }
 
   onNotification(notification: { type: 'success' | 'error' | 'warning' | 'info'; message: string }): void {
-    console.log('Notification:', notification);
+    this.notificationService.show(notification.message, notification.type);
   }
 }
 

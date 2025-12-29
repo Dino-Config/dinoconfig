@@ -18,18 +18,18 @@
           <label for="version-select" class="version-selector__dropdown-label">
             Select Version to Preview:
           </label>
-          <mat-form-field appearance="outline" class="version-selector__dropdown-field">
-            <mat-select id="version-select" [value]="previewVersion()?.version || ''" (selectionChange)="onVersionChange($event.value)">
-              @for (version of versions(); track version.id) {
-                <mat-option [value]="version.version">
-                  v{{ version.version }} - {{ formatDate(version.createdAt) }}
-                  @if (activeVersion() === version.version) {
-                    <span> (Active)</span>
-                  }
-                </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <select
+            id="version-select"
+            class="version-selector__select"
+            [value]="previewVersion()?.version || ''"
+            (change)="onVersionChange(+$any($event.target).value)"
+          >
+            @for (version of versions(); track version.id) {
+              <option [value]="version.version">
+                v{{ version.version }} - {{ formatDate(version.createdAt) }}@if (activeVersion() === version.version) { (Active)}
+              </option>
+            }
+          </select>
         </div>
         
         <div class="version-selector__actions">
@@ -63,9 +63,7 @@
           
           <div class="version-selector__preview-data">
             <strong>Form Data:</strong>
-            <pre class="version-selector__preview-json">
-              {{ previewVersion()!.formData | json }}
-            </pre>
+            <pre class="version-selector__preview-json">{{ formatJson(previewVersion()!.formData) }}</pre>
           </div>
         </div>
       }

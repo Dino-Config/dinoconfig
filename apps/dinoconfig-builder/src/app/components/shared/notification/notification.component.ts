@@ -60,9 +60,10 @@ import { NotificationService } from '../../../services/notification.service';
     .notification {
       max-width: 400px;
       border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       animation: slideIn 0.3s ease-out;
       pointer-events: auto;
+      border: 1px solid rgba(255, 255, 255, 0.2);
 
       &--success {
         background: #10b981;
@@ -99,7 +100,8 @@ import { NotificationService } from '../../../services/notification.service';
         flex: 1;
         font-size: 14px;
         font-weight: 500;
-        line-height: 1.4;
+        line-height: 1.5;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
 
       &__close {
