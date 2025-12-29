@@ -4,9 +4,8 @@
     <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.5px]"
           [class.bg-blue-50]="subscription().tier === 'free'"
           [class.text-blue-700]="subscription().tier === 'free'"
-          [class.bg-gradient-to-br]="subscription().tier === 'pro' || subscription().tier === 'custom' || subscription().tier === 'starter'"
-          [class.from-purple-500]="subscription().tier === 'pro' || subscription().tier === 'starter'"
-          [class.to-purple-600]="subscription().tier === 'pro' || subscription().tier === 'starter'"
+          [style.background]="(subscription().tier === 'pro' || subscription().tier === 'starter') ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : ''"
+          [class.bg-gradient-to-br]="subscription().tier === 'custom'"
           [class.from-pink-400]="subscription().tier === 'custom'"
           [class.to-red-500]="subscription().tier === 'custom'"
           [class.text-white]="subscription().tier === 'pro' || subscription().tier === 'custom' || subscription().tier === 'starter'">
@@ -14,7 +13,9 @@
     </span>
   </div>
   @if (subscription().tier === 'free') {
-    <button class="w-full px-3 py-2 bg-gradient-to-br from-purple-500 to-purple-600 text-white border-none rounded-md text-xs font-semibold cursor-pointer transition-all duration-200 mt-3 hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(102,126,234,0.3)]" (click)="navigateToSubscription()">
+    <button class="w-full px-3 py-2 text-white border-none rounded-md text-xs font-semibold cursor-pointer transition-all duration-200 mt-3 hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(102,126,234,0.3)]" 
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+            (click)="navigateToSubscription()">
       Upgrade to Pro
     </button>
   }
