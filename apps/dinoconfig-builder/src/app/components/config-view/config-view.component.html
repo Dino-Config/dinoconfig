@@ -1,6 +1,6 @@
 @if (isLoading()) {
   <div class="config-view-loading">
-    <p>Loading config...</p>
+    <dc-spinner text="Loading configuration..." size="medium"></dc-spinner>
   </div>
 } @else if (error()) {
   <div class="config-view-error">

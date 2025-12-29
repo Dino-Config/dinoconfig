@@ -7,6 +7,7 @@ import { VersionSelectorComponent } from '../version-selector/version-selector.c
 import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dragdrop/config-builder-panel-dragdrop.component';
 import { LimitViolationService } from '../../services/limit-violation.service';
 import { NotificationService } from '../../services/notification.service';
+import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { catchError, of } from 'rxjs';
 
 @Component({
@@ -15,7 +16,8 @@ import { catchError, of } from 'rxjs';
   imports: [
     CommonModule,
     VersionSelectorComponent,
-    ConfigBuilderPanelDragDropComponent
+    ConfigBuilderPanelDragDropComponent,
+    SpinnerComponent
   ],
   templateUrl: './config-view.component.html',
   styleUrl: './config-view.component.scss'
@@ -74,6 +76,7 @@ export class ConfigViewComponent implements OnInit {
   }
 
   private loadConfigVersions(brandId: number, configId: number, selectVersion?: number): void {
+    this.isLoading.set(true);
     const emptyResponse: ConfigVersionsResponse = { activeVersion: null, versions: [] };
     
     this.configService.getConfigVersions(brandId, configId).pipe(
