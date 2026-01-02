@@ -37,6 +37,12 @@ export interface GridFieldConfig extends FieldConfig {
   h: number;
 }
 
+export interface ConfigDefinition {
+  id: number;
+  name: string;
+  company: string;
+}
+
 export interface Config {
   id: number;
   name: string;
@@ -45,5 +51,6 @@ export interface Config {
   layout?: GridFieldConfig[];
   version: number;
   createdAt: string;
+  definition: ConfigDefinition;
 }
 

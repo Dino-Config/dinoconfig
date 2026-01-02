@@ -167,7 +167,7 @@ export class BuilderComponent implements OnInit {
         this.limitErrorMessage.set('');
         this.notificationService.show(`Configuration "${name}" created successfully`, 'success');
         // Navigate to the new config
-        this.router.navigate(['/brands', brandId, 'builder', 'configs', response.id]);
+        this.router.navigate(['/brands', brandId, 'builder', 'configs', response.definition.id]);
       }
     });
   }
