@@ -49,7 +49,7 @@ export class ForgotPasswordComponent {
       },
       error: (err: any) => {
         this.isLoading.set(false);
-        let errorMessage = ErrorMessages.AUTH.FORGOT_PASSWORD_FAILED;
+        let errorMessage: string = ErrorMessages.AUTH.FORGOT_PASSWORD_FAILED;
         
         if (err.status === 0 || !err.status) {
           errorMessage = ErrorMessages.AUTH.CONNECTION_ERROR;

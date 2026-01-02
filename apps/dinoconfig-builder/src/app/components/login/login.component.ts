@@ -50,7 +50,7 @@ export class LoginComponent {
       },
       error: (err: any) => {
         this.isLoading.set(false);
-        let errorMessage = ErrorMessages.AUTH.LOGIN_FAILED;
+        let errorMessage: string = ErrorMessages.AUTH.LOGIN_FAILED;
         
         if (err.status === 401) {
           errorMessage = ErrorMessages.AUTH.INVALID_CREDENTIALS;

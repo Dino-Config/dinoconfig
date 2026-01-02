@@ -9,7 +9,7 @@ export const ErrorMessages = {
   AUTH: {
     LOGIN_FAILED: 'Login failed. Please try again.',
     INVALID_CREDENTIALS: 'Invalid email or password.',
-    SIGNUP_FAILED: 'Unable to create account. Please try again or use a different email.',
+    SIGNUP_FAILED: 'Unable to create account. Please try again.',
     CONNECTION_ERROR: 'Unable to connect to server. Please check your connection.',
     FORGOT_PASSWORD_FAILED: 'Failed to send password reset email. Please try again.',
     VERIFICATION_FAILED: 'Failed to resend verification email. Please try again.',

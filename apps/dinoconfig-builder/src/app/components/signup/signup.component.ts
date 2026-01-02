@@ -109,7 +109,7 @@ export class SignupComponent {
       },
       error: (err: any) => {
         this.isLoading.set(false);
-        let errorMessage = ErrorMessages.AUTH.SIGNUP_FAILED;
+        let errorMessage: string = ErrorMessages.AUTH.SIGNUP_FAILED;
         
         if (err.status === 0 || !err.status) {
           errorMessage = ErrorMessages.AUTH.CONNECTION_ERROR;
