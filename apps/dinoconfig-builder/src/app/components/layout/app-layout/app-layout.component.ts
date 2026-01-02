@@ -1,14 +1,16 @@
-import { Component, signal, computed, inject, effect } from '@angular/core';
+import { Component, signal, computed, inject, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter, firstValueFrom } from 'rxjs';
 import { LeftNavigationComponent } from '../../navigation/left-navigation/left-navigation.component';
 import { SubscriptionViolationModalComponent } from '../../shared/subscription-violation-modal/subscription-violation-modal.component';
 import { IdleWarningModalComponent } from '../../shared/idle-warning-modal/idle-warning-modal.component';
 import { LimitViolationService } from '../../../services/limit-violation.service';
 import { TokenRenewalService } from '../../../services/token-renewal.service';
 import { environment } from '../../../../environments/environment';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'dc-app-layout',
@@ -25,9 +27,11 @@ import { environment } from '../../../../environments/environment';
   styleUrl: './app-layout.component.scss'
 })
 export class AppLayoutComponent {
-  private router = inject(Router);
-  private limitViolationService = inject(LimitViolationService);
-  private tokenRenewalService = inject(TokenRenewalService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly limitViolationService = inject(LimitViolationService);
+  private readonly tokenRenewalService = inject(TokenRenewalService);
+  private readonly authService = inject(AuthService);
 
   isCollapsed = signal(false);
 
@@ -47,22 +51,21 @@ export class AppLayoutComponent {
 
   constructor() {
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
+      filter(event => event instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.currentPath.set(this.router.url);
     });
     
     this.currentPath.set(this.router.url);
 
-    this.tokenRenewalService.setIdleWarningCallback((seconds) => {
-      if (seconds > 0) {
-        this.tokenRenewalService.remainingSeconds.set(seconds);
-        this.tokenRenewalService.isVisible.set(true);
-      } else {
-        this.tokenRenewalService.isVisible.set(false);
-        this.tokenRenewalService.remainingSeconds.set(0);
-      }
-    });
+    // Subscribe to session expired event for automatic logout
+    this.tokenRenewalService.onSessionExpired$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        console.log('[AppLayoutComponent] Session expired, performing logout');
+        this.performLogout();
+      });
 
     effect(() => {
       const path = this.currentPath();
@@ -85,6 +88,28 @@ export class AppLayoutComponent {
   }
 
   handleLogout(): void {
+    console.log('[AppLayoutComponent] User requested logout');
+    // Disable activity tracking to prevent interference
+    this.tokenRenewalService.disableActivityTracking();
+    this.tokenRenewalService.stopTokenRenewal();
+    this.performLogout();
+  }
+
+  private async performLogout(): Promise<void> {
+    console.log('[AppLayoutComponent] Performing logout');
+
+    // Clear storage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    try {
+      await firstValueFrom(this.authService.logout());
+      console.log('[AppLayoutComponent] Logout API call successful');
+    } catch (error) {
+      console.error('[AppLayoutComponent] Logout API call failed:', error);
+    }
+
+    // Redirect to signin page
     window.location.href = `${environment.homeUrl}/signin`;
   }
 }
