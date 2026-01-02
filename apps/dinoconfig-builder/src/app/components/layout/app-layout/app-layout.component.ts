@@ -9,8 +9,8 @@ import { SubscriptionViolationModalComponent } from '../../shared/subscription-v
 import { IdleWarningModalComponent } from '../../shared/idle-warning-modal/idle-warning-modal.component';
 import { LimitViolationService } from '../../../services/limit-violation.service';
 import { TokenRenewalService } from '../../../services/token-renewal.service';
-import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'dc-app-layout',
@@ -21,10 +21,10 @@ import { AuthService } from '../../../services/auth.service';
     MatSidenavModule,
     LeftNavigationComponent,
     SubscriptionViolationModalComponent,
-    IdleWarningModalComponent
+    IdleWarningModalComponent,
   ],
   templateUrl: './app-layout.component.html',
-  styleUrl: './app-layout.component.scss'
+  styleUrl: './app-layout.component.scss',
 })
 export class AppLayoutComponent {
   private readonly router = inject(Router);
@@ -34,6 +34,7 @@ export class AppLayoutComponent {
   private readonly authService = inject(AuthService);
 
   isCollapsed = signal(false);
+  currentPath = signal<string>('');
 
   activeItem = computed<'builder' | 'profile' | 'settings'>(() => {
     const path = this.currentPath();
@@ -43,40 +44,34 @@ export class AppLayoutComponent {
     return 'builder';
   });
 
-  currentPath = signal<string>('');
   showViolationModal = computed(() => this.limitViolationService.showModal());
   violations = computed(() => this.limitViolationService.violations());
   idleVisible = computed(() => this.tokenRenewalService.isVisible());
   idleRemainingSeconds = computed(() => this.tokenRenewalService.remainingSeconds());
 
   constructor() {
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.currentPath.set(this.router.url);
-    });
-    
     this.currentPath.set(this.router.url);
 
-    // Subscribe to session expired event for automatic logout
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.currentPath.set(this.router.url));
+
     this.tokenRenewalService.onSessionExpired$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        console.log('[AppLayoutComponent] Session expired, performing logout');
-        this.performLogout();
-      });
+      .subscribe(() => this.performLogout());
 
     effect(() => {
-      const path = this.currentPath();
-      if (path === '/subscription/success') {
+      if (this.currentPath() === '/subscription/success') {
         this.limitViolationService.refreshViolations();
       }
     });
   }
 
   toggleSidebar(): void {
-    this.isCollapsed.update(value => !value);
+    this.isCollapsed.update((value) => !value);
   }
 
   getSidenavWidth(): string {
@@ -88,29 +83,21 @@ export class AppLayoutComponent {
   }
 
   handleLogout(): void {
-    console.log('[AppLayoutComponent] User requested logout');
-    // Disable activity tracking to prevent interference
     this.tokenRenewalService.disableActivityTracking();
     this.tokenRenewalService.stopTokenRenewal();
     this.performLogout();
   }
 
   private async performLogout(): Promise<void> {
-    console.log('[AppLayoutComponent] Performing logout');
-
-    // Clear storage
     localStorage.clear();
     sessionStorage.clear();
 
     try {
       await firstValueFrom(this.authService.logout());
-      console.log('[AppLayoutComponent] Logout API call successful');
-    } catch (error) {
-      console.error('[AppLayoutComponent] Logout API call failed:', error);
+    } catch {
+      // Ignore logout API errors, proceed with redirect
     }
 
-    // Redirect to signin page
     window.location.href = `${environment.homeUrl}/signin`;
   }
 }
-
