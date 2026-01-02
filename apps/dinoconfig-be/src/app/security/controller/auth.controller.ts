@@ -6,6 +6,7 @@ import { SdkAuthService } from '../service/sdk-auth.service';
 import { UserAuthGuard } from '../guard/user-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/user.service';
+import { ErrorMessages } from '../../constants/error-messages';
 import * as jwt from 'jsonwebtoken';
 
 @Controller('auth')
@@ -41,7 +42,7 @@ export class AuthController {
     const { email, password } = body;
     const authResponse = await this.authService.login(email, password);
     if (!authResponse) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      throw new HttpException(ErrorMessages.AUTH.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED);
     }
 
      const { access_token, id_token, refresh_token } = authResponse;
@@ -180,7 +181,7 @@ export class AuthController {
     
     if (user.verificationEmailResendCount >= 3) {
       throw new HttpException(
-        'You have reached the maximum number of verification email attempts (3). Please contact support for assistance.',
+        ErrorMessages.AUTHORIZATION.MAX_VERIFICATION_ATTEMPTS,
         HttpStatus.FORBIDDEN
       );
     }
@@ -214,7 +215,7 @@ export class AuthController {
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const refreshToken = req.cookies['refresh_token'];
     if (!refreshToken) {
-      throw new HttpException('No refresh token provided', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(ErrorMessages.AUTH.NO_REFRESH_TOKEN, HttpStatus.UNAUTHORIZED);
     }
 
     try {
@@ -261,7 +262,7 @@ export class AuthController {
         expires_in: 900 // 15 minutes in seconds
       };
     } catch (error) {
-      throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(ErrorMessages.AUTH.INVALID_REFRESH_TOKEN, HttpStatus.UNAUTHORIZED);
     }
   }
 
@@ -281,7 +282,7 @@ export class AuthController {
   @HttpCode(200)
   async exchangeApiKeyForToken(@Headers('x-api-key') apiKey: string) {
     if (!apiKey) {
-      throw new HttpException('API key is required', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(ErrorMessages.AUTH.API_KEY_REQUIRED, HttpStatus.UNAUTHORIZED);
     }
 
     return this.sdkAuthService.exchangeApiKeyForToken(apiKey);

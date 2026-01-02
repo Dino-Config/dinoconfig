@@ -3,6 +3,7 @@ import { UserAuthGuard } from '../security/guard/user-auth.guard';
 import { SubscriptionService } from './subscription.service';
 import { UsersService } from '../users/user.service';
 import { StripeService } from './stripe.service';
+import { ErrorMessages } from '../constants/error-messages';
 
 @Controller('subscriptions')
 @UseGuards(UserAuthGuard)
@@ -20,7 +21,7 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     const subscription = await this.subscriptionService.getOrCreateDefaultSubscription(user.id);
@@ -46,12 +47,12 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     if (!body || !body.priceId) {
       console.error('Missing price ID. Body:', JSON.stringify(body, null, 2));
-      throw new Error('Price ID is required in request body');
+      throw new Error(ErrorMessages.SUBSCRIPTION.PRICE_ID_REQUIRED);
     }
 
     const session = await this.stripeService.createCheckoutSession(
@@ -68,13 +69,13 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     const subscription = await this.subscriptionService.findByUserId(user.id);
     
     if (!subscription || !subscription.stripeCustomerId) {
-      throw new Error('No Stripe customer found');
+      throw new Error(ErrorMessages.SUBSCRIPTION.NO_STRIPE_CUSTOMER);
     }
 
     const session = await this.stripeService.createPortalSession(
@@ -90,7 +91,7 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     const subscription = await this.subscriptionService.findByUserId(user.id);
@@ -144,7 +145,7 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     const subscription = await this.subscriptionService.findByUserId(user.id);
@@ -179,13 +180,13 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     const subscription = await this.subscriptionService.findByUserId(user.id);
     
     if (!subscription || !subscription.stripeSubscriptionId) {
-      throw new Error('No active subscription found');
+      throw new Error(ErrorMessages.SUBSCRIPTION.NO_ACTIVE_SUBSCRIPTION);
     }
 
     try {
@@ -229,7 +230,7 @@ export class SubscriptionController {
       };
     } catch (error) {
       console.error('Failed to change subscription plan:', error);
-      throw new Error('Failed to change subscription plan. Please try again.');
+      throw new Error(ErrorMessages.SUBSCRIPTION.FAILED_TO_CHANGE_PLAN);
     }
   }
 
@@ -239,13 +240,13 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     const subscription = await this.subscriptionService.findByUserId(user.id);
     
     if (!subscription || !subscription.stripeSubscriptionId) {
-      throw new Error('No active subscription found');
+      throw new Error(ErrorMessages.SUBSCRIPTION.NO_ACTIVE_SUBSCRIPTION);
     }
 
     try {
@@ -285,7 +286,7 @@ export class SubscriptionController {
       };
     } catch (error) {
       console.error('Failed to cancel subscription:', error);
-      throw new Error('Failed to cancel subscription. Please try again.');
+      throw new Error(ErrorMessages.SUBSCRIPTION.FAILED_TO_CANCEL);
     }
   }
 
@@ -295,13 +296,13 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     const subscription = await this.subscriptionService.findByUserId(user.id);
     
     if (!subscription || !subscription.stripeCustomerId) {
-      throw new Error('No Stripe customer found');
+      throw new Error(ErrorMessages.SUBSCRIPTION.NO_STRIPE_CUSTOMER);
     }
 
     try {
@@ -311,7 +312,7 @@ export class SubscriptionController {
       };
     } catch (error) {
       console.error('Failed to cleanup FREE subscriptions:', error);
-      throw new Error('Failed to cleanup FREE subscriptions. Please try again.');
+      throw new Error(ErrorMessages.SUBSCRIPTION.FAILED_TO_CLEANUP_FREE);
     }
   }
 
@@ -322,7 +323,7 @@ export class SubscriptionController {
     const user = await this.usersService.findByAuth0Id(auth0Id);
     
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
     const violations = await this.subscriptionService.checkLimitViolations(user.id);

@@ -5,6 +5,7 @@ import { UserAuthGuard } from '../security/guard/user-auth.guard';
 import { brandHeaderExtractor } from '../security/jwt-extractor';
 import { UsersService } from '../users/user.service';
 import { SubscriptionService } from '../subscriptions/subscription.service';
+import { ErrorMessages } from '../constants/error-messages';
 
 @Controller('brands')
 @UseGuards(UserAuthGuard)
@@ -20,14 +21,14 @@ export class BrandsController {
   async findAll(@Req() req) {
     const company = brandHeaderExtractor(req);
     if (!company) {
-      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
+      throw new UnauthorizedException(ErrorMessages.AUTHORIZATION.COMPANY_HEADER_REQUIRED);
     }
     
     // Get user by auth0Id from JWT token
     const { auth0Id } = req.user;
     const user = await this.usersService.findByAuth0Id(auth0Id);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
     
     // Check for limit violations
@@ -48,14 +49,14 @@ export class BrandsController {
   async create(@Body() dto: CreateBrandDto, @Req() req) {
     const company = brandHeaderExtractor(req);
     if (!company) {
-      throw new UnauthorizedException('X-INTERNAL-COMPANY header is required');
+      throw new UnauthorizedException(ErrorMessages.AUTHORIZATION.COMPANY_HEADER_REQUIRED);
     }
     
     // Get user by auth0Id from JWT token
     const { auth0Id } = req.user;
     const user = await this.usersService.findByAuth0Id(auth0Id);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
     
     // Check if user has reached brand limit

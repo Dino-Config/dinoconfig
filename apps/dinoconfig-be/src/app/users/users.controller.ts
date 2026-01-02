@@ -3,6 +3,7 @@ import { UsersService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserAuthGuard } from '../security/guard/user-auth.guard';
 import { AuthService } from '../security/service/auth.service';
+import { ErrorMessages } from '../constants/error-messages';
 
 @Controller('users')
 @UseGuards(UserAuthGuard)
@@ -28,7 +29,7 @@ export class UsersController {
           company: company
         });
       } catch (error) {
-        throw new NotFoundException('User not found in database and could not be created. Please contact support.');
+        throw new NotFoundException(ErrorMessages.AUTH.UNABLE_TO_COMPLETE_AUTH);
       }
     }
     
