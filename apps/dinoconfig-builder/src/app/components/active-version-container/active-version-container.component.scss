@@ -1,10 +1,17 @@
 .active-version-container {
   background: #fff;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  padding: 16px 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  &:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
 
   .active-version-header {
     display: flex;
@@ -16,20 +23,25 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    width: 100%;
   }
 
   .active-label {
     font-size: 14px;
-    color: #7f8c8d;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   .active-version {
-    font-size: 14px;
-    color: #27ae60;
+    font-size: 15px;
+    color: #3b82f6;
     font-weight: 600;
-    background: #d5f4e6;
-    padding: 4px 12px;
-    border-radius: 20px;
+    background: #eff6ff;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #dbeafe;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 

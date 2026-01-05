@@ -1,8 +1,6 @@
 import { Component, input, output, signal, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { ConfigService } from '../../services/config.service';
@@ -14,8 +12,6 @@ import { Config } from '../../models/config.models';
   imports: [
     CommonModule,
     MatButtonModule,
-    MatSelectModule,
-    MatFormFieldModule,
     MatIconModule,
     MatExpansionModule
   ],
@@ -83,6 +79,13 @@ export class VersionSelectorComponent {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  formatJson(data: any): string {
+    if (!data || Object.keys(data).length === 0) {
+      return '{}';
+    }
+    return JSON.stringify(data, null, 2);
   }
 }
 

@@ -6,6 +6,8 @@ import { Config } from '../../models/config.models';
 import { VersionSelectorComponent } from '../version-selector/version-selector.component';
 import { ConfigBuilderPanelDragDropComponent } from '../config-builder-panel-dragdrop/config-builder-panel-dragdrop.component';
 import { LimitViolationService } from '../../services/limit-violation.service';
+import { NotificationService } from '../../services/notification.service';
+import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { catchError, of } from 'rxjs';
 
 @Component({
@@ -14,7 +16,8 @@ import { catchError, of } from 'rxjs';
   imports: [
     CommonModule,
     VersionSelectorComponent,
-    ConfigBuilderPanelDragDropComponent
+    ConfigBuilderPanelDragDropComponent,
+    SpinnerComponent
   ],
   templateUrl: './config-view.component.html',
   styleUrl: './config-view.component.scss'
@@ -23,6 +26,7 @@ export class ConfigViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private configService = inject(ConfigService);
   private limitViolationService = inject(LimitViolationService);
+  private notificationService = inject(NotificationService);
 
   brandId = signal<number | null>(null);
   configId = signal<number | null>(null);
@@ -72,6 +76,7 @@ export class ConfigViewComponent implements OnInit {
   }
 
   private loadConfigVersions(brandId: number, configId: number, selectVersion?: number): void {
+    this.isLoading.set(true);
     const emptyResponse: ConfigVersionsResponse = { activeVersion: null, versions: [] };
     
     this.configService.getConfigVersions(brandId, configId).pipe(
@@ -125,10 +130,11 @@ export class ConfigViewComponent implements OnInit {
     this.selectedConfig.set(config);
     this.formData.set(config.formData ?? {});
     this.configVersions.set(versions);
+    this.activeVersion.set(config.version);
   }
 
   onNotification(notification: { type: 'success' | 'error' | 'warning' | 'info'; message: string }): void {
-    console.log('Notification:', notification);
+    this.notificationService.show(notification.message, notification.type);
   }
 }
 
