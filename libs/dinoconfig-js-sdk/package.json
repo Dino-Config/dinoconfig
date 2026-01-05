@@ -1,23 +1,53 @@
 {
   "name": "@dinoconfig/dinoconfig-js-sdk",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
   "main": "./index.js",
   "types": "./index.d.ts",
-  "description": "Official JavaScript SDK for DinoConfig API",
-  "keywords": ["dinoconfig", "sdk", "javascript", "typescript", "api"],
-  "author": "DinoConfig Team",
+  "description": "Official JavaScript/TypeScript SDK for DinoConfig API - Simple, type-safe configuration management",
+  "keywords": [
+    "dinoconfig",
+    "sdk",
+    "javascript",
+    "typescript",
+    "api",
+    "configuration",
+    "config",
+    "feature-flags",
+    "remote-config",
+    "settings"
+  ],
+  "author": {
+    "name": "DinoConfig Team",
+    "email": "support@dinoconfig.com",
+    "url": "https://dinoconfig.com"
+  },
   "license": "MIT",
+  "homepage": "https://github.com/dinoconfig/dinoconfig-js-sdk#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dinoconfig/dinoconfig-js-sdk"
+    "url": "git+https://github.com/dinoconfig/dinoconfig-js-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dinoconfig/dinoconfig-js-sdk/issues",
+    "email": "support@dinoconfig.com"
   },
   "files": [
     "index.js",
     "index.d.ts",
     "lib/**/*.js",
-    "lib/**/*.d.ts"
+    "lib/**/*.d.ts",
+    "README.md",
+    "LICENSE"
   ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  },
+  "sideEffects": false,
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -25,5 +55,8 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
