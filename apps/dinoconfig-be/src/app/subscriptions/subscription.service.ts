@@ -8,6 +8,7 @@ import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { ActiveVersion } from '../configs/entities/active-version.entity';
 import { Feature } from '../features/enums/feature.enum';
 import { SubscriptionPlan } from './entities/subscription-plan.entity';
+import { ErrorMessages } from '../constants/error-messages';
 
 export interface TierLimits {
   maxBrands: number;
@@ -170,7 +171,7 @@ export class SubscriptionService implements OnModuleInit {
     }
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(ErrorMessages.OPERATION.UNABLE_TO_COMPLETE);
     }
 
     const subscription = this.subscriptionRepo.create({
@@ -344,7 +345,7 @@ export class SubscriptionService implements OnModuleInit {
     const subscription = await this.findByUserIdentifier(userIdOrAuth0Id);
     
     if (!subscription) {
-      throw new NotFoundException('Subscription not found');
+      throw new NotFoundException(ErrorMessages.SUBSCRIPTION.NOT_FOUND);
     }
 
     subscription.stripeSubscriptionId = stripeSubscriptionId;
@@ -358,7 +359,7 @@ export class SubscriptionService implements OnModuleInit {
     const subscription = await this.findByUserIdentifier(userIdOrAuth0Id);
     
     if (!subscription) {
-      throw new NotFoundException('Subscription not found');
+      throw new NotFoundException(ErrorMessages.SUBSCRIPTION.NOT_FOUND);
     }
 
     subscription.status = SubscriptionStatus.CANCELLED;

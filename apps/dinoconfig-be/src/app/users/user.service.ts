@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ErrorMessages } from '../constants/error-messages';
 
 @Injectable()
 export class UsersService {
@@ -54,7 +55,7 @@ export class UsersService {
 
   async updateByAuth0Id(auth0Id: string, dto: UpdateUserDto): Promise<User> {
     const user = await this.findByAuth0Id(auth0Id);
-    if (!user) throw new NotFoundException(`User not found`);
+    if (!user) throw new NotFoundException(ErrorMessages.OPERATION.UNABLE_TO_COMPLETE);
     Object.assign(user, dto);
     return this.userRepo.save(user);
   }
@@ -62,7 +63,7 @@ export class UsersService {
   async removeByAuth0Id(auth0Id: string): Promise<void> {
     const result = await this.userRepo.delete({ auth0Id });
     if (result.affected === 0) {
-      throw new NotFoundException(`User not found`);
+      throw new NotFoundException(ErrorMessages.OPERATION.UNABLE_TO_COMPLETE);
     }
   }
 

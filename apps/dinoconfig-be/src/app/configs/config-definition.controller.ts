@@ -16,6 +16,7 @@ import { BrandsService } from '../brands/brand.service';
 import { ConfigsService } from './config.service';
 import { UsersService } from '../users/user.service';
 import { UpdateConfigDefinitionDto } from './dto/update-config-definition.dto';
+import { ErrorMessages } from '../constants/error-messages';
 
 @Controller('brands')
 @UseGuards(UserAuthGuard)
@@ -30,11 +31,11 @@ export class ConfigDefinitionController {
   private async getBrandForUser(userId: string, brandId: number) {
     const user = await this.usersService.findByAuth0Id(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
     const brand = await this.brandsService.findByIdAndUser(brandId, user.id);
     if (!brand) {
-      throw new NotFoundException(`Brand with ID "${brandId}" not found`);
+      throw new NotFoundException(ErrorMessages.BRAND.NOT_FOUND(brandId));
     }
     return brand;
   }
@@ -121,7 +122,7 @@ export class ConfigDefinitionController {
     );
 
     if (!config.definition) {
-      throw new NotFoundException('Config definition not found');
+      throw new NotFoundException(ErrorMessages.CONFIG.DEFINITION_NOT_FOUND);
     }
 
     const brand = await this.getBrandForUser(req.user.auth0Id, parseInt(brandId));

@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractContro
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AuthLayoutComponent } from '../shared/auth-layout/auth-layout.component';
+import { ErrorMessages } from '../../constants/error-messages';
 
 @Component({
   selector: 'dc-signup',
@@ -108,14 +109,10 @@ export class SignupComponent {
       },
       error: (err: any) => {
         this.isLoading.set(false);
-        let errorMessage = 'Signup failed. Please try again.';
+        let errorMessage: string = ErrorMessages.AUTH.SIGNUP_FAILED;
         
-        if (err.error?.message) {
-          errorMessage = err.error.message;
-        } else if (err.status === 409) {
-          errorMessage = 'An account with this email already exists.';
-        } else if (err.status === 0 || !err.status) {
-          errorMessage = 'Unable to connect to server. Please check your connection.';
+        if (err.status === 0 || !err.status) {
+          errorMessage = ErrorMessages.AUTH.CONNECTION_ERROR;
         }
         
         this.error.set(errorMessage);
