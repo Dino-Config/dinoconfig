@@ -1,4 +1,4 @@
-import { DinoConfigSDK } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
 
 /**
  * Demo application showcasing the DinoConfig JavaScript SDK.
@@ -13,30 +13,15 @@ class DinoConfigJSDemo {
     console.log('DinoConfig JavaScript SDK Demo');
     console.log('=========================================\n');
 
-    // Create SDK instance
-    const sdk = new DinoConfigSDK();
-    
     try {
-      if (baseUrl) {
-        console.log('Initializing SDK with API key and custom base URL...');
-        await sdk.configure({
-          apiKey,
-          baseUrl,
-          timeout: 10000,
-        });
-      } else {
-        console.log('Initializing SDK with API key...');
-        await sdk.configure({
-          apiKey,
-          baseUrl: 'http://localhost:3000',
-          timeout: 10000,
-        });
-      }
+      // Initialize SDK with single factory function (like Shopify SDK pattern)
+      console.log('Initializing SDK...');
+      const dinoconfig = await dinoconfigApi({
+        apiKey,
+        baseUrl: baseUrl || 'http://localhost:3000',
+        timeout: 10000,
+      });
       console.log('✓ SDK initialized successfully\n');
-
-      // Get ConfigAPI instance
-      const configAPI = sdk.getConfigAPI();
-      console.log('✓ ConfigAPI instance created\n');
 
       // Show SDK information
       console.log('=========================================');
@@ -50,20 +35,20 @@ class DinoConfigJSDemo {
       console.log('=========================================');
       console.log('Available API Methods');
       console.log('=========================================');
-      console.log('✓ getConfigValue(brandName, configName, configValueKey)');
+      console.log('✓ dinoconfig.configs.getConfigValue(brandName, configName, configValueKey)');
       console.log();
 
       // Demonstrate configuration value retrieval
       console.log('=========================================');
       console.log('Retrieving Configuration Value');
       console.log('=========================================');
-      console.log('Calling: configAPI.getConfigValue("Orden", "RiskDetails", "isRiskEnabled")');
+      console.log('Calling: dinoconfig.configs.getConfigValue("Paysafe", "MyConfig", "test")');
       
       try {
-        const response = await configAPI.getConfigValue(
-          'Brand2',
-          'Test2',
-          'countries',
+        const response = await dinoconfig.configs.getConfigValue(
+          'Paysafe',
+          'MyConfig',
+          'test',
           {}
         );
 
@@ -83,13 +68,17 @@ class DinoConfigJSDemo {
 
       // Show example usage
       console.log('=========================================');
-      console.log('Example: Retrieving Configuration Value');
+      console.log('Example: Simplified SDK Usage');
       console.log('=========================================');
-      console.log('// Example usage:');
-      console.log('// const sdk = new DinoConfigSDK();');
-      console.log('// await sdk.configure({ apiKey: "your-api-key", baseUrl: "https://api.dinoconfig.com" });');
-      console.log('// const configAPI = sdk.getConfigAPI();');
-      console.log('// const response = await configAPI.getConfigValue("mybrand", "myconfig", "mykey");');
+      console.log('// Initialize SDK with a single function call:');
+      console.log('// const dinoconfig = await dinoconfigApi({');
+      console.log('//   apiKey: "your-api-key",');
+      console.log('//   baseUrl: "https://api.dinoconfig.com",');
+      console.log('//   timeout: 10000');
+      console.log('// });');
+      console.log('//');
+      console.log('// Get config value directly:');
+      console.log('// const response = await dinoconfig.configs.getConfigValue("mybrand", "myconfig", "mykey");');
       console.log('// if (response.success) {');
       console.log('//   console.log("Config value:", response.data);');
       console.log('// }');
@@ -100,11 +89,9 @@ class DinoConfigJSDemo {
       console.log('=========================================');
       console.log('\nTo use the SDK in your application:');
       console.log('1. Install: npm install @dinoconfig/dinoconfig-js-sdk');
-      console.log('2. Import: import { DinoConfigSDK } from "@dinoconfig/dinoconfig-js-sdk";');
-      console.log('3. Create instance: const sdk = new DinoConfigSDK();');
-      console.log('4. Configure: await sdk.configure({ apiKey: "your-api-key" });');
-      console.log('5. Get API: const configAPI = sdk.getConfigAPI();');
-      console.log('6. Get config value: const response = await configAPI.getConfigValue(brandName, configName, key);');
+      console.log('2. Import: import { dinoconfigApi } from "@dinoconfig/dinoconfig-js-sdk";');
+      console.log('3. Initialize: const dinoconfig = await dinoconfigApi({ apiKey: "your-api-key" });');
+      console.log('4. Get config value: const response = await dinoconfig.configs.getConfigValue(brandName, configName, key);');
       console.log('\nSee README.md for complete documentation.');
     } catch (error: any) {
       console.error('✗ Error during SDK initialization:');

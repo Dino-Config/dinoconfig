@@ -1,33 +1,14 @@
 import { HttpClient } from './http-client';
 import { ConfigAPI } from './config-api';
-import { DinoConfigSDKConfig, ApiResponse, RequestOptions } from './types';
+import { DinoConfigSDKConfig } from './types';
 
-export class DinoConfigSDK {
-  private httpClient!: HttpClient;
-
-  async configure(config: DinoConfigSDKConfig): Promise<void> {
-    const {
-      apiKey,
-      baseUrl = 'http://localhost:3000',
-      timeout = 10000,
-    } = config;
-
-    this.httpClient = new HttpClient(baseUrl, timeout);
-
-    await this.httpClient.configureAuthorizationHeader({
-      'X-API-Key': apiKey,
-    });
-  }
-
-  getConfigAPI(): ConfigAPI {
-    let configAPI = null;
-
-    if (!configAPI) {
-      configAPI = new ConfigAPI(this.httpClient);
-    }
-
-    return configAPI;
-  }
+/**
+ * DinoConfig SDK instance interface
+ * Provides access to all SDK APIs
+ */
+export interface DinoConfigInstance {
+  /** Configuration API for managing config values */
+  configs: ConfigAPI;
 }
 
 /**
@@ -38,18 +19,33 @@ export class DinoConfigSDK {
  * 
  * @example
  * ```typescript
- * const dinoconfig = dinoconfigApi({
+ * const dinoconfig = await dinoconfigApi({
  *   apiKey: 'dino_your-api-key-here',
  *   baseUrl: 'https://api.dinoconfig.com',
- *   apiVersion: 'v1',
  *   timeout: 10000
  * });
  * 
- * // The SDK is ready to use immediately
- * // Token exchange happens automatically in the background
- * const configs = await dinoconfig.configs.getAllConfigs(123);
- * 
- * // Get a specific config
- * const config = await dinoconfig.configs.getConfig(123, 456);
+ * // Get a config value
+ * const response = await dinoconfig.configs.getConfigValue('brandName', 'configName', 'key');
+ * if (response.success) {
+ *   console.log('Config value:', response.data);
+ * }
  * ```
  */
+export async function dinoconfigApi(config: DinoConfigSDKConfig): Promise<DinoConfigInstance> {
+  const {
+    apiKey,
+    baseUrl = 'http://localhost:3000',
+    timeout = 10000,
+  } = config;
+
+  const httpClient = new HttpClient(baseUrl, timeout);
+
+  await httpClient.configureAuthorizationHeader({
+    'X-API-Key': apiKey,
+  });
+
+  return {
+    configs: new ConfigAPI(httpClient),
+  };
+}
