@@ -38,7 +38,9 @@
         
         <button 
           class="btn btn--outline btn--large"
-          (click)="onLogout.emit()"
+          (mousedown)="$event.stopPropagation()"
+          (touchstart)="$event.stopPropagation()"
+          (click)="$event.stopPropagation(); onLogout.emit()"
         >
           Logout Now
         </button>

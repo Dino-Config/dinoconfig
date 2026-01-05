@@ -1,7 +1,22 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed, DestroyRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { environment } from '../../environments/environment';
-import { firstValueFrom } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  Subscription,
+  catchError,
+  filter,
+  fromEvent,
+  interval,
+  map,
+  merge,
+  of,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 
 export interface TokenRenewalResponse {
   access_token: string;
@@ -9,27 +24,55 @@ export interface TokenRenewalResponse {
   expires_in: number;
 }
 
+/** Timer configuration constants */
+const TIMER_CONFIG = {
+  /** Idle timeout before showing warning (13 minutes) */
+  IDLE_TIMEOUT_MS: 13 * 60 * 1000,
+  /** Warning countdown duration in seconds (2 minutes) */
+  WARNING_DURATION_SECONDS: 2 * 60,
+  /** Token renewal check interval (2 minutes) */
+  RENEWAL_INTERVAL_MS: 2 * 60 * 1000,
+  /** Warning countdown tick interval */
+  COUNTDOWN_INTERVAL_MS: 1000,
+} as const;
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TokenRenewalService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
+
   private readonly apiUrl = environment.apiUrl;
   private readonly homeUrl = environment.homeUrl;
 
-  private renewalTimer: ReturnType<typeof setInterval> | null = null;
-  private isRenewing = false;
-  private renewalCallbacks: Array<(success: boolean) => void> = [];
-  private lastActivityTime: number = Date.now();
-  private readonly IDLE_TIMEOUT = 13 * 60 * 1000;
-  private readonly WARNING_DURATION = 2 * 60;
-  private activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
-  private idleWarningCallback: ((remainingSeconds: number) => void) | null = null;
-  private idleWarningTimer: ReturnType<typeof setInterval> | null = null;
-  private warningDismissed = false;
+  readonly remainingSeconds = signal<number>(0);
+  readonly isVisible = signal<boolean>(false);
+  readonly isRenewing = signal<boolean>(false);
 
-  remainingSeconds = signal<number>(0);
-  isVisible = signal<boolean>(false);
+  readonly formattedRemainingTime = computed(() => {
+    const seconds = this.remainingSeconds();
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  });
+
+  private readonly sessionExpired$ = new Subject<void>();
+  readonly onSessionExpired$ = this.sessionExpired$.asObservable();
+
+  private activityTrackingEnabled = true;
+  private lastActivityTime = Date.now();
+  private warningDismissed = false;
+  private countdownSubscription: Subscription | null = null;
+  private readonly renewalComplete$ = new Subject<boolean>();
+
+  private readonly activityEvents = [
+    'mousedown',
+    'keydown',
+    'scroll',
+    'touchstart',
+    'click',
+  ] as const;
 
   constructor() {
     this.setupActivityTracking();
@@ -37,148 +80,146 @@ export class TokenRenewalService {
   }
 
   private setupActivityTracking(): void {
-    const updateActivity = () => {
-      this.lastActivityTime = Date.now();
-      this.warningDismissed = false;
-      this.clearIdleWarning();
-    };
+    const activityEvents$ = merge(
+      ...this.activityEvents.map((eventName) =>
+        fromEvent(window, eventName, { passive: true })
+      )
+    );
 
-    this.activityEvents.forEach(event => {
-      window.addEventListener(event, updateActivity, { passive: true });
-    });
+    const visibilityChange$ = fromEvent(document, 'visibilitychange').pipe(
+      filter(() => !document.hidden)
+    );
 
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        this.lastActivityTime = Date.now();
-        this.warningDismissed = false;
-        this.clearIdleWarning();
-      }
-    });
+    merge(activityEvents$, visibilityChange$)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.onUserActivity());
   }
 
-  setIdleWarningCallback(callback: (remainingSeconds: number) => void): void {
-    this.idleWarningCallback = callback;
+  private onUserActivity(): void {
+    if (!this.activityTrackingEnabled) {
+      return;
+    }
+
+    const wasIdle = Date.now() - this.lastActivityTime > TIMER_CONFIG.IDLE_TIMEOUT_MS;
+    this.lastActivityTime = Date.now();
+    this.warningDismissed = false;
+
+    if (wasIdle || this.isVisible()) {
+      this.clearIdleWarning();
+    }
+  }
+
+  disableActivityTracking(): void {
+    this.activityTrackingEnabled = false;
+  }
+
+  enableActivityTracking(): void {
+    this.activityTrackingEnabled = true;
   }
 
   private clearIdleWarning(): void {
-    if (this.idleWarningTimer) {
-      clearInterval(this.idleWarningTimer);
-      this.idleWarningTimer = null;
-    }
+    this.stopCountdown();
     this.remainingSeconds.set(0);
     this.isVisible.set(false);
-    if (this.idleWarningCallback) {
-      this.idleWarningCallback(0);
+  }
+
+  private stopCountdown(): void {
+    if (this.countdownSubscription) {
+      this.countdownSubscription.unsubscribe();
+      this.countdownSubscription = null;
     }
   }
 
   private checkIdleAndWarn(): void {
     const idleTime = Date.now() - this.lastActivityTime;
-    
-    if (idleTime >= this.IDLE_TIMEOUT && !this.warningDismissed && !this.idleWarningTimer) {
+    const isIdle = idleTime >= TIMER_CONFIG.IDLE_TIMEOUT_MS;
+
+    if (isIdle && !this.warningDismissed && !this.countdownSubscription) {
       this.showIdleWarning();
     }
   }
 
   private showIdleWarning(): void {
-    if (!this.idleWarningCallback) return;
-
-    let remainingSeconds = this.WARNING_DURATION;
-    this.remainingSeconds.set(remainingSeconds);
+    this.remainingSeconds.set(TIMER_CONFIG.WARNING_DURATION_SECONDS);
     this.isVisible.set(true);
-    this.idleWarningCallback(remainingSeconds);
 
-    this.idleWarningTimer = setInterval(() => {
-      remainingSeconds--;
-      
-      if (remainingSeconds <= 0) {
-        this.clearIdleWarning();
-        window.location.href = this.homeUrl;
-        return;
-      }
+    this.countdownSubscription = interval(TIMER_CONFIG.COUNTDOWN_INTERVAL_MS)
+      .pipe(
+        take(TIMER_CONFIG.WARNING_DURATION_SECONDS),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (tick) => {
+          const remaining = TIMER_CONFIG.WARNING_DURATION_SECONDS - tick - 1;
 
-      this.remainingSeconds.set(remainingSeconds);
-      if (this.idleWarningCallback) {
-        this.idleWarningCallback(remainingSeconds);
-      }
-    }, 1000);
+          if (remaining <= 0) {
+            this.disableActivityTracking();
+            this.stopCountdown();
+            this.sessionExpired$.next();
+            return;
+          }
+
+          this.remainingSeconds.set(remaining);
+        },
+      });
   }
 
-  async keepSessionActive(): Promise<void> {
+  keepSessionActive(): void {
     this.warningDismissed = true;
     this.clearIdleWarning();
     this.lastActivityTime = Date.now();
-    
-    await this.forceRenewal();
+    this.forceRenewal().subscribe();
   }
 
-  async renewToken(): Promise<TokenRenewalResponse | null> {
-    if (this.isRenewing) {
-      return new Promise((resolve) => {
-        this.renewalCallbacks.push((success) => {
-          resolve(success ? { access_token: '', expires_in: 0 } : null);
-        });
-      });
-    }
-
-    this.isRenewing = true;
-
-    try {
-      const response = await firstValueFrom(
-        this.http.post<TokenRenewalResponse>(
-          `${this.apiUrl}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        )
+  renewToken(): Observable<TokenRenewalResponse | null> {
+    if (this.isRenewing()) {
+      return this.renewalComplete$.pipe(
+        take(1),
+        map((success) => (success ? ({} as TokenRenewalResponse) : null))
       );
-
-      this.isRenewing = false;
-      this.notifyCallbacks(true);
-      return response;
-    } catch (error) {
-      console.error('Token renewal failed:', error);
-      this.isRenewing = false;
-      this.notifyCallbacks(false);
-      return null;
     }
+
+    this.isRenewing.set(true);
+
+    return this.http
+      .post<TokenRenewalResponse>(
+        `${this.apiUrl}/auth/refresh`,
+        {},
+        { withCredentials: true }
+      )
+      .pipe(
+        tap(() => {
+          this.isRenewing.set(false);
+          this.renewalComplete$.next(true);
+        }),
+        catchError(() => {
+          this.isRenewing.set(false);
+          this.renewalComplete$.next(false);
+          return of(null);
+        })
+      );
   }
 
   private startTokenRenewalTimer(): void {
-    this.renewalTimer = setInterval(async () => {
-      this.checkIdleAndWarn();
+    interval(TIMER_CONFIG.RENEWAL_INTERVAL_MS)
+      .pipe(
+        tap(() => this.checkIdleAndWarn()),
+        filter(() => !this.countdownSubscription),
+        switchMap(() =>
+          this.http.get(`${this.apiUrl}/auth/validate`, { withCredentials: true }).pipe(
+            catchError(() => this.renewToken())
+          )
+        ),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe();
+  }
 
-      if (!this.idleWarningTimer) {
-        try {
-          await firstValueFrom(
-            this.http.get(`${this.apiUrl}/auth/validate`, { 
-              withCredentials: true 
-            })
-          );
-        } catch (error) {
-          const renewed = await this.renewToken();
-          if (!renewed) {
-            console.error('Token renewal failed, user may need to re-authenticate');
-          }
-        }
-      }
-    }, 2 * 60 * 1000);
+  forceRenewal(): Observable<boolean> {
+    return this.renewToken().pipe(map((result) => result !== null));
   }
 
   stopTokenRenewal(): void {
-    if (this.renewalTimer) {
-      clearInterval(this.renewalTimer);
-      this.renewalTimer = null;
-    }
-  }
-
-  private notifyCallbacks(success: boolean): void {
-    this.renewalCallbacks.forEach(callback => callback(success));
-    this.renewalCallbacks = [];
-  }
-
-  async forceRenewal(): Promise<boolean> {
-    const result = await this.renewToken();
-    return result !== null;
+    this.stopCountdown();
   }
 }
-

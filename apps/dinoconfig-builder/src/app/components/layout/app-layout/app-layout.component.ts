@@ -1,13 +1,15 @@
-import { Component, signal, computed, inject, effect } from '@angular/core';
+import { Component, signal, computed, inject, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter, firstValueFrom } from 'rxjs';
 import { LeftNavigationComponent } from '../../navigation/left-navigation/left-navigation.component';
 import { SubscriptionViolationModalComponent } from '../../shared/subscription-violation-modal/subscription-violation-modal.component';
 import { IdleWarningModalComponent } from '../../shared/idle-warning-modal/idle-warning-modal.component';
 import { LimitViolationService } from '../../../services/limit-violation.service';
 import { TokenRenewalService } from '../../../services/token-renewal.service';
+import { AuthService } from '../../../services/auth.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -19,17 +21,20 @@ import { environment } from '../../../../environments/environment';
     MatSidenavModule,
     LeftNavigationComponent,
     SubscriptionViolationModalComponent,
-    IdleWarningModalComponent
+    IdleWarningModalComponent,
   ],
   templateUrl: './app-layout.component.html',
-  styleUrl: './app-layout.component.scss'
+  styleUrl: './app-layout.component.scss',
 })
 export class AppLayoutComponent {
-  private router = inject(Router);
-  private limitViolationService = inject(LimitViolationService);
-  private tokenRenewalService = inject(TokenRenewalService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly limitViolationService = inject(LimitViolationService);
+  private readonly tokenRenewalService = inject(TokenRenewalService);
+  private readonly authService = inject(AuthService);
 
   isCollapsed = signal(false);
+  currentPath = signal<string>('');
 
   activeItem = computed<'builder' | 'profile' | 'settings'>(() => {
     const path = this.currentPath();
@@ -39,41 +44,34 @@ export class AppLayoutComponent {
     return 'builder';
   });
 
-  currentPath = signal<string>('');
   showViolationModal = computed(() => this.limitViolationService.showModal());
   violations = computed(() => this.limitViolationService.violations());
   idleVisible = computed(() => this.tokenRenewalService.isVisible());
   idleRemainingSeconds = computed(() => this.tokenRenewalService.remainingSeconds());
 
   constructor() {
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.currentPath.set(this.router.url);
-    });
-    
     this.currentPath.set(this.router.url);
 
-    this.tokenRenewalService.setIdleWarningCallback((seconds) => {
-      if (seconds > 0) {
-        this.tokenRenewalService.remainingSeconds.set(seconds);
-        this.tokenRenewalService.isVisible.set(true);
-      } else {
-        this.tokenRenewalService.isVisible.set(false);
-        this.tokenRenewalService.remainingSeconds.set(0);
-      }
-    });
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.currentPath.set(this.router.url));
+
+    this.tokenRenewalService.onSessionExpired$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performLogout());
 
     effect(() => {
-      const path = this.currentPath();
-      if (path === '/subscription/success') {
+      if (this.currentPath() === '/subscription/success') {
         this.limitViolationService.refreshViolations();
       }
     });
   }
 
   toggleSidebar(): void {
-    this.isCollapsed.update(value => !value);
+    this.isCollapsed.update((value) => !value);
   }
 
   getSidenavWidth(): string {
@@ -85,7 +83,21 @@ export class AppLayoutComponent {
   }
 
   handleLogout(): void {
+    this.tokenRenewalService.disableActivityTracking();
+    this.tokenRenewalService.stopTokenRenewal();
+    this.performLogout();
+  }
+
+  private async performLogout(): Promise<void> {
+    localStorage.clear();
+    sessionStorage.clear();
+
+    try {
+      await firstValueFrom(this.authService.logout());
+    } catch {
+      // Ignore logout API errors, proceed with redirect
+    }
+
     window.location.href = `${environment.homeUrl}/signin`;
   }
 }
-

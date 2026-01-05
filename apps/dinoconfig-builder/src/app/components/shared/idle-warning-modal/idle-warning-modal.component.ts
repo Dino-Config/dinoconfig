@@ -1,4 +1,4 @@
-import { Component, input, output, signal, effect, computed } from '@angular/core';
+import { Component, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -9,54 +9,21 @@ import { CommonModule } from '@angular/common';
   styleUrl: './idle-warning-modal.component.scss'
 })
 export class IdleWarningModalComponent {
+  /** Whether the modal is visible */
   isVisible = input.required<boolean>();
+
+  /** Remaining seconds from the token renewal service */
   remainingSeconds = input.required<number>();
+
+  /** Emitted when user wants to keep the session active */
   onKeepSession = output<void>();
+
+  /** Emitted when user wants to logout */
   onLogout = output<void>();
 
-  countdown = signal<number>(0);
-  minutes = computed(() => Math.floor(this.countdown() / 60));
-  seconds = computed(() => this.countdown() % 60);
+  /** Computed minutes from remaining seconds */
+  minutes = computed(() => Math.floor(this.remainingSeconds() / 60));
 
-  private countdownInterval: ReturnType<typeof setInterval> | null = null;
-
-  constructor() {
-    effect(() => {
-      const remaining = this.remainingSeconds();
-      this.countdown.set(remaining);
-    });
-
-    effect(() => {
-      const visible = this.isVisible();
-      const countdown = this.countdown();
-
-      if (visible && countdown > 0) {
-        this.startCountdown();
-      } else {
-        this.stopCountdown();
-      }
-    });
-  }
-
-  private startCountdown(): void {
-    this.stopCountdown();
-    
-    this.countdownInterval = setInterval(() => {
-      this.countdown.update(value => {
-        if (value <= 1) {
-          this.stopCountdown();
-          return 0;
-        }
-        return value - 1;
-      });
-    }, 1000);
-  }
-
-  private stopCountdown(): void {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-      this.countdownInterval = null;
-    }
-  }
+  /** Computed seconds (remainder) from remaining seconds */
+  seconds = computed(() => this.remainingSeconds() % 60);
 }
-
