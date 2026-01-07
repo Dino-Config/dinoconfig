@@ -3,3 +3,16 @@
 
 # Ignore Gradle build output directory
 build
+
+# Ignore compiled class files (IDE generated)
+bin
+
+# Ignore IDE specific files
+.idea
+*.iml
+.project
+.classpath
+.settings
+
+# Ignore OS files
+.DS_Store
