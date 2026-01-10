@@ -1,8 +1,9 @@
 .brand-switcher-dropdown {
   position: absolute;
   top: calc(100% + 12px);
-  left: 100px;
-  right: 0;
+  left: 0;
+  width: 480px;
+  max-width: calc(100vw - 32px);
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -209,7 +210,7 @@
 
   @media (max-width: 768px) {
     left: 0;
-    right: 0;
+    width: calc(100vw - 32px);
     max-height: 400px;
   }
 }

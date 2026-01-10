@@ -1,25 +1,4 @@
 <div class="config-builder-panel dragdrop-mode">
-  <div class="panel-header">
-    <div class="header-content">
-      <h3 class="section-title">{{ selectedConfig()?.name }}</h3>
-      <p class="section-subtitle">Drag and drop form elements to build your configuration</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-success" (click)="onSaveConfig()" [disabled]="isSavingConfig()">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Save Configuration
-      </button>
-      <button class="btn btn-outline" (click)="onExportSchema()">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2m0 0L4.667 5.333M8 2v8" 
-            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Export Layout
-      </button>
-    </div>
-  </div>
   <div class="dragdrop-workspace">
     <div class="workspace-palette">
       <dc-form-element-palette (addElement)="onAddElement($event)"></dc-form-element-palette>
@@ -29,10 +8,51 @@
         [fields]="gridFields()"
         [formData]="formData()"
         (fieldsChange)="onFieldsChange($event)"
-        (formDataChange)="formDataChange.emit($event)"
+        (formDataChange)="onFormDataValueChange($event)"
         (editField)="onEditField($event)"
         (deleteField)="onDeleteField($event)"
       ></dc-gridstack-canvas>
     </div>
   </div>
+
+  @if (hasUnsavedChanges()) {
+    <div class="unsaved-changes-snackbar">
+      <div class="snackbar-content">
+        <div class="snackbar-info">
+          <div class="snackbar-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 6v4M10 14h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="snackbar-text">
+            <span class="snackbar-title">You have unsaved changes</span>
+            <span class="snackbar-subtitle">Don't forget to save your configuration</span>
+          </div>
+        </div>
+        <div class="snackbar-actions">
+          <button class="btn btn-secondary" (click)="onExportSchema()" title="Export Layout">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2m0 0L4.667 5.333M8 2v8" 
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Export
+          </button>
+          <button class="btn btn-primary" (click)="onSaveConfig()" [disabled]="isSavingConfig()">
+            @if (isSavingConfig()) {
+              <svg class="spinner" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="2" stroke-dasharray="43.98" stroke-dashoffset="10" opacity="0.3"/>
+                <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="2" stroke-dasharray="43.98" stroke-dashoffset="33.98" stroke-linecap="round"/>
+              </svg>
+              Saving...
+            } @else {
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Save Configuration
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
