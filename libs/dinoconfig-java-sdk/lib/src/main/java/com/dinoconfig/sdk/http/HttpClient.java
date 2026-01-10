@@ -1,3 +1,8 @@
+/*
+ * DinoConfig Java SDK
+ * Copyright (c) 2024 DinoConfig Team
+ * Licensed under the MIT License
+ */
 package com.dinoconfig.sdk.http;
 
 import com.dinoconfig.sdk.model.*;
@@ -11,29 +16,59 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * HTTP client for making API requests to the DinoConfig API.
- * Handles authentication, request/response processing, and error handling.
+ * HTTP client for making requests to the DinoConfig API.
+ * 
+ * <p>This class handles all HTTP communication with the DinoConfig API, including:
+ * <ul>
+ *   <li>API key to token exchange</li>
+ *   <li>Authorization header management</li>
+ *   <li>Request/response JSON serialization</li>
+ *   <li>Timeout handling</li>
+ *   <li>Retry logic with exponential backoff</li>
+ * </ul>
+ * 
+ * <p><b>Note:</b> This class is intended for internal use by the SDK.
+ * Use {@link com.dinoconfig.sdk.DinoConfigSDKFactory} and
+ * {@link com.dinoconfig.sdk.api.ConfigAPI} for public API access.
+ * 
+ * <p><b>Thread Safety:</b> This class is thread-safe after initialization.
+ * The OkHttpClient is shared across all requests and handles connection pooling.
+ * 
+ * @author DinoConfig Team
+ * @version 1.0.0
+ * @since 1.0.0
  */
 public class HttpClient {
     
+    /** Base URL for all API requests */
     private final String baseUrl;
+    
+    /** Default timeout for requests in milliseconds */
     private final Long defaultTimeout;
+    
+    /** OkHttp client for making HTTP requests */
     private final OkHttpClient client;
+    
+    /** Jackson ObjectMapper for JSON serialization/deserialization */
     private final ObjectMapper objectMapper;
+    
+    /** Default headers included in every request */
     private Map<String, String> defaultHeaders;
     
     /**
-     * Constructor
-     * @param baseUrl The base URL of the DinoConfig API
-     * @param timeout Request timeout in milliseconds
+     * Creates a new HttpClient instance.
+     * 
+     * @param baseUrl The base URL of the DinoConfig API (e.g., "https://api.dinoconfig.com")
+     * @param timeout Default request timeout in milliseconds
      */
     public HttpClient(String baseUrl, Long timeout) {
-        this.baseUrl = baseUrl.replaceAll("/$", ""); // Remove trailing slash
+        // Remove trailing slash to prevent double slashes in URLs
+        this.baseUrl = baseUrl.replaceAll("/$", "");
         this.defaultTimeout = timeout;
         this.objectMapper = new ObjectMapper();
         this.defaultHeaders = new HashMap<>();
         
-        // Configure OkHttpClient
+        // Configure OkHttpClient with timeouts
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(timeout, TimeUnit.MILLISECONDS)
                 .readTimeout(timeout, TimeUnit.MILLISECONDS)
@@ -42,9 +77,18 @@ public class HttpClient {
     }
     
     /**
-     * Configure authorization header by exchanging API key for token
-     * @param headers Headers containing the API key
-     * @throws IOException if authentication fails
+     * Configures authorization by exchanging the API key for an access token.
+     * 
+     * <p>This method:
+     * <ol>
+     *   <li>Extracts the API key from the provided headers</li>
+     *   <li>Exchanges it for a JWT access token</li>
+     *   <li>Configures the Authorization header for subsequent requests</li>
+     * </ol>
+     * 
+     * @param headers Headers containing the X-API-Key
+     * @throws IOException if the token exchange fails
+     * @throws IllegalArgumentException if X-API-Key header is missing
      */
     public void configureAuthorizationHeader(Map<String, String> headers) throws IOException {
         String apiKey = headers.get("X-API-Key");
@@ -61,11 +105,14 @@ public class HttpClient {
     }
     
     /**
-     * Exchange API key for access token
-     * Sends plain text API key to server (HTTPS encrypts it in transit)
-     * @param apiKey The plain text API key to exchange
-     * @return The access token
-     * @throws IOException if the exchange fails
+     * Exchanges an API key for a JWT access token.
+     * 
+     * <p>Makes a POST request to the token exchange endpoint with the API key
+     * and returns the access token from the response.
+     * 
+     * @param apiKey The API key to exchange
+     * @return The JWT access token
+     * @throws IOException if the exchange fails or the API key is invalid
      */
     private String exchangeApiKeyForToken(String apiKey) throws IOException {
         try {
@@ -98,13 +145,25 @@ public class HttpClient {
     }
     
     /**
-     * Make a generic HTTP request
-     * @param method HTTP method
-     * @param endpoint API endpoint
-     * @param data Request data (for POST/PUT/PATCH)
-     * @param options Request options
-     * @return API response
-     * @throws IOException if the request fails
+     * Makes a generic HTTP request to the API.
+     * 
+     * <p>Handles:
+     * <ul>
+     *   <li>Request formatting and headers</li>
+     *   <li>Custom timeouts per request</li>
+     *   <li>Response parsing</li>
+     *   <li>Error handling</li>
+     *   <li>Retry logic with exponential backoff</li>
+     * </ul>
+     * 
+     * @param <T> The expected response data type
+     * @param method HTTP method (GET, POST, PUT, PATCH, DELETE)
+     * @param endpoint API endpoint path (e.g., "/api/configs/123")
+     * @param data Request body data (for POST, PUT, PATCH)
+     * @param options Request customization options
+     * @return The API response
+     * @throws IOException if a network error occurs
+     * @throws ApiError if the API returns an error response
      */
     private <T> ApiResponse<T> request(String method, String endpoint, Object data, RequestOptions options) throws IOException {
         String url = baseUrl + endpoint;
@@ -113,12 +172,13 @@ public class HttpClient {
         
         Exception lastError = null;
         
+        // Attempt the request with retries
         for (int attempt = 0; attempt <= retries; attempt++) {
             try {
                 Request.Builder requestBuilder = new Request.Builder()
                         .url(url);
                 
-                // Add headers
+                // Merge headers
                 Map<String, String> headers = new HashMap<>(defaultHeaders);
                 if (options != null && options.getHeaders() != null) {
                     headers.putAll(options.getHeaders());
@@ -208,7 +268,7 @@ public class HttpClient {
                 break;
             }
             
-            // Exponential backoff
+            // Exponential backoff: 1s, 2s, 4s, 8s, etc.
             try {
                 Thread.sleep((long) Math.pow(2, attempt) * 1000);
             } catch (InterruptedException e) {
@@ -229,10 +289,12 @@ public class HttpClient {
     }
     
     /**
-     * Make a GET request
-     * @param endpoint API endpoint
-     * @param options Request options
-     * @return API response
+     * Makes a GET request to the specified endpoint.
+     * 
+     * @param <T> The expected response data type
+     * @param endpoint API endpoint path
+     * @param options Request customization options
+     * @return The API response
      * @throws IOException if the request fails
      */
     public <T> ApiResponse<T> get(String endpoint, RequestOptions options) throws IOException {
@@ -240,11 +302,13 @@ public class HttpClient {
     }
     
     /**
-     * Make a POST request
-     * @param endpoint API endpoint
-     * @param data Request data
-     * @param options Request options
-     * @return API response
+     * Makes a POST request to the specified endpoint.
+     * 
+     * @param <T> The expected response data type
+     * @param endpoint API endpoint path
+     * @param data Request body data
+     * @param options Request customization options
+     * @return The API response
      * @throws IOException if the request fails
      */
     public <T> ApiResponse<T> post(String endpoint, Object data, RequestOptions options) throws IOException {
@@ -252,11 +316,13 @@ public class HttpClient {
     }
     
     /**
-     * Make a PUT request
-     * @param endpoint API endpoint
-     * @param data Request data
-     * @param options Request options
-     * @return API response
+     * Makes a PUT request to the specified endpoint.
+     * 
+     * @param <T> The expected response data type
+     * @param endpoint API endpoint path
+     * @param data Request body data
+     * @param options Request customization options
+     * @return The API response
      * @throws IOException if the request fails
      */
     public <T> ApiResponse<T> put(String endpoint, Object data, RequestOptions options) throws IOException {
@@ -264,11 +330,13 @@ public class HttpClient {
     }
     
     /**
-     * Make a PATCH request
-     * @param endpoint API endpoint
-     * @param data Request data
-     * @param options Request options
-     * @return API response
+     * Makes a PATCH request to the specified endpoint.
+     * 
+     * @param <T> The expected response data type
+     * @param endpoint API endpoint path
+     * @param data Request body data (partial update)
+     * @param options Request customization options
+     * @return The API response
      * @throws IOException if the request fails
      */
     public <T> ApiResponse<T> patch(String endpoint, Object data, RequestOptions options) throws IOException {
@@ -276,10 +344,12 @@ public class HttpClient {
     }
     
     /**
-     * Make a DELETE request
-     * @param endpoint API endpoint
-     * @param options Request options
-     * @return API response
+     * Makes a DELETE request to the specified endpoint.
+     * 
+     * @param <T> The expected response data type
+     * @param endpoint API endpoint path
+     * @param options Request customization options
+     * @return The API response
      * @throws IOException if the request fails
      */
     public <T> ApiResponse<T> delete(String endpoint, RequestOptions options) throws IOException {
@@ -287,16 +357,18 @@ public class HttpClient {
     }
     
     /**
-     * Set authentication token
-     * @param token The authentication token
+     * Updates the authentication token.
+     * 
+     * @param token The new JWT access token
      */
     public void setToken(String token) {
         defaultHeaders.put("Authorization", "Bearer " + token);
     }
     
     /**
-     * Set a custom header
-     * @param key Header key
+     * Sets a custom header for all subsequent requests.
+     * 
+     * @param key Header name
      * @param value Header value
      */
     public void setHeader(String key, String value) {
@@ -304,8 +376,9 @@ public class HttpClient {
     }
     
     /**
-     * Remove a custom header
-     * @param key Header key to remove
+     * Removes a custom header from subsequent requests.
+     * 
+     * @param key Header name to remove
      */
     public void removeHeader(String key) {
         defaultHeaders.remove(key);
