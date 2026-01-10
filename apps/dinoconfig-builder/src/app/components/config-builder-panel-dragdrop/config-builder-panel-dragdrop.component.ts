@@ -35,16 +35,33 @@ export class ConfigBuilderPanelDragDropComponent {
   
   gridFields = signal<GridFieldConfig[]>([]);
   isSavingConfig = signal(false);
+  hasUnsavedChanges = signal(false);
+  private initialFieldsSnapshot: GridFieldConfig[] = [];
+  private initialFormDataSnapshot: Record<string, any> = {};
+  private currentConfigId: number | null = null;
 
   private currentFormData = computed(() => this.formData());
 
   constructor() {
     effect(() => {
       const config = this.selectedConfig();
+      
       if (config) {
-        this.loadGridFields(config);
+        const configId = config.id;
+        const isNewConfig = this.currentConfigId !== configId;
+        
+        if (isNewConfig) {
+          this.currentConfigId = configId;
+          this.loadGridFields(config);
+          this.initialFormDataSnapshot = JSON.parse(JSON.stringify(config.formData || {}));
+          this.hasUnsavedChanges.set(false);
+        }
       } else {
         this.gridFields.set([]);
+        this.hasUnsavedChanges.set(false);
+        this.initialFieldsSnapshot = [];
+        this.initialFormDataSnapshot = {};
+        this.currentConfigId = null;
       }
     });
 
@@ -60,6 +77,8 @@ export class ConfigBuilderPanelDragDropComponent {
     const layout = config?.layout;
     if (!layout || !Array.isArray(layout) || layout.length === 0) {
       this.gridFields.set([]);
+      this.initialFieldsSnapshot = [];
+      this.hasUnsavedChanges.set(false);
       return;
     }
 
@@ -73,6 +92,8 @@ export class ConfigBuilderPanelDragDropComponent {
     } as GridFieldConfig));
     
     this.gridFields.set(validatedLayout);
+    this.initialFieldsSnapshot = JSON.parse(JSON.stringify(validatedLayout));
+    this.hasUnsavedChanges.set(false);
   }
 
   onAddElement(item: PaletteItem): void {
@@ -164,7 +185,46 @@ export class ConfigBuilderPanelDragDropComponent {
     newFormData[newField.name] = this.fieldUtils.getDefaultValue(newField.type, newField.options);
     this.formDataChange.emit(newFormData);
 
+    this.checkForUnsavedChanges();
     this.notification.emit({ type: 'success', message: `Field "${newField.label || newField.name}" added successfully!` });
+  }
+
+  private checkForUnsavedChanges(): void {
+    const fields = this.gridFields();
+    const formData = this.currentFormData();
+
+    let hasFieldChanges = false;
+    let hasFormDataChanges = false;
+
+    if (this.initialFieldsSnapshot.length === 0 && fields.length > 0) {
+      hasFieldChanges = true;
+    } else if (fields.length !== this.initialFieldsSnapshot.length) {
+      hasFieldChanges = true;
+    } else {
+      const fieldsMap = new Map(fields.map(f => [f.id, f]));
+      const snapshotMap = new Map(this.initialFieldsSnapshot.map(f => [f.id, f]));
+
+      for (const [id, field] of fieldsMap) {
+        const snapshotField = snapshotMap.get(id);
+        if (!snapshotField) {
+          hasFieldChanges = true;
+          break;
+        }
+
+        const fieldStr = JSON.stringify({ ...field, id: undefined });
+        const snapshotStr = JSON.stringify({ ...snapshotField, id: undefined });
+        if (fieldStr !== snapshotStr) {
+          hasFieldChanges = true;
+          break;
+        }
+      }
+    }
+
+    const formDataStr = JSON.stringify(formData);
+    const initialFormDataStr = JSON.stringify(this.initialFormDataSnapshot);
+    hasFormDataChanges = formDataStr !== initialFormDataStr;
+
+    this.hasUnsavedChanges.set(hasFieldChanges || hasFormDataChanges);
   }
 
   onFieldsChange(fields: GridFieldConfig[]): void {
@@ -181,6 +241,12 @@ export class ConfigBuilderPanelDragDropComponent {
     });
     
     this.formDataChange.emit(newFormData);
+    this.checkForUnsavedChanges();
+  }
+
+  onFormDataValueChange(formData: Record<string, any>): void {
+    this.formDataChange.emit(formData);
+    this.checkForUnsavedChanges();
   }
 
   onEditField(field: GridFieldConfig): void {
@@ -230,6 +296,7 @@ export class ConfigBuilderPanelDragDropComponent {
       this.formDataChange.emit(updatedFormData);
     }
 
+    this.checkForUnsavedChanges();
     this.notification.emit({ type: 'success', message: `Field "${trimmedName}" updated successfully!` });
   }
 
@@ -251,6 +318,7 @@ export class ConfigBuilderPanelDragDropComponent {
       const updatedFormData = { ...currentData };
       delete updatedFormData[field.name];
       this.formDataChange.emit(updatedFormData);
+      this.checkForUnsavedChanges();
       this.notification.emit({ type: 'success', message: `Field "${field.label || field.name}" deleted successfully.` });
     });
   }
@@ -274,6 +342,10 @@ export class ConfigBuilderPanelDragDropComponent {
       }
     ).subscribe({
       next: (response) => {
+        this.gridFields.set(response.config.layout || []);
+        this.initialFieldsSnapshot = JSON.parse(JSON.stringify(response.config.layout || []));
+        this.initialFormDataSnapshot = JSON.parse(JSON.stringify(response.config.formData || {}));
+        this.hasUnsavedChanges.set(false);
         this.configUpdated.emit({
           config: response.config,
           versions: response.versions,
