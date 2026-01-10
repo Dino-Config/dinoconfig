@@ -5,20 +5,47 @@
   .unsaved-changes-snackbar {
     position: fixed;
     bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
+    z-index: 2000;
     animation: slideUpSnackbar 0.3s ease-out;
-    max-width: calc(100vw - 48px);
-    width: 100%;
-    max-width: 800px;
+    box-sizing: border-box;
 
-    @media (max-width: 768px) {
+    @media (min-width: 1201px) {
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 800px;
+      padding: 0 24px;
+    }
+
+    @media (max-width: 1200px) and (min-width: 991px) {
+      left: 304px;
+      right: 24px;
+      transform: none;
+      max-width: calc(100vw - 280px - 48px);
+      width: auto;
+      margin: 0;
+      padding: 0;
+    }
+
+    @media (max-width: 990px) and (min-width: 641px) {
+      left: 304px;
+      right: 24px;
+      transform: none;
+      max-width: calc(100vw - 304px);
+      width: auto;
+      margin: 0;
+      padding: 0;
+    }
+
+    @media (max-width: 640px) {
       bottom: 16px;
       left: 16px;
       right: 16px;
       transform: none;
       max-width: none;
+      width: auto;
+      margin: 0;
+      padding: 0;
     }
 
     .snackbar-content {
@@ -255,7 +282,7 @@
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 990px) {
     .unsaved-changes-snackbar {
       .snackbar-content {
         flex-direction: column;
@@ -289,7 +316,9 @@
         }
       }
     }
+  }
 
+  @media (max-width: 768px) {
     .dragdrop-workspace {
       gap: 16px;
     }
@@ -319,24 +348,11 @@
 @keyframes slideUpSnackbar {
   from {
     opacity: 0;
-    transform: translate(-50%, 20px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-@media (max-width: 768px) {
-  @keyframes slideUpSnackbar {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    transform: translateY(0);
   }
 }
 
