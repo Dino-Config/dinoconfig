@@ -1,10 +1,10 @@
 <div class="config-sidebar">
   <div class="sidebar-header">
     <h3 class="section-title">Configurations</h3>
-    <span class="config-count">{{ configs().length }}</span>
+    <span class="config-count">{{ configDefinitions().length }}</span>
   </div>
   
-  @if (configs().length === 0) {
+  @if (configDefinitions().length === 0) {
     <div class="empty-configs">
       <img src="/assets/write.svg" alt="" class="write-icon-svg" />
       <p>No configurations yet</p>
@@ -12,32 +12,32 @@
     </div>
   } @else {
     <ul class="config-list">
-      @for (config of configs(); track config.id) {
-        <li [class.selected]="selectedId() === config.id">
+      @for (definition of configDefinitions(); track definition.id) {
+        <li [class.selected]="selectedDefinitionId() === definition.id">
           <div class="config-item">
             <button
-              (click)="onSelect(config.id)"
+              (click)="onSelect(definition.id)"
               class="config-btn"
             >
               <div class="config-icon">
-                {{ selectedId() === config.id ? '📄' : '📋' }}
+                {{ selectedDefinitionId() === definition.id ? '📄' : '📋' }}
               </div>
-              <span class="config-name">{{ config.name }}</span>
+              <span class="config-name">{{ definition.name }}</span>
             </button>
             <button 
               class="menu-btn" 
-              (click)="toggleExpanded(config.id)"
+              (click)="toggleExpanded(definition.id)"
             >
               <mat-icon>more_vert</mat-icon>
             </button>
           </div>
-          @if (expandedId() === config.id) {
+          @if (expandedId() === definition.id) {
             <div class="config-actions">
-              <button (click)="onRename(config.id); expandedId.set(null)" class="action-btn rename">
+              <button (click)="onRename(definition.id); expandedId.set(null)" class="action-btn rename">
                 <mat-icon>edit</mat-icon>
                 Rename
               </button>
-              <button (click)="onDelete(config.id); expandedId.set(null)" class="action-btn delete">
+              <button (click)="onDelete(definition.id); expandedId.set(null)" class="action-btn delete">
                 <mat-icon>delete</mat-icon>
                 Delete
               </button>

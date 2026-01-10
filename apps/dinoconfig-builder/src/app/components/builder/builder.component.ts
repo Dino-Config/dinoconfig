@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfigService } from '../../services/config.service';
 import { BrandService } from '../../services/brand.service';
-import { Config } from '../../models/config.models';
+import { Config, ConfigDefinition } from '../../models/config.models';
 import { Brand } from '../../models/user.models';
 import { BrandHeaderComponent } from '../brand-header/brand-header.component';
 import { ConfigSidebarComponent } from '../config-sidebar/config-sidebar.component';
@@ -41,9 +41,8 @@ export class BuilderComponent implements OnInit {
   private notificationService = inject(NotificationService);
 
   brand = signal<Brand | null>(null);
-  configs = signal<Config[]>([]);
-  selectedId = signal<number | null>(null);
-  activeVersions = signal<Record<string, number>>({});
+  configDefinitions = signal<ConfigDefinition[]>([]);
+  selectedDefinitionId = signal<number | null>(null);
   isLoading = signal(true);
   error = signal<string | null>(null);
   subscription = signal<SubscriptionStatus | null>(null);
@@ -71,13 +70,13 @@ export class BuilderComponent implements OnInit {
       }
     });
 
-    // Listen to child route params for configId to sync sidebar selection
+    // Listen to child route params for configId (which is actually definitionId) to sync sidebar selection
     this.route.firstChild?.params.subscribe(params => {
-      const configId = params['configId'] ? parseInt(params['configId']) : null;
-      if (configId && this.selectedId() !== configId) {
-        this.selectedId.set(configId);
-      } else if (!configId) {
-        this.selectedId.set(null);
+      const definitionId = params['configId'] ? parseInt(params['configId']) : null;
+      if (definitionId && this.selectedDefinitionId() !== definitionId) {
+        this.selectedDefinitionId.set(definitionId);
+      } else if (!definitionId) {
+        this.selectedDefinitionId.set(null);
       }
     });
 
@@ -118,25 +117,23 @@ export class BuilderComponent implements OnInit {
 
     this.configService.getConfigDefinitions(brandId).pipe(
       catchError((err: any) => {
-        this.error.set(err.message || 'Failed to load configs');
+        this.error.set(err.message || 'Failed to load config definitions');
         return of([]);
       })
-    ).subscribe(configsData => {
-      this.configs.set(configsData);
-
-      this.activeVersions.set(this.extractActiveVersions(configsData));
+    ).subscribe(definitions => {
+      this.configDefinitions.set(definitions);
       this.isLoading.set(false);
     });
   }
 
-  onConfigSelect(id: number | null): void {
+  onConfigSelect(definitionId: number | null): void {
     const brandId = this.brandId();
     if (!brandId) return;
-    this.selectedId.set(id);
+    this.selectedDefinitionId.set(definitionId);
 
-    if (id) {
-      // Navigate to config route
-      this.router.navigate(['/brands', brandId, 'builder', 'configs', id]);
+    if (definitionId) {
+      // Navigate to config route using definition ID
+      this.router.navigate(['/brands', brandId, 'builder', 'configs', definitionId]);
     } else {
       // Navigate to builder without config
       this.router.navigate(['/brands', brandId, 'builder']);
@@ -162,17 +159,18 @@ export class BuilderComponent implements OnInit {
       })
     ).subscribe(response => {
       if (response) {
-        this.configs.set([...this.configs(), response]);
+        // Add the new definition to the list
+        this.configDefinitions.set([...this.configDefinitions(), response.definition]);
         this.limitReached.set(false);
         this.limitErrorMessage.set('');
         this.notificationService.show(`Configuration "${name}" created successfully`, 'success');
-        // Navigate to the new config
+        // Navigate to the new config using definition ID
         this.router.navigate(['/brands', brandId, 'builder', 'configs', response.definition.id]);
       }
     });
   }
 
-  onConfigDelete(id: number): void {
+  onConfigDelete(definitionId: number): void {
     const brandId = this.brandId();
     if (!brandId) return;
 
@@ -182,34 +180,34 @@ export class BuilderComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        const configName = this.configs().find(c => c.id === id)?.name || 'Configuration';
-        this.configService.deleteConfigDefinition(brandId, id).pipe(
+        const definitionName = this.configDefinitions().find(d => d.id === definitionId)?.name || 'Configuration';
+        this.configService.deleteConfigDefinition(brandId, definitionId).pipe(
           catchError((err: any) => {
             const errorMessage = err.error?.message || err.message || 'Failed to delete configuration';
             this.notificationService.show(errorMessage, 'error');
             return of(null);
           })
         ).subscribe(() => {
-          this.configs.set(this.configs().filter(c => c.id !== id));
-          // If deleted config was selected, navigate back to builder
-          if (this.selectedId() === id) {
+          this.configDefinitions.set(this.configDefinitions().filter(d => d.id !== definitionId));
+          // If deleted definition was selected, navigate back to builder
+          if (this.selectedDefinitionId() === definitionId) {
             this.router.navigate(['/brands', brandId, 'builder']);
           }
-          this.notificationService.show(`Configuration "${configName}" deleted successfully`, 'success');
+          this.notificationService.show(`Configuration "${definitionName}" deleted successfully`, 'success');
         });
       }
     });
   }
 
-  onConfigRename(id: number): void {
-    const config = this.configs().find(c => c.id === id);
-    if (!config) return;
+  onConfigRename(definitionId: number): void {
+    const definition = this.configDefinitions().find(d => d.id === definitionId);
+    if (!definition) return;
 
     const dialogRef = this.dialog.open(InputDialogComponent, {
       data: {
         title: 'Rename Configuration',
         label: 'Configuration Name',
-        defaultValue: config.name
+        defaultValue: definition.name
       }
     });
 
@@ -219,7 +217,7 @@ export class BuilderComponent implements OnInit {
       const brandId = this.brandId();
       if (!brandId) return;
 
-      this.configService.updateConfigName(brandId, id, newName.trim()).pipe(
+      this.configService.updateConfigName(brandId, definitionId, newName.trim()).pipe(
         catchError((err: any) => {
           const errorMessage = err.error?.message || err.message || 'Failed to rename configuration';
           this.notificationService.show(errorMessage, 'error');
@@ -228,32 +226,21 @@ export class BuilderComponent implements OnInit {
       ).subscribe(updatedDefinition => {
         if (updatedDefinition) {
           // Update the definition in the list with the returned updated definition
-          this.configs.set(this.configs().map(c => c.id === id ? updatedDefinition : c));
+          this.configDefinitions.set(this.configDefinitions().map(d => d.id === definitionId ? updatedDefinition : d));
           this.notificationService.show(`Configuration renamed to "${newName.trim()}" successfully`, 'success');
         }
       });
     });
   }
 
-  private extractActiveVersions(configs: Config[]): Record<string, number> {
-    const activeVersionsData: Record<string, number> = {};
-    for (const config of configs) {
-      if (config.name && config.version) {
-        activeVersionsData[config.name] = config.version;
-      }
-    }
-    return activeVersionsData;
-  }
-
   onConfigUpdated(data: { config: Config; versions: Config[]; previousConfigId: number }): void {
-    // Reload configs to get updated active versions
+    // Reload config definitions to ensure the list is up to date
     const brandId = this.brandId();
     if (brandId) {
       this.configService.getConfigDefinitions(brandId).pipe(
         catchError(() => of([]))
-      ).subscribe(configs => {
-        this.configs.set(configs);
-        this.activeVersions.set(this.extractActiveVersions(configs));
+      ).subscribe(definitions => {
+        this.configDefinitions.set(definitions);
       });
     }
   }
