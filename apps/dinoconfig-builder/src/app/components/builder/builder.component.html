@@ -27,8 +27,8 @@
 
       <div class="main-content">
         <dc-config-sidebar
-          [configs]="configs()"
-          [selectedId]="selectedId()"
+          [configDefinitions]="configDefinitions()"
+          [selectedDefinitionId]="selectedDefinitionId()"
           (selected)="onConfigSelect($event)"
           (deleted)="onConfigDelete($event)"
           (renamed)="onConfigRename($event)"
@@ -36,7 +36,7 @@
         ></dc-config-sidebar>
 
         <div class="config-content">
-          @if (selectedId()) {
+          @if (selectedDefinitionId()) {
             <router-outlet></router-outlet>
           } @else {
             <div class="config-builder-panel dragdrop-mode">

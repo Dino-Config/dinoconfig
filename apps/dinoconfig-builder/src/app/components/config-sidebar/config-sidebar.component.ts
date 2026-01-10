@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
-import { Config } from '../../models/config.models';
+import { ConfigDefinition } from '../../models/config.models';
 import { ConfigModalComponent } from '../config-modal/config-modal.component';
 
 @Component({
@@ -16,8 +16,8 @@ import { ConfigModalComponent } from '../config-modal/config-modal.component';
 export class ConfigSidebarComponent {
   private dialog = inject(MatDialog);
 
-  configs = input.required<Config[]>();
-  selectedId = input<number | null>(null);
+  configDefinitions = input.required<ConfigDefinition[]>();
+  selectedDefinitionId = input<number | null>(null);
 
   selected = output<number | null>();
   deleted = output<number>();

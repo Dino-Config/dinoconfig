@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Config, GridFieldConfig } from '../models/config.models';
+import { Config, ConfigDefinition, GridFieldConfig } from '../models/config.models';
 
 export interface ConfigVersionsResponse {
   activeVersion: Config | null;
@@ -16,8 +16,8 @@ export class ConfigService {
   private http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  getConfigDefinitions(brandId: number): Observable<Config[]> {
-    return this.http.get<Config[]>(
+  getConfigDefinitions(brandId: number): Observable<ConfigDefinition[]> {
+    return this.http.get<ConfigDefinition[]>(
       `${this.apiUrl}/brands/${brandId}/config-definitions`,
       { withCredentials: true }
     );
@@ -51,8 +51,8 @@ export class ConfigService {
     );
   }
 
-  updateConfigName(brandId: number, configDefinitionId: number, newName: string): Observable<Config> {
-    return this.http.patch<Config>(
+  updateConfigName(brandId: number, configDefinitionId: number, newName: string): Observable<ConfigDefinition> {
+    return this.http.patch<ConfigDefinition>(
       `${this.apiUrl}/brands/${brandId}/config-definitions/${configDefinitionId}`,
       { name: newName.trim() },
       { withCredentials: true }
