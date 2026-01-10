@@ -161,6 +161,8 @@ export class BuilderComponent implements OnInit {
       if (response) {
         // Add the new definition to the list
         this.configDefinitions.set([...this.configDefinitions(), response.definition]);
+        // Select the new definition in the sidebar
+        this.selectedDefinitionId.set(response.definition.id);
         this.limitReached.set(false);
         this.limitErrorMessage.set('');
         this.notificationService.show(`Configuration "${name}" created successfully`, 'success');
