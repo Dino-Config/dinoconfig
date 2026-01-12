@@ -9,6 +9,7 @@ import { SdkConfigsController } from './sdk-config.controller';
 import { ConfigsService } from './config.service';
 import { ConfigDefinitionService } from './config-definition.service';
 import { BrandsModule } from '../brands/brands.module';
+import { BrandsService } from '../brands/brand.service';
 import { Brand } from '../brands/entities/brand.entity';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { FeatureGuard } from '../subscriptions/guards/feature.guard';

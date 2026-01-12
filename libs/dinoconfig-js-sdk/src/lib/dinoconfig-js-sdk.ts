@@ -8,6 +8,7 @@
 
 import { HttpClient } from './http-client';
 import { ConfigAPI } from './config-api';
+import { DiscoveryAPI } from './discovery-api';
 import { DinoConfigSDKConfig } from './types';
 
 /**
@@ -33,6 +34,14 @@ export interface DinoConfigInstance {
    * @see {@link ConfigAPI}
    */
   configs: ConfigAPI;
+
+  /**
+   * Discovery API for discovering available brands, configs, and schemas.
+   * Provides methods to list and introspect configurations.
+   * 
+   * @see {@link DiscoveryAPI}
+   */
+  discovery: DiscoveryAPI;
 }
 
 /**
@@ -133,5 +142,6 @@ export async function dinoconfigApi(config: DinoConfigSDKConfig): Promise<DinoCo
   // Return initialized SDK instance with all APIs
   return {
     configs: new ConfigAPI(httpClient),
+    discovery: new DiscoveryAPI(httpClient),
   };
 }

@@ -6,6 +6,7 @@ This demo project showcases how to use the DinoConfig JavaScript SDK in your app
 
 This demo application demonstrates:
 - How to initialize the DinoConfig SDK
+- How to use the Discovery API to explore available brands and configurations
 - How to retrieve configuration values using the SDK
 - How to handle responses and errors
 
@@ -80,25 +81,36 @@ nx serve dinoconfig-js-sdk-demo
 ## Usage Example
 
 ```typescript
-import { DinoConfigSDK } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
 
-// Initialize SDK
-const sdk = new DinoConfigSDK();
-await sdk.configure({
+// Initialize SDK with single factory function
+const dinoconfig = await dinoconfigApi({
   apiKey: 'dino_your-api-key-here',
   baseUrl: 'https://api.dinoconfig.com',
   timeout: 10000,
 });
 
-// Get API instance
-const configAPI = sdk.getConfigAPI();
+// Discovery API - List all brands
+const brands = await dinoconfig.discovery.listBrands();
+console.log('Available brands:', brands.data);
 
-// Get a specific configuration value
-const response = await configAPI.getConfigValue(
-  'mybrand',
-  'myconfig',
-  'mykey',
-  {}
+// Discovery API - List configs for a brand
+const configs = await dinoconfig.discovery.listConfigs('MyBrand');
+console.log('Configs:', configs.data);
+
+// Discovery API - Get config schema
+const schema = await dinoconfig.discovery.getSchema('MyBrand', 'MyConfig');
+console.log('Schema fields:', Object.keys(schema.data.fields));
+
+// Discovery API - Full introspection
+const introspection = await dinoconfig.discovery.introspect();
+console.log('All data:', introspection.data);
+
+// Configs API - Get a specific configuration value
+const response = await dinoconfig.configs.getConfigValue(
+  'MyBrand',
+  'MyConfig',
+  'myKey'
 );
 
 if (response.success) {
@@ -110,14 +122,22 @@ if (response.success) {
 
 The demo application includes:
 
-1. **SDK Initialization** - Shows how to create and configure the SDK
-2. **Configuration Value Retrieval** - Demonstrates how to retrieve configuration values
-3. **Request Options** - Shows how to customize request behavior
-4. **Error Handling** - Demonstrates proper error handling patterns
+1. **SDK Initialization** - Shows how to create and configure the SDK using the factory function
+2. **Discovery API** - Demonstrates how to discover brands, configs, and schemas
+3. **Introspection** - Shows full introspection of all available configurations
+4. **Configuration Value Retrieval** - Demonstrates how to retrieve configuration values
+5. **Error Handling** - Demonstrates proper error handling patterns
 
 ## API Methods Available
 
-- `getConfigValue(brandName, configName, configValueKey, options)` - Get a specific configuration value by brand name, config name, and config value key
+### Discovery API
+- `discovery.listBrands()` - List all brands accessible by your API key
+- `discovery.listConfigs(brandName)` - List all configs for a specific brand
+- `discovery.getSchema(brandName, configName)` - Get the schema for a configuration
+- `discovery.introspect()` - Get full introspection of all brands, configs, and keys
+
+### Configs API
+- `configs.getConfigValue(brandName, configName, configValueKey, options?)` - Get a specific configuration value
 
 ## TypeScript Support
 

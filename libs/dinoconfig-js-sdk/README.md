@@ -25,6 +25,8 @@ Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a s
 
 - **Simple Initialization** - Single factory function following modern SDK patterns (inspired by Shopify SDK)
 - **Automatic Authentication** - API key to token exchange handled automatically
+- **Discovery API** - Discover brands, configs, and schemas dynamically
+- **Full Introspection** - Get complete visibility into all available configurations
 - **Type-Safe** - Full TypeScript support with comprehensive type definitions
 - **Zero Dependencies** - Uses native `fetch` API, no external HTTP libraries required
 - **Retry Logic** - Built-in exponential backoff for failed requests
@@ -181,6 +183,104 @@ if (response.success) {
 
 ---
 
+### Discovery API
+
+The Discovery API enables dynamic configuration discovery, allowing you to explore available brands, configurations, and their schemas at runtime.
+
+#### `dinoconfig.discovery.listBrands(options?)`
+
+Lists all brands accessible by your API key.
+
+**Returns:** `Promise<ApiResponse<BrandInfo[]>>`
+
+**Example:**
+```typescript
+const response = await dinoconfig.discovery.listBrands();
+if (response.success) {
+  response.data.forEach(brand => {
+    console.log(`${brand.name}: ${brand.configCount} configs`);
+  });
+}
+```
+
+---
+
+#### `dinoconfig.discovery.listConfigs(brandName, options?)`
+
+Lists all configurations for a specific brand.
+
+**Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `brandName` | `string` | **Yes** | The name of the brand |
+| `options` | `RequestOptions` | No | Additional request options |
+
+**Returns:** `Promise<ApiResponse<ConfigInfo[]>>`
+
+**Example:**
+```typescript
+const response = await dinoconfig.discovery.listConfigs('MyBrand');
+if (response.success) {
+  response.data.forEach(config => {
+    console.log(`${config.name} (v${config.version}): ${config.keys.length} keys`);
+  });
+}
+```
+
+---
+
+#### `dinoconfig.discovery.getSchema(brandName, configName, options?)`
+
+Gets the schema/structure for a specific configuration, including field types and validation rules.
+
+**Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `brandName` | `string` | **Yes** | The name of the brand |
+| `configName` | `string` | **Yes** | The name of the configuration |
+| `options` | `RequestOptions` | No | Additional request options |
+
+**Returns:** `Promise<ApiResponse<ConfigSchema>>`
+
+**Example:**
+```typescript
+const response = await dinoconfig.discovery.getSchema('MyBrand', 'FeatureFlags');
+if (response.success) {
+  const { fields } = response.data;
+  Object.entries(fields).forEach(([name, field]) => {
+    console.log(`${name}: ${field.type}${field.required ? ' (required)' : ''}`);
+  });
+}
+```
+
+---
+
+#### `dinoconfig.discovery.introspect(options?)`
+
+Performs full introspection, returning all brands, configs, and their current values. Useful for documentation and debugging.
+
+**Returns:** `Promise<ApiResponse<IntrospectionResult>>`
+
+**Example:**
+```typescript
+const response = await dinoconfig.discovery.introspect();
+if (response.success) {
+  const { company, brands } = response.data;
+  console.log(`Company: ${company}`);
+  brands.forEach(brand => {
+    console.log(`\nBrand: ${brand.name}`);
+    brand.configs.forEach(config => {
+      console.log(`  Config: ${config.name} (v${config.version})`);
+      config.keys.forEach(key => {
+        console.log(`    ${key.name} (${key.type}): ${JSON.stringify(key.value)}`);
+      });
+    });
+  });
+}
+```
+
+---
+
 ### Request Options
 
 All API methods accept an optional `RequestOptions` object:
@@ -300,12 +400,28 @@ The SDK is written in TypeScript and provides comprehensive type definitions.
 
 ```typescript
 import { 
+  // Main SDK
   dinoconfigApi,
   DinoConfigInstance,
   DinoConfigSDKConfig,
   ApiResponse,
   RequestOptions,
-  ConfigAPI
+  
+  // APIs
+  ConfigAPI,
+  DiscoveryAPI,
+  
+  // Discovery Types
+  BrandInfo,
+  ConfigInfo,
+  ConfigSchema,
+  FieldSchema,
+  FieldType,
+  FieldValidation,
+  IntrospectionResult,
+  BrandInfoDetail,
+  ConfigInfoDetail,
+  KeyInfo,
 } from '@dinoconfig/dinoconfig-js-sdk';
 ```
 
@@ -326,6 +442,8 @@ interface DinoConfigSDKConfig {
 interface DinoConfigInstance {
   /** Configuration API for managing config values */
   configs: ConfigAPI;
+  /** Discovery API for exploring brands, configs, and schemas */
+  discovery: DiscoveryAPI;
 }
 
 /** Standard API response wrapper */
@@ -346,6 +464,49 @@ interface RequestOptions {
   timeout?: number;
   /** Number of retry attempts */
   retries?: number;
+}
+
+/** Brand information */
+interface BrandInfo {
+  readonly name: string;
+  readonly description?: string;
+  readonly configCount: number;
+  readonly createdAt: Date;
+}
+
+/** Configuration information */
+interface ConfigInfo {
+  readonly name: string;
+  readonly description?: string;
+  readonly keys: readonly string[];
+  readonly version: number;
+  readonly createdAt: Date;
+}
+
+/** Configuration schema */
+interface ConfigSchema {
+  readonly configName: string;
+  readonly version: number;
+  readonly fields: Record<string, FieldSchema>;
+}
+
+/** Field schema definition */
+interface FieldSchema {
+  readonly type: FieldType;
+  readonly description?: string;
+  readonly defaultValue?: unknown;
+  readonly required?: boolean;
+  readonly validation?: FieldValidation;
+}
+
+/** Supported field types */
+type FieldType = 'string' | 'number' | 'boolean' | 'object' | 'array';
+
+/** Full introspection result */
+interface IntrospectionResult {
+  readonly company: string;
+  readonly brands: readonly BrandInfoDetail[];
+  readonly generatedAt: Date;
 }
 ```
 

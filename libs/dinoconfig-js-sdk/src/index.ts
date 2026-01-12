@@ -42,3 +42,16 @@ export type { DinoConfigSDKConfig, ApiResponse, RequestOptions } from './lib/typ
 
 // Class exports (for advanced usage)
 export { ConfigAPI } from './lib/config-api';
+export { DiscoveryAPI } from './lib/discovery-api';
+export type {
+  BrandInfo,
+  ConfigInfo,
+  ConfigSchema,
+  FieldSchema,
+  FieldType,
+  FieldValidation,
+  IntrospectionResult,
+  BrandInfoDetail,
+  ConfigInfoDetail,
+  KeyInfo,
+} from './lib/discovery-api';
