@@ -8,6 +8,17 @@
 import { HttpClient } from './http-client';
 import { ApiResponse, RequestOptions } from './types';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Base path for SDK discovery endpoints */
+const API_BASE_PATH = '/api/sdk';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * Information about a brand in DinoConfig.
  */
@@ -101,119 +112,92 @@ export interface IntrospectionResult {
   readonly generatedAt: Date;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Internal response types
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface BrandListResponse {
+  brands: BrandInfo[];
+  total: number;
+}
+
+interface ConfigListResponse {
+  configs: ConfigInfo[];
+  total: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Discovery API
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * Discovery API class for interacting with DinoConfig discovery endpoints.
- * 
- * This class provides methods to discover available brands, configurations,
- * and their schemas, enabling dynamic configuration discovery.
- * 
+ *
  * @class DiscoveryAPI
  * @example
  * ```typescript
  * const dinoconfig = await dinoconfigApi({ apiKey: 'dino_...' });
- * 
+ *
  * // List all brands
  * const brands = await dinoconfig.discovery.listBrands();
- * console.log('Available brands:', brands.data);
- * 
+ *
  * // List configs for a brand
  * const configs = await dinoconfig.discovery.listConfigs('MyBrand');
- * console.log('Configs:', configs.data);
- * 
+ *
  * // Get config schema
  * const schema = await dinoconfig.discovery.getSchema('MyBrand', 'FeatureFlags');
- * console.log('Schema:', schema.data);
  * ```
  */
 export class DiscoveryAPI {
-  /**
-   * Creates a new DiscoveryAPI instance.
-   * 
-   * @param {HttpClient} httpClient - The HTTP client for making API requests
-   * @internal This constructor is called internally by the SDK
-   */
-  constructor(private httpClient: HttpClient) {}
+  constructor(private readonly httpClient: HttpClient) {}
 
   /**
    * Lists all brands accessible by the current API key.
-   * 
-   * @async
-   * @method listBrands
-   * @param {RequestOptions} [options] - Optional request configuration
-   * @returns {Promise<ApiResponse<BrandInfo[]>>} A Promise resolving to the list of brands
-   * @throws {ApiError} If the request fails
-   * 
+   *
    * @example
    * ```typescript
    * const response = await dinoconfig.discovery.listBrands();
-   * if (response.success) {
-   *   response.data.forEach(brand => {
-   *     console.log(`${brand.name}: ${brand.configCount} configs`);
-   *   });
-   * }
+   * response.data.forEach(brand => {
+   *   console.log(`${brand.name}: ${brand.configCount} configs`);
+   * });
    * ```
    */
   async listBrands(options?: RequestOptions): Promise<ApiResponse<BrandInfo[]>> {
-    const response = await this.httpClient.get<{ brands: BrandInfo[]; total: number }>(
-      '/api/sdk/brands',
+    const response = await this.httpClient.get<BrandListResponse>(
+      `${API_BASE_PATH}/brands`,
       options
     );
-    return {
-      ...response,
-      data: response.data.brands,
-    };
+    return this.extractData(response, response.data.brands);
   }
 
   /**
    * Lists all configurations for a specific brand.
-   * 
-   * @async
-   * @method listConfigs
-   * @param {string} brandName - The name of the brand
-   * @param {RequestOptions} [options] - Optional request configuration
-   * @returns {Promise<ApiResponse<ConfigInfo[]>>} A Promise resolving to the list of configs
-   * @throws {ApiError} If the request fails
-   * 
+   *
    * @example
    * ```typescript
    * const response = await dinoconfig.discovery.listConfigs('MyBrand');
-   * if (response.success) {
-   *   response.data.forEach(config => {
-   *     console.log(`${config.name}: ${config.keyCount} keys`);
-   *   });
-   * }
+   * response.data.forEach(config => {
+   *   console.log(`${config.name}: ${config.keys.length} keys`);
+   * });
    * ```
    */
   async listConfigs(brandName: string, options?: RequestOptions): Promise<ApiResponse<ConfigInfo[]>> {
-    const response = await this.httpClient.get<{ configs: ConfigInfo[]; total: number }>(
-      `/api/sdk/brands/${encodeURIComponent(brandName)}/configs`,
+    const response = await this.httpClient.get<ConfigListResponse>(
+      this.buildBrandUrl(brandName, '/configs'),
       options
     );
-    return {
-      ...response,
-      data: response.data.configs,
-    };
+    return this.extractData(response, response.data.configs);
   }
 
   /**
    * Gets the schema/structure for a specific configuration.
-   * 
-   * @async
-   * @method getSchema
-   * @param {string} brandName - The name of the brand
-   * @param {string} configName - The name of the configuration
-   * @param {RequestOptions} [options] - Optional request configuration
-   * @returns {Promise<ApiResponse<ConfigSchema>>} A Promise resolving to the config schema
-   * @throws {ApiError} If the request fails
-   * 
+   *
    * @example
    * ```typescript
    * const response = await dinoconfig.discovery.getSchema('MyBrand', 'FeatureFlags');
-   * if (response.success) {
-   *   const schema = response.data;
-   *   console.log('Fields:', Object.keys(schema.fields));
-   *   console.log('Types:', Object.values(schema.fields).map(f => f.type));
-   * }
+   * Object.entries(response.data.fields).forEach(([name, field]) => {
+   *   console.log(`${name}: ${field.type}`);
+   * });
    * ```
    */
   async getSchema(
@@ -222,40 +206,64 @@ export class DiscoveryAPI {
     options?: RequestOptions
   ): Promise<ApiResponse<ConfigSchema>> {
     return this.httpClient.get<ConfigSchema>(
-      `/api/sdk/brands/${encodeURIComponent(brandName)}/configs/${encodeURIComponent(configName)}/schema`,
+      this.buildConfigUrl(brandName, configName, '/schema'),
       options
     );
   }
 
   /**
    * Performs full introspection, returning all brands, configs, and keys.
-   * 
-   * This method provides a complete view of all accessible configurations,
-   * including current values for each key. Useful for discovery and documentation.
-   * 
-   * @async
-   * @method introspect
-   * @param {RequestOptions} [options] - Optional request configuration
-   * @returns {Promise<ApiResponse<IntrospectionResult>>} A Promise resolving to the full introspection result
-   * @throws {ApiError} If the request fails
-   * 
+   *
    * @example
    * ```typescript
    * const response = await dinoconfig.discovery.introspect();
-   * if (response.success) {
-   *   response.data.brands.forEach(brand => {
-   *     console.log(`Brand: ${brand.name}`);
-   *     brand.configs.forEach(config => {
-   *       console.log(`  Config: ${config.name}`);
-   *       config.keys.forEach(key => {
-   *         console.log(`    ${key.name} (${key.type}): ${key.value}`);
-   *       });
-   *     });
+   * response.data.brands.forEach(brand => {
+   *   console.log(`Brand: ${brand.name}`);
+   *   brand.configs.forEach(config => {
+   *     console.log(`  Config: ${config.name} (${config.keys.length} keys)`);
    *   });
-   * }
+   * });
    * ```
    */
   async introspect(options?: RequestOptions): Promise<ApiResponse<IntrospectionResult>> {
-    return this.httpClient.get<IntrospectionResult>('/api/sdk/introspect', options);
+    return this.httpClient.get<IntrospectionResult>(`${API_BASE_PATH}/introspect`, options);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Private helpers
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Builds URL path for brand-level endpoints.
+   */
+  private buildBrandUrl(brandName: string, suffix = ''): string {
+    return `${API_BASE_PATH}/brands/${this.encode(brandName)}${suffix}`;
+  }
+
+  /**
+   * Builds URL path for config-level endpoints.
+   */
+  private buildConfigUrl(brandName: string, configName: string, suffix = ''): string {
+    return `${API_BASE_PATH}/brands/${this.encode(brandName)}/configs/${this.encode(configName)}${suffix}`;
+  }
+
+  /**
+   * URL-encodes a path segment.
+   */
+  private encode(value: string): string {
+    return encodeURIComponent(value);
+  }
+
+  /**
+   * Extracts and transforms response data.
+   */
+  private extractData<TOriginal, TExtracted>(
+    response: ApiResponse<TOriginal>,
+    extracted: TExtracted
+  ): ApiResponse<TExtracted> {
+    return {
+      ...response,
+      data: extracted,
+    };
   }
 }

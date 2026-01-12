@@ -19,14 +19,13 @@
  *   baseUrl: 'https://api.dinoconfig.com'
  * });
  * 
- * // Get a configuration value
- * const response = await dinoconfig.configs.getConfigValue(
- *   'MyBrand',
- *   'AppSettings',
- *   'theme'
- * );
+ * // Get entire config
+ * const config = await dinoconfig.configs.get('MyBrand', 'AppSettings');
+ * console.log('All values:', config.data.values);
  * 
- * console.log('Theme:', response.data);
+ * // Get single value
+ * const theme = await dinoconfig.configs.getValue('MyBrand.AppSettings.theme');
+ * console.log('Theme:', theme.data);
  * ```
  * 
  * @see {@link https://docs.dinoconfig.com | Documentation}
@@ -42,6 +41,7 @@ export type { DinoConfigSDKConfig, ApiResponse, RequestOptions } from './lib/typ
 
 // Class exports (for advanced usage)
 export { ConfigAPI } from './lib/config-api';
+export type { ConfigData } from './lib/config-api';
 export { DiscoveryAPI } from './lib/discovery-api';
 export type {
   BrandInfo,

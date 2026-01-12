@@ -23,7 +23,7 @@ import { DinoConfigSDKConfig } from './types';
  * });
  * 
  * // Access the configs API
- * const response = await dinoconfig.configs.getConfigValue('brand', 'config', 'key');
+ * const response = await dinoconfig.configs.getValue('brand', 'config', 'key');
  * ```
  */
 export interface DinoConfigInstance {
@@ -72,7 +72,7 @@ export interface DinoConfigInstance {
  * });
  * 
  * // SDK is ready to use!
- * const response = await dinoconfig.configs.getConfigValue('brand', 'config', 'key');
+ * const response = await dinoconfig.configs.getValue('brand', 'config', 'key');
  * ```
  * 
  * @example With all options
@@ -110,7 +110,7 @@ export interface DinoConfigInstance {
  *   
  *   const app = express();
  *   app.get('/config/:key', async (req, res) => {
- *     const response = await dinoconfig.configs.getConfigValue(
+ *     const response = await dinoconfig.configs.getValue(
  *       'MyBrand', 'Settings', req.params.key
  *     );
  *     res.json(response.data);
