@@ -13,7 +13,7 @@
     </label>
     <mat-radio-group
       [value]="value() || ''"
-      (change)="onValueChange($event.value)"
+      (change)="onValueChange($event)"
       [required]="config().required ?? false"
       class="radio-group"
     >
