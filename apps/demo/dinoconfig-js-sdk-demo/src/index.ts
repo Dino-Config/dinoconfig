@@ -275,6 +275,11 @@ async function demoCache(sdk: DinoConfigInstance): Promise<void> {
   log.header('Cache Layer Demonstration');
   console.log('Testing cache with both get() and getValue() methods...\n');
 
+  // Clear cache before starting tests to ensure clean state
+  console.log('🧹 Clearing cache before starting cache tests...');
+  await sdk.cache.clear();
+  console.log('✓ Cache cleared\n');
+
   const brandName = DEMO_BRAND;
   const configName = DEMO_CONFIG;
   const configKey = DEMO_KEY;
