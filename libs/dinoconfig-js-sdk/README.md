@@ -160,18 +160,18 @@ All API methods automatically use the cache when enabled. You can control cachin
 
 ```typescript
 // Use cache (default behavior when cache is enabled)
-const response = await dinoconfig.configs.getConfigValue(
+const response = await dinoconfig.configs.getValue(
   'Brand', 'Config', 'key'
 );
 
 // Force refresh (bypass cache)
-const response = await dinoconfig.configs.getConfigValue(
+const response = await dinoconfig.configs.getValue(
   'Brand', 'Config', 'key',
   { forceRefresh: true }
 );
 
 // Disable cache for this request
-const response = await dinoconfig.configs.getConfigValue(
+const response = await dinoconfig.configs.getValue(
   'Brand', 'Config', 'key',
   { cache: false }
 );
@@ -195,7 +195,7 @@ await dinoconfig.cache.invalidate('config:.*:.*:featureFlag'); // Clear all feat
 
 // Prefetch a value into cache
 await dinoconfig.cache.prefetch('key', async () => {
-  return await dinoconfig.configs.getConfigValue('Brand', 'Config', 'key');
+  return await dinoconfig.configs.getValue('Brand', 'Config', 'key');
 });
 ```
 
@@ -222,12 +222,12 @@ const dinoconfig = await dinoconfigApi({
 
 // First request - hits network (~250ms)
 console.time('first');
-const response1 = await dinoconfig.configs.getConfigValue('Brand', 'Config', 'key');
+const response1 = await dinoconfig.configs.getValue('Brand', 'Config', 'key');
 console.timeEnd('first'); // ~250ms
 
 // Second request - served from cache (~1ms)
 console.time('second');
-const response2 = await dinoconfig.configs.getConfigValue('Brand', 'Config', 'key');
+const response2 = await dinoconfig.configs.getValue('Brand', 'Config', 'key');
 console.timeEnd('second'); // ~1ms ⚡
 
 // Check cache performance

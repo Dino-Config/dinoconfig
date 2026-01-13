@@ -308,7 +308,7 @@ export interface ApiResponse<T = any> {
  * @example
  * ```typescript
  * try {
- *   await dinoconfig.configs.getConfigValue('brand', 'config', 'key');
+ *   await dinoconfig.configs.getValue('brand', 'config', 'key');
  * } catch (error) {
  *   const apiError = error as ApiError;
  *   console.error(`Error ${apiError.status}: ${apiError.message}`);
@@ -357,7 +357,7 @@ export interface ApiError {
  *   headers: { 'X-Request-ID': 'abc123' }
  * };
  * 
- * const response = await dinoconfig.configs.getConfigValue(
+ * const response = await dinoconfig.configs.getValue(
  *   'brand', 'config', 'key', options
  * );
  * ```
