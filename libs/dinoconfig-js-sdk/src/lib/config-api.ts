@@ -100,15 +100,31 @@ export class ConfigAPI {
       options
     );
 
+    const cacheKey = `config:${brand}:${config}`;
+    const useCache = this.cacheManager && requestOptions?.cache !== false && !requestOptions?.forceRefresh;
+
+    if (useCache) {
+      const cached = await this.cacheManager.get<ApiResponse<ConfigData>>(cacheKey);
+      if (cached !== null) {
+        return cached;
+      }
+    }
+
     const response = await this.httpClient.get<ConfigDetailResponse>(
       this.buildConfigUrl(brand, config),
       requestOptions
     );
 
-    return {
+    const transformedResponse: ApiResponse<ConfigData> = {
       ...response,
       data: this.transformConfigResponse(response.data),
     };
+
+    if (useCache && response.success) {
+      await this.cacheManager!.set(cacheKey, transformedResponse, { ttl: requestOptions?.ttl });
+    }
+
+    return transformedResponse;
   }
 
   /**

@@ -273,14 +273,16 @@ async function demoGetValue(sdk: DinoConfigInstance): Promise<void> {
 
 async function demoCache(sdk: DinoConfigInstance): Promise<void> {
   log.header('Cache Layer Demonstration');
-  console.log('Testing cache with configuration value retrieval...\n');
+  console.log('Testing cache with both get() and getValue() methods...\n');
 
   const brandName = DEMO_BRAND;
   const configName = DEMO_CONFIG;
   const configKey = DEMO_KEY;
 
-  // First request - should hit the network (cache miss)
-  console.log('1️⃣ First Request (Cache Miss Expected):');
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Test 1: getValue() - First request (cache miss)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('1️⃣ Testing getValue() - First Request (Cache Miss Expected):');
   console.log(`   Calling: getValue("${brandName}", "${configName}", "${configKey}")`);
   const start1 = performance.now();
   let duration1 = 0;
@@ -307,13 +309,14 @@ async function demoCache(sdk: DinoConfigInstance): Promise<void> {
     console.log('     This is expected if you don\'t have valid credentials or the config doesn\'t exist.');
   }
 
-  // Show cache stats
   const stats1 = sdk.cache.getStats();
-  console.log(`\n   📊 Cache Stats: ${stats1.hits} hits, ${stats1.misses} misses, ${(stats1.hitRate * 100).toFixed(1)}% hit rate`);
+  console.log(`   📊 Cache Stats: ${stats1.hits} hits, ${stats1.misses} misses, ${(stats1.hitRate * 100).toFixed(1)}% hit rate`);
   console.log();
 
-  // Second request - should hit cache (cache hit)
-  console.log('2️⃣ Second Request (Cache Hit Expected):');
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Test 2: getValue() - Second request (cache hit)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('2️⃣ Testing getValue() - Second Request (Cache Hit Expected):');
   console.log(`   Calling: getValue("${brandName}", "${configName}", "${configKey}")`);
   const start2 = performance.now();
   
@@ -341,63 +344,57 @@ async function demoCache(sdk: DinoConfigInstance): Promise<void> {
     console.log(`     Message: ${error.message || 'Unknown error'}`);
   }
 
-  // Show updated cache stats
   const stats2 = sdk.cache.getStats();
-  console.log(`\n   📊 Cache Stats: ${stats2.hits} hits, ${stats2.misses} misses, ${(stats2.hitRate * 100).toFixed(1)}% hit rate`);
+  console.log(`   📊 Cache Stats: ${stats2.hits} hits, ${stats2.misses} misses, ${(stats2.hitRate * 100).toFixed(1)}% hit rate`);
   console.log();
 
-  // Third request - force refresh (bypass cache)
-  console.log('3️⃣ Third Request (Force Refresh - Bypass Cache):');
-  console.log(`   Calling: getValue("${brandName}", "${configName}", "${configKey}", { forceRefresh: true })`);
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Test 3: get() - First request (cache miss)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('3️⃣ Testing get() - First Request (Cache Miss Expected):');
+  console.log(`   Calling: get("${brandName}", "${configName}")`);
   const start3 = performance.now();
+  let duration3 = 0;
   
   try {
-    const response3 = await sdk.configs.getValue(
-      brandName,
-      configName,
-      configKey,
-      { forceRefresh: true }
-    );
-    const duration3 = performance.now() - start3;
+    const response3 = await sdk.configs.get(brandName, configName);
+    duration3 = performance.now() - start3;
 
     if (response3.success) {
-      console.log(`   ✓ Request successful in ${duration3.toFixed(2)}ms (from network)`);
-      console.log(`   Config value: ${JSON.stringify(response3.data, null, 2)}`);
+      console.log(`   ✓ Request successful in ${duration3.toFixed(2)}ms`);
+      console.log(`   Config: ${response3.data.name} (v${response3.data.version})`);
+      console.log(`   Keys: ${response3.data.keys.length}`);
     } else {
       console.log('   ✗ Request failed');
       console.log(`   Message: ${response3.message || 'Unknown error'}`);
     }
   } catch (error: any) {
-    const duration3 = performance.now() - start3;
+    duration3 = performance.now() - start3;
     console.log(`   ✗ Error after ${duration3.toFixed(2)}ms:`);
     console.log(`     Message: ${error.message || 'Unknown error'}`);
   }
 
-  // Show final cache stats
   const stats3 = sdk.cache.getStats();
-  console.log(`\n   📊 Cache Stats: ${stats3.hits} hits, ${stats3.misses} misses, ${(stats3.hitRate * 100).toFixed(1)}% hit rate`);
+  console.log(`   📊 Cache Stats: ${stats3.hits} hits, ${stats3.misses} misses, ${(stats3.hitRate * 100).toFixed(1)}% hit rate`);
   console.log();
 
-  // Demonstrate cache invalidation
-  console.log('4️⃣ Cache Invalidation Test:');
-  console.log('   Invalidating cache for pattern: "config:*"');
-  await sdk.cache.invalidate('config:*');
-  console.log('   ✓ Cache invalidated');
-
-  // Request after invalidation - should hit network again
-  console.log(`\n   Calling: getValue("${brandName}", "${configName}", "${configKey}")`);
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Test 4: get() - Second request (cache hit)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('4️⃣ Testing get() - Second Request (Cache Hit Expected):');
+  console.log(`   Calling: get("${brandName}", "${configName}")`);
   const start4 = performance.now();
   
   try {
-    const response4 = await sdk.configs.getValue(
-      brandName,
-      configName,
-      configKey
-    );
+    const response4 = await sdk.configs.get(brandName, configName);
     const duration4 = performance.now() - start4;
 
     if (response4.success) {
-      console.log(`   ✓ Request successful in ${duration4.toFixed(2)}ms (from network after invalidation)`);
+      console.log(`   ✓ Request successful in ${duration4.toFixed(2)}ms (from cache!)`);
+      console.log(`   Config: ${response4.data.name} (v${response4.data.version})`);
+      if (duration3 > 0) {
+        console.log(`   ⚡ Speed improvement: ${((duration3 - duration4) / duration3 * 100).toFixed(1)}% faster`);
+      }
     } else {
       console.log('   ✗ Request failed');
       console.log(`   Message: ${response4.message || 'Unknown error'}`);
@@ -408,9 +405,78 @@ async function demoCache(sdk: DinoConfigInstance): Promise<void> {
     console.log(`     Message: ${error.message || 'Unknown error'}`);
   }
 
-  // Show final cache stats
   const stats4 = sdk.cache.getStats();
-  console.log(`\n   📊 Final Cache Stats: ${stats4.hits} hits, ${stats4.misses} misses, ${(stats4.hitRate * 100).toFixed(1)}% hit rate`);
+  console.log(`   📊 Cache Stats: ${stats4.hits} hits, ${stats4.misses} misses, ${(stats4.hitRate * 100).toFixed(1)}% hit rate`);
+  console.log();
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Test 5: Force refresh (bypass cache)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('5️⃣ Testing Force Refresh (Bypass Cache):');
+  console.log(`   Calling: getValue("${brandName}", "${configName}", "${configKey}", { forceRefresh: true })`);
+  const start5 = performance.now();
+  
+  try {
+    const response5 = await sdk.configs.getValue(
+      brandName,
+      configName,
+      configKey,
+      { forceRefresh: true }
+    );
+    const duration5 = performance.now() - start5;
+
+    if (response5.success) {
+      console.log(`   ✓ Request successful in ${duration5.toFixed(2)}ms (from network)`);
+      console.log(`   Config value: ${JSON.stringify(response5.data, null, 2)}`);
+    } else {
+      console.log('   ✗ Request failed');
+      console.log(`   Message: ${response5.message || 'Unknown error'}`);
+    }
+  } catch (error: any) {
+    const duration5 = performance.now() - start5;
+    console.log(`   ✗ Error after ${duration5.toFixed(2)}ms:`);
+    console.log(`     Message: ${error.message || 'Unknown error'}`);
+  }
+
+  const stats5 = sdk.cache.getStats();
+  console.log(`   📊 Cache Stats: ${stats5.hits} hits, ${stats5.misses} misses, ${(stats5.hitRate * 100).toFixed(1)}% hit rate`);
+  console.log();
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Test 6: Cache invalidation
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('6️⃣ Testing Cache Invalidation:');
+  console.log('   Invalidating cache for pattern: "config:*"');
+  await sdk.cache.invalidate('config:*');
+  console.log('   ✓ Cache invalidated');
+
+  // Request after invalidation - should hit network again
+  console.log(`\n   Calling: getValue("${brandName}", "${configName}", "${configKey}")`);
+  const start6 = performance.now();
+  
+  try {
+    const response6 = await sdk.configs.getValue(
+      brandName,
+      configName,
+      configKey
+    );
+    const duration6 = performance.now() - start6;
+
+    if (response6.success) {
+      console.log(`   ✓ Request successful in ${duration6.toFixed(2)}ms (from network after invalidation)`);
+    } else {
+      console.log('   ✗ Request failed');
+      console.log(`   Message: ${response6.message || 'Unknown error'}`);
+    }
+  } catch (error: any) {
+    const duration6 = performance.now() - start6;
+    console.log(`   ✗ Error after ${duration6.toFixed(2)}ms:`);
+    console.log(`     Message: ${error.message || 'Unknown error'}`);
+  }
+
+  // Show final cache stats
+  const stats6 = sdk.cache.getStats();
+  console.log(`\n   📊 Final Cache Stats: ${stats6.hits} hits, ${stats6.misses} misses, ${(stats6.hitRate * 100).toFixed(1)}% hit rate`);
   console.log();
 }
 
