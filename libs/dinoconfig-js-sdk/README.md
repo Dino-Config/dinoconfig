@@ -243,7 +243,6 @@ console.log(`Cache hit rate: ${(stats.hitRate * 100).toFixed(1)}%`);
 4. **Invalidate cache on updates** - Use cache invalidation when you know configs changed
 5. **Monitor cache hit rates** - Use `getStats()` to track cache effectiveness
 
->>>>>>> Stashed changes
 ## Authentication
 
 ### Security Best Practices
@@ -421,14 +420,6 @@ All API methods accept an optional `RequestOptions` object:
 
 ```typescript
 interface RequestOptions {
-<<<<<<< Updated upstream
-  headers?: Record<string, string>;  // Custom headers
-  timeout?: number;                   // Request timeout (ms)
-  retries?: number;                   // Retry attempts
-}
-```
-
-=======
   /** Custom headers for this specific request */
   headers?: Record<string, string>;
   /** Request timeout in milliseconds (overrides default) */
@@ -444,7 +435,7 @@ interface RequestOptions {
 
 **Example with options:**
 ```typescript
-const response = await dinoconfig.configs.getConfigValue(
+const response = await dinoconfig.configs.getValue(
   'MyBrand',
   'Settings',
   'apiEndpoint',
@@ -459,8 +450,6 @@ const response = await dinoconfig.configs.getConfigValue(
   }
 );
 ```
-
->>>>>>> Stashed changes
 ## Error Handling
 
 ```typescript
@@ -496,11 +485,11 @@ import {
   DinoConfigSDKConfig,
   ApiResponse,
   RequestOptions,
-<<<<<<< Updated upstream
 
   // APIs
   ConfigAPI,
   DiscoveryAPI,
+  CacheAPI,
 
   // Config types
   ConfigData,
@@ -516,21 +505,16 @@ import {
   BrandInfoDetail,
   ConfigInfoDetail,
   KeyInfo,
-=======
-  ConfigAPI,
-  CacheAPI,
+
+  // Cache types
   CacheConfig,
   CacheStats
->>>>>>> Stashed changes
 } from '@dinoconfig/dinoconfig-js-sdk';
 ```
 
 ### Key Interfaces
 
 ```typescript
-<<<<<<< Updated upstream
-/** SDK instance */
-=======
 /** SDK configuration options */
 interface DinoConfigSDKConfig {
   /** The API key for authentication */
@@ -544,15 +528,13 @@ interface DinoConfigSDKConfig {
 }
 
 /** SDK instance returned by dinoconfigApi() */
->>>>>>> Stashed changes
 interface DinoConfigInstance {
+  /** Configuration API for retrieving config values */
   configs: ConfigAPI;
-<<<<<<< Updated upstream
+  /** Discovery API for exploring available brands, configs, and schemas */
   discovery: DiscoveryAPI;
-=======
   /** Cache API for managing the cache layer */
   cache: CacheAPI;
->>>>>>> Stashed changes
 }
 
 /** Full config data */
@@ -572,8 +554,6 @@ interface ApiResponse<T> {
   success: boolean;
   message?: string;
 }
-<<<<<<< Updated upstream
-=======
 
 /** Request customization options */
 interface RequestOptions {
@@ -588,7 +568,6 @@ interface RequestOptions {
   /** Force refresh from API, bypassing cache */
   forceRefresh?: boolean;
 }
->>>>>>> Stashed changes
 ```
 
 ## Examples
