@@ -8,64 +8,84 @@
 
 import { HttpClient } from './http-client';
 import { ConfigAPI } from './config-api';
+import { DiscoveryAPI } from './discovery-api';
 import { DinoConfigSDKConfig } from './types';
 
 /**
  * DinoConfig SDK instance interface.
  * Provides access to all SDK APIs through a unified interface.
- * 
+ *
  * @interface DinoConfigInstance
+ * @property {ConfigAPI} configs - API for retrieving configuration values
+ * @property {DiscoveryAPI} discovery - API for discovering brands, configs, and schemas
+ *
  * @example
  * ```typescript
- * const dinoconfig: DinoConfigInstance = await dinoconfigApi({
- *   apiKey: 'dino_your-api-key'
- * });
- * 
- * // Access the configs API
- * const response = await dinoconfig.configs.getConfigValue('brand', 'config', 'key');
+ * const dinoconfig = await dinoconfigApi({ apiKey: 'dino_...' });
+ *
+ * // Get entire config
+ * const config = await dinoconfig.configs.get('Brand.Config');
+ *
+ * // Get single value
+ * const value = await dinoconfig.configs.getValue('Brand.Config.Key');
+ *
+ * // Discovery
+ * const brands = await dinoconfig.discovery.listBrands();
  * ```
  */
 export interface DinoConfigInstance {
   /**
    * Configuration API for retrieving config values.
-   * Provides methods to interact with DinoConfig configurations.
-   * 
+   *
+   * Methods:
+   * - `get(path)` or `get(brand, config)` - Get entire config
+   * - `getValue(path)` or `getValue(brand, config, key)` - Get single value
+   *
    * @see {@link ConfigAPI}
    */
   configs: ConfigAPI;
+
+  /**
+   * Discovery API for exploring available brands, configs, and schemas.
+   *
+   * Methods:
+   * - `listBrands()` - List all accessible brands
+   * - `listConfigs(brand)` - List configs for a brand
+   * - `getSchema(brand, config)` - Get config schema
+   * - `introspect()` - Full introspection of all data
+   *
+   * @see {@link DiscoveryAPI}
+   */
+  discovery: DiscoveryAPI;
 }
 
 /**
  * Creates and initializes a new DinoConfig SDK instance.
- * 
- * This is the main entry point for using the DinoConfig SDK. It follows
- * the factory function pattern (similar to Shopify's SDK) for a cleaner,
- * more intuitive initialization experience.
- * 
+ *
+ * This is the main entry point for using the DinoConfig SDK.
+ *
  * @async
  * @function dinoconfigApi
- * @param {DinoConfigSDKConfig} config - Configuration options for the SDK
- * @returns {Promise<DinoConfigInstance>} A Promise that resolves to an initialized SDK instance
+ * @param {DinoConfigSDKConfig} config - Configuration options
+ * @param {string} config.apiKey - Your DinoConfig API key
+ * @param {string} [config.baseUrl='http://localhost:3000'] - API base URL
+ * @param {number} [config.timeout=10000] - Request timeout in milliseconds
+ * @returns {Promise<DinoConfigInstance>} Initialized SDK instance
  * @throws {Error} If API key exchange fails or network error occurs
- * 
- * @remarks
- * The SDK automatically:
- * - Exchanges your API key for an access token
- * - Configures authorization headers
- * - Sets up the HTTP client with your preferences
- * 
+ *
  * @example Basic usage
  * ```typescript
  * import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
- * 
+ *
  * const dinoconfig = await dinoconfigApi({
  *   apiKey: 'dino_your-api-key-here'
  * });
- * 
- * // SDK is ready to use!
- * const response = await dinoconfig.configs.getConfigValue('brand', 'config', 'key');
+ *
+ * // Get config value
+ * const response = await dinoconfig.configs.getValue('Brand.Config.Key');
+ * console.log(response.data);
  * ```
- * 
+ *
  * @example With all options
  * ```typescript
  * const dinoconfig = await dinoconfigApi({
@@ -74,46 +94,15 @@ export interface DinoConfigInstance {
  *   timeout: 15000
  * });
  * ```
- * 
+ *
  * @example Error handling
  * ```typescript
  * try {
- *   const dinoconfig = await dinoconfigApi({
- *     apiKey: 'dino_invalid-key'
- *   });
+ *   const dinoconfig = await dinoconfigApi({ apiKey: '...' });
  * } catch (error) {
- *   console.error('Failed to initialize SDK:', error.message);
- *   // Handle initialization failure
+ *   console.error('Failed to initialize:', error);
  * }
  * ```
- * 
- * @example Express.js integration
- * ```typescript
- * import express from 'express';
- * import { dinoconfigApi, DinoConfigInstance } from '@dinoconfig/dinoconfig-js-sdk';
- * 
- * let dinoconfig: DinoConfigInstance;
- * 
- * async function initApp() {
- *   dinoconfig = await dinoconfigApi({
- *     apiKey: process.env.DINOCONFIG_API_KEY!
- *   });
- *   
- *   const app = express();
- *   app.get('/config/:key', async (req, res) => {
- *     const response = await dinoconfig.configs.getConfigValue(
- *       'MyBrand', 'Settings', req.params.key
- *     );
- *     res.json(response.data);
- *   });
- *   app.listen(3000);
- * }
- * 
- * initApp();
- * ```
- * 
- * @see {@link DinoConfigSDKConfig} for configuration options
- * @see {@link DinoConfigInstance} for available APIs
  */
 export async function dinoconfigApi(config: DinoConfigSDKConfig): Promise<DinoConfigInstance> {
   const {
@@ -133,5 +122,6 @@ export async function dinoconfigApi(config: DinoConfigSDKConfig): Promise<DinoCo
   // Return initialized SDK instance with all APIs
   return {
     configs: new ConfigAPI(httpClient),
+    discovery: new DiscoveryAPI(httpClient),
   };
 }

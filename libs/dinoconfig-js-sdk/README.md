@@ -15,6 +15,8 @@ Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a s
 - [Configuration Options](#configuration-options)
 - [Authentication](#authentication)
 - [API Reference](#api-reference)
+  - [Configs API](#configs-api)
+  - [Discovery API](#discovery-api)
 - [Error Handling](#error-handling)
 - [TypeScript Support](#typescript-support)
 - [Examples](#examples)
@@ -23,13 +25,15 @@ Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a s
 
 ## Features
 
-- **Simple Initialization** - Single factory function following modern SDK patterns (inspired by Shopify SDK)
+- **Simple Initialization** - Single factory function following modern SDK patterns
 - **Automatic Authentication** - API key to token exchange handled automatically
+- **Shorthand Path Syntax** - Use `"Brand.Config.Key"` dot notation for concise access
+- **Discovery API** - Discover brands, configs, and schemas dynamically
+- **Full Introspection** - Get complete visibility into all available configurations
 - **Type-Safe** - Full TypeScript support with comprehensive type definitions
 - **Zero Dependencies** - Uses native `fetch` API, no external HTTP libraries required
 - **Retry Logic** - Built-in exponential backoff for failed requests
 - **Timeout Support** - Configurable request timeouts
-- **Modern JavaScript** - ES modules, async/await, Promise-based API
 
 ## Installation
 
@@ -49,23 +53,24 @@ pnpm add @dinoconfig/dinoconfig-js-sdk
 ```typescript
 import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
 
-// Initialize the SDK with your API key (single step!)
+// Initialize the SDK
 const dinoconfig = await dinoconfigApi({
   apiKey: 'dino_your-api-key-here',
   baseUrl: 'https://api.dinoconfig.com', // optional
-  timeout: 10000 // optional, defaults to 10000ms
+  timeout: 10000 // optional
 });
 
-// Get a configuration value
-const response = await dinoconfig.configs.getConfigValue(
-  'MyBrand',      // brand name
-  'AppSettings',  // config name
-  'featureFlag'   // config value key
-);
+// Get entire config
+const config = await dinoconfig.configs.get('MyBrand', 'AppSettings');
+console.log('All values:', config.data.values);
 
-if (response.success) {
-  console.log('Config value:', response.data);
-}
+// Get single value (shorthand)
+const theme = await dinoconfig.configs.getValue('MyBrand.AppSettings.theme');
+console.log('Theme:', theme.data);
+
+// Get single value (full params)
+const response = await dinoconfig.configs.getValue('MyBrand', 'AppSettings', 'theme');
+console.log('Theme:', response.data);
 ```
 
 **That's it!** The SDK handles:
@@ -75,41 +80,13 @@ if (response.success) {
 
 ## Configuration Options
 
-The `dinoconfigApi` function accepts a configuration object with the following options:
-
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
-| `apiKey` | `string` | **Yes** | - | Your DinoConfig API key for authentication |
-| `baseUrl` | `string` | No | `'http://localhost:3000'` | Base URL for the DinoConfig API |
+| `apiKey` | `string` | **Yes** | - | Your DinoConfig API key |
+| `baseUrl` | `string` | No | `'http://localhost:3000'` | Base URL for the API |
 | `timeout` | `number` | No | `10000` | Request timeout in milliseconds |
 
-### Example with All Options
-
-```typescript
-const dinoconfig = await dinoconfigApi({
-  apiKey: 'dino_abc123def456...',
-  baseUrl: 'https://api.dinoconfig.com',
-  timeout: 15000
-});
-```
-
 ## Authentication
-
-### How It Works
-
-The DinoConfig SDK uses API key-based authentication with automatic token exchange:
-
-1. **You provide an API key** - Obtained from the DinoConfig dashboard
-2. **SDK exchanges it for a token** - Happens automatically during initialization
-3. **Token is used for requests** - All subsequent API calls use the access token
-
-### Getting an API Key
-
-1. Log in to your [DinoConfig Dashboard](https://app.dinoconfig.com)
-2. Navigate to **Settings** → **SDK & API Keys**
-3. Click **Create New Key**
-4. Provide a name and description for the key
-5. **Copy the key immediately** - It won't be shown again!
 
 ### Security Best Practices
 
@@ -128,55 +105,154 @@ const dinoconfig = await dinoconfigApi({
 
 ## API Reference
 
-### `dinoconfigApi(config)`
+### Configs API
 
-Factory function to create and initialize a DinoConfig SDK instance.
+The Configs API provides methods to retrieve configuration values.
 
-**Parameters:**
-- `config` (`DinoConfigSDKConfig`) - Configuration object
+---
 
-**Returns:**
-- `Promise<DinoConfigInstance>` - Initialized SDK instance
+#### `configs.get(path, options?)` / `configs.get(brand, config, options?)`
 
-**Example:**
+Retrieves an entire configuration with all its values.
+
+**Signatures:**
 ```typescript
-const dinoconfig = await dinoconfigApi({
-  apiKey: 'dino_your-api-key',
-  baseUrl: 'https://api.dinoconfig.com',
-  timeout: 10000
+// Shorthand path
+get(path: string, options?: RequestOptions): Promise<ApiResponse<ConfigData>>
+
+// Full parameters
+get(brand: string, config: string, options?: RequestOptions): Promise<ApiResponse<ConfigData>>
+```
+
+**Returns:** `ApiResponse<ConfigData>` containing:
+- `name` - Configuration name
+- `description` - Configuration description
+- `values` - All key-value pairs as `Record<string, unknown>`
+- `version` - Configuration version
+- `keys` - Array of all key names
+- `createdAt` - Creation timestamp
+- `updatedAt` - Last update timestamp
+
+**Examples:**
+```typescript
+// Shorthand path
+const config = await dinoconfig.configs.get('MyBrand.FeatureFlags');
+console.log(config.data.values);
+// { enableDarkMode: true, maxUsers: 100, ... }
+
+// Full parameters
+const config = await dinoconfig.configs.get('MyBrand', 'FeatureFlags');
+console.log(`Version: ${config.data.version}`);
+console.log(`Keys: ${config.data.keys.join(', ')}`);
+
+// Access specific values
+const { values } = config.data;
+const darkMode = values.enableDarkMode as boolean;
+const maxUsers = values.maxUsers as number;
+```
+
+---
+
+#### `configs.getValue(path, options?)` / `configs.getValue(brand, config, key, options?)`
+
+Retrieves a specific configuration value.
+
+**Signatures:**
+```typescript
+// Shorthand path
+getValue(path: string, options?: RequestOptions): Promise<ApiResponse<unknown>>
+
+// Full parameters
+getValue(brand: string, config: string, key: string, options?: RequestOptions): Promise<ApiResponse<unknown>>
+```
+
+**Examples:**
+```typescript
+// Shorthand path (recommended)
+const response = await dinoconfig.configs.getValue('MyBrand.FeatureFlags.enableDarkMode');
+console.log('Dark mode:', response.data); // true
+
+// Full parameters
+const response = await dinoconfig.configs.getValue('MyBrand', 'FeatureFlags', 'enableDarkMode');
+console.log('Dark mode:', response.data);
+
+// With request options
+const response = await dinoconfig.configs.getValue(
+  'MyBrand.CriticalConfig.databaseUrl',
+  { timeout: 30000, retries: 5 }
+);
+```
+
+---
+
+### Discovery API
+
+The Discovery API enables dynamic configuration discovery.
+
+---
+
+#### `discovery.listBrands(options?)`
+
+Lists all brands accessible by your API key.
+
+**Returns:** `ApiResponse<BrandInfo[]>`
+
+```typescript
+const response = await dinoconfig.discovery.listBrands();
+response.data.forEach(brand => {
+  console.log(`${brand.name}: ${brand.configCount} configs`);
 });
 ```
 
 ---
 
-### `dinoconfig.configs.getConfigValue(brandName, configName, configValueKey, options?)`
+#### `discovery.listConfigs(brandName, options?)`
 
-Retrieves a specific configuration value.
+Lists all configurations for a specific brand.
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `brandName` | `string` | **Yes** | The name of the brand |
-| `configName` | `string` | **Yes** | The name of the configuration |
-| `configValueKey` | `string` | **Yes** | The key of the specific value to retrieve |
-| `options` | `RequestOptions` | No | Additional request options |
+**Returns:** `ApiResponse<ConfigInfo[]>`
 
-**Returns:**
-- `Promise<ApiResponse<any>>` - Response containing the config value
-
-**Example:**
 ```typescript
-// Get a feature flag value
-const response = await dinoconfig.configs.getConfigValue(
-  'MyBrand',
-  'FeatureFlags',
-  'enableDarkMode'
-);
+const response = await dinoconfig.discovery.listConfigs('MyBrand');
+response.data.forEach(config => {
+  console.log(`${config.name} (v${config.version}): ${config.keys.length} keys`);
+});
+```
 
-if (response.success) {
-  const isDarkModeEnabled = response.data;
-  console.log('Dark mode enabled:', isDarkModeEnabled);
-}
+---
+
+#### `discovery.getSchema(brandName, configName, options?)`
+
+Gets the schema/structure for a specific configuration.
+
+**Returns:** `ApiResponse<ConfigSchema>`
+
+```typescript
+const response = await dinoconfig.discovery.getSchema('MyBrand', 'FeatureFlags');
+Object.entries(response.data.fields).forEach(([name, field]) => {
+  console.log(`${name}: ${field.type}${field.required ? ' (required)' : ''}`);
+});
+```
+
+---
+
+#### `discovery.introspect(options?)`
+
+Performs full introspection, returning all brands, configs, and values.
+
+**Returns:** `ApiResponse<IntrospectionResult>`
+
+```typescript
+const response = await dinoconfig.discovery.introspect();
+const { company, brands } = response.data;
+
+console.log(`Company: ${company}`);
+brands.forEach(brand => {
+  console.log(`\nBrand: ${brand.name}`);
+  brand.configs.forEach(config => {
+    console.log(`  Config: ${config.name} (${config.keys.length} keys)`);
+  });
+});
 ```
 
 ---
@@ -187,97 +263,21 @@ All API methods accept an optional `RequestOptions` object:
 
 ```typescript
 interface RequestOptions {
-  /** Custom headers for this specific request */
-  headers?: Record<string, string>;
-  /** Request timeout in milliseconds (overrides default) */
-  timeout?: number;
-  /** Number of retry attempts for failed requests */
-  retries?: number;
+  headers?: Record<string, string>;  // Custom headers
+  timeout?: number;                   // Request timeout (ms)
+  retries?: number;                   // Retry attempts
 }
-```
-
-**Example with options:**
-```typescript
-const response = await dinoconfig.configs.getConfigValue(
-  'MyBrand',
-  'Settings',
-  'apiEndpoint',
-  {
-    timeout: 5000,
-    retries: 3,
-    headers: {
-      'X-Request-ID': 'unique-request-id'
-    }
-  }
-);
 ```
 
 ## Error Handling
 
-The SDK throws structured errors that you can catch and handle appropriately.
-
-### ApiError Interface
-
 ```typescript
-interface ApiError {
-  /** Human-readable error message */
-  message: string;
-  /** HTTP status code */
-  status: number;
-  /** Optional error code for programmatic handling */
-  code?: string;
-}
-```
-
-### Error Handling Example
-
-```typescript
-import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
-
 try {
-  const dinoconfig = await dinoconfigApi({
-    apiKey: 'dino_your-api-key'
-  });
-
-  const response = await dinoconfig.configs.getConfigValue(
-    'MyBrand',
-    'MyConfig',
-    'myKey'
-  );
-
-  if (response.success) {
-    console.log('Value:', response.data);
-  }
-} catch (error: any) {
-  // Handle initialization errors
-  if (error.message?.includes('Failed to authenticate')) {
-    console.error('Invalid API key. Please check your credentials.');
-  }
-  // Handle API errors
-  else if (error.status) {
-    switch (error.status) {
-      case 401:
-        console.error('Unauthorized - check your API key');
-        break;
-      case 403:
-        console.error('Forbidden - insufficient permissions');
-        break;
-      case 404:
-        console.error('Configuration not found');
-        break;
-      case 429:
-        console.error('Rate limited - please slow down requests');
-        break;
-      case 500:
-        console.error('Server error - please try again later');
-        break;
-      default:
-        console.error(`API Error (${error.status}): ${error.message}`);
-    }
-  }
-  // Handle network/timeout errors
-  else {
-    console.error('Network error:', error.message);
+  const response = await dinoconfig.configs.getValue('Brand.Config.Key');
+  console.log('Value:', response.data);
+} catch (error) {
+  if (error instanceof Error) {
+    console.error('Error:', error.message);
   }
 }
 ```
@@ -287,65 +287,70 @@ try {
 | Status | Meaning | Suggested Action |
 |--------|---------|------------------|
 | 401 | Unauthorized | Check API key validity |
-| 403 | Forbidden | Verify permissions for the resource |
+| 403 | Forbidden | Verify permissions |
 | 404 | Not Found | Check brand/config/key names |
-| 429 | Too Many Requests | Implement backoff, reduce request rate |
-| 500 | Server Error | Retry with exponential backoff |
+| 429 | Rate Limited | Implement backoff |
+| 500 | Server Error | Retry with backoff |
 
 ## TypeScript Support
-
-The SDK is written in TypeScript and provides comprehensive type definitions.
 
 ### Exported Types
 
 ```typescript
-import { 
+import {
+  // Main SDK
   dinoconfigApi,
   DinoConfigInstance,
   DinoConfigSDKConfig,
   ApiResponse,
   RequestOptions,
-  ConfigAPI
+
+  // APIs
+  ConfigAPI,
+  DiscoveryAPI,
+
+  // Config types
+  ConfigData,
+
+  // Discovery types
+  BrandInfo,
+  ConfigInfo,
+  ConfigSchema,
+  FieldSchema,
+  FieldType,
+  FieldValidation,
+  IntrospectionResult,
+  BrandInfoDetail,
+  ConfigInfoDetail,
+  KeyInfo,
 } from '@dinoconfig/dinoconfig-js-sdk';
 ```
 
-### Type Definitions
+### Key Interfaces
 
 ```typescript
-/** SDK configuration options */
-interface DinoConfigSDKConfig {
-  /** The API key for authentication */
-  apiKey: string;
-  /** The base URL of the DinoConfig API */
-  baseUrl?: string;
-  /** Request timeout in milliseconds */
-  timeout?: number;
-}
-
-/** SDK instance returned by dinoconfigApi() */
+/** SDK instance */
 interface DinoConfigInstance {
-  /** Configuration API for managing config values */
   configs: ConfigAPI;
+  discovery: DiscoveryAPI;
 }
 
-/** Standard API response wrapper */
-interface ApiResponse<T = any> {
-  /** Response data */
+/** Full config data */
+interface ConfigData {
+  readonly name: string;
+  readonly description?: string;
+  readonly values: Record<string, unknown>;
+  readonly version: number;
+  readonly keys: readonly string[];
+  readonly createdAt: Date;
+  readonly updatedAt?: Date;
+}
+
+/** API response wrapper */
+interface ApiResponse<T> {
   data: T;
-  /** Whether the request was successful */
   success: boolean;
-  /** Optional message (usually for errors) */
   message?: string;
-}
-
-/** Request customization options */
-interface RequestOptions {
-  /** Custom headers */
-  headers?: Record<string, string>;
-  /** Request timeout in milliseconds */
-  timeout?: number;
-  /** Number of retry attempts */
-  retries?: number;
 }
 ```
 
@@ -356,23 +361,17 @@ interface RequestOptions {
 ```typescript
 import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
 
-async function main() {
-  // Initialize
-  const dinoconfig = await dinoconfigApi({
-    apiKey: process.env.DINOCONFIG_API_KEY!
-  });
+const dinoconfig = await dinoconfigApi({
+  apiKey: process.env.DINOCONFIG_API_KEY!
+});
 
-  // Fetch a config value
-  const response = await dinoconfig.configs.getConfigValue(
-    'Acme',
-    'AppSettings',
-    'maxUploadSize'
-  );
+// Get entire config
+const config = await dinoconfig.configs.get('Brand.Config');
+console.log(config.data.values);
 
-  console.log('Max upload size:', response.data);
-}
-
-main().catch(console.error);
+// Get single value
+const value = await dinoconfig.configs.getValue('Brand.Config.Key');
+console.log(value.data);
 ```
 
 ### Express.js Integration
@@ -381,80 +380,51 @@ main().catch(console.error);
 import express from 'express';
 import { dinoconfigApi, DinoConfigInstance } from '@dinoconfig/dinoconfig-js-sdk';
 
-const app = express();
 let dinoconfig: DinoConfigInstance;
 
-// Initialize SDK on startup
-async function initializeDinoConfig() {
+async function initApp() {
   dinoconfig = await dinoconfigApi({
-    apiKey: process.env.DINOCONFIG_API_KEY!,
-    baseUrl: process.env.DINOCONFIG_BASE_URL
+    apiKey: process.env.DINOCONFIG_API_KEY!
   });
-  console.log('DinoConfig SDK initialized');
+
+  const app = express();
+
+  app.get('/config/:brand/:config/:key', async (req, res) => {
+    try {
+      const { brand, config, key } = req.params;
+      const response = await dinoconfig.configs.getValue(brand, config, key);
+      res.json(response.data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch config' });
+    }
+  });
+
+  app.listen(3000);
 }
 
-// Use in routes
-app.get('/api/feature-flags/:flag', async (req, res) => {
-  try {
-    const response = await dinoconfig.configs.getConfigValue(
-      'MyApp',
-      'FeatureFlags',
-      req.params.flag
-    );
-    res.json({ flag: req.params.flag, enabled: response.data });
-  } catch (error: any) {
-    res.status(error.status || 500).json({ error: error.message });
-  }
-});
-
-initializeDinoConfig().then(() => {
-  app.listen(3000, () => console.log('Server running on port 3000'));
-});
+initApp();
 ```
 
 ### Next.js API Route
 
 ```typescript
-// pages/api/config/[...params].ts
-import type { NextApiRequest, NextApiResponse } from 'next';
+// app/api/config/[...path]/route.ts
 import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+import { NextResponse } from 'next/server';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+export async function GET(
+  request: Request,
+  { params }: { params: { path: string[] } }
 ) {
-  const [brandName, configName, key] = req.query.params as string[];
+  const [brand, config, key] = params.path;
 
-  try {
-    const dinoconfig = await dinoconfigApi({
-      apiKey: process.env.DINOCONFIG_API_KEY!
-    });
+  const dinoconfig = await dinoconfigApi({
+    apiKey: process.env.DINOCONFIG_API_KEY!
+  });
 
-    const response = await dinoconfig.configs.getConfigValue(
-      brandName,
-      configName,
-      key
-    );
-
-    res.status(200).json(response.data);
-  } catch (error: any) {
-    res.status(error.status || 500).json({ error: error.message });
-  }
+  const response = await dinoconfig.configs.getValue(brand, config, key);
+  return NextResponse.json(response.data);
 }
-```
-
-### With Retry Options
-
-```typescript
-const response = await dinoconfig.configs.getConfigValue(
-  'MyBrand',
-  'CriticalSettings',
-  'databaseUrl',
-  {
-    timeout: 30000,  // 30 second timeout for critical config
-    retries: 5       // Retry up to 5 times with exponential backoff
-  }
-);
 ```
 
 ## Requirements
@@ -462,41 +432,22 @@ const response = await dinoconfig.configs.getConfigValue(
 - **Node.js** >= 16.0.0
 - **TypeScript** >= 5.0.0 (for TypeScript projects)
 
-## Browser Support
-
-The SDK uses the native `fetch` API and is compatible with:
-- Modern browsers (Chrome, Firefox, Safari, Edge)
-- Node.js 18+ (native fetch)
-- Node.js 16-17 (with `node-fetch` polyfill)
-
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting a pull request.
-
-### Development
-
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/dinoconfig/dinoconfig-js-sdk.git
-
-# Install dependencies
 npm install
 
 # Build
 npx nx build dinoconfig-js-sdk
 
-# Run tests
+# Test
 npx nx test dinoconfig-js-sdk
 
 # Lint
 npx nx lint dinoconfig-js-sdk
 ```
-
-## Support
-
-- **Documentation**: [https://docs.dinoconfig.com](https://docs.dinoconfig.com)
-- **Issues**: [GitHub Issues](https://github.com/dinoconfig/dinoconfig-js-sdk/issues)
-- **Email**: support@dinoconfig.com
 
 ## License
 
@@ -504,4 +455,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-Made with &#x2764; by the DinoConfig Team
+Made with ❤️ by the DinoConfig Team

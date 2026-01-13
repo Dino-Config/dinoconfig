@@ -12,6 +12,18 @@ import { SubscriptionService } from '../subscriptions/subscription.service';
 import { Feature } from '../features/enums/feature.enum';
 import { ConfigDefinitionService } from './config-definition.service';
 import { UpdateConfigLayoutDto } from './dto/update-config-layout.dto';
+import {
+  ConfigListResponseDto,
+  ConfigSummaryDto,
+  ConfigDetailResponseDto,
+  ConfigSchemaResponseDto,
+  FieldSchemaDto,
+  FieldType,
+  IntrospectionResponseDto,
+  BrandInfoDto,
+  ConfigInfoDto,
+  KeyInfoDto,
+} from './dto/sdk-discovery.dto';
 
 @Injectable()
 export class ConfigsService {
@@ -323,6 +335,182 @@ export class ConfigsService {
     const value = config?.formData[valueKey];
 
     return { value };
+  }
+
+  async findAllForBrandSdk(brandName: string, company: string): Promise<ConfigListResponseDto> {
+    const brand = await this.brandRepo.findOne({
+      where: { name: brandName, company: company },
+    });
+
+    if (!brand) {
+      throw new NotFoundException(`Brand with name "${brandName}" not found`);
+    }
+
+    const definitions = await this.configDefinitionRepo.find({
+      where: { brand: { id: brand.id }, company },
+    });
+
+    const configs: ConfigSummaryDto[] = await Promise.all(
+      definitions.map(async (def) => {
+        const activeConfig = await this.getActiveConfigForSDK(brandName, def.name, company);
+        return {
+          name: def.name,
+          description: activeConfig?.description,
+          keys: Object.keys(activeConfig?.formData || {}),
+          keyCount: Object.keys(activeConfig?.formData || {}).length,
+          version: activeConfig?.version || 1,
+          createdAt: activeConfig?.createdAt || new Date(),
+        };
+      })
+    );
+
+    return {
+      configs,
+      total: configs.length,
+    };
+  }
+
+  async findByNameForSdk(
+    brandName: string,
+    configName: string,
+    company: string
+  ): Promise<ConfigDetailResponseDto> {
+    const config = await this.getActiveConfigForSDK(brandName, configName, company);
+    
+    if (!config) {
+      throw new NotFoundException(`Config "${configName}" not found in brand "${brandName}"`);
+    }
+
+    return {
+      name: config.name,
+      description: config.description,
+      formData: config.formData,
+      version: config.version,
+      keys: Object.keys(config.formData),
+      createdAt: config.createdAt,
+    };
+  }
+
+  async getSchemaForSdk(
+    brandName: string,
+    configName: string,
+    company: string
+  ): Promise<ConfigSchemaResponseDto> {
+    const config = await this.getActiveConfigForSDK(brandName, configName, company);
+    
+    if (!config) {
+      throw new NotFoundException(`Config "${configName}" not found`);
+    }
+
+    // Infer schema from layout and formData
+    const fields: Record<string, FieldSchemaDto> = {};
+    
+    if (config.layout) {
+      for (const field of config.layout) {
+        fields[field.name] = {
+          type: this.mapFieldType(field.type),
+          description: field.label,
+          required: field.required,
+          validation: {
+            min: field.min,
+            max: field.max,
+            maxLength: field.maxLength,
+            pattern: field.pattern,
+            enum: field.options?.split(',').map(o => o.trim()),
+          },
+        };
+      }
+    } else {
+      // Infer from formData types
+      for (const [key, value] of Object.entries(config.formData)) {
+        fields[key] = {
+          type: this.inferType(value),
+        };
+      }
+    }
+
+    return {
+      configName,
+      version: config.version,
+      fields,
+    };
+  }
+
+  /**
+   * Maps form field types to schema field types.
+   */
+  private mapFieldType(fieldType: string): FieldType {
+    const typeMap: Record<string, FieldType> = {
+      text: 'string',
+      textarea: 'string',
+      number: 'number',
+      checkbox: 'boolean',
+      select: 'string',
+      date: 'string',
+      json: 'object',
+    };
+    return typeMap[fieldType] || 'string';
+  }
+
+  /**
+   * Infers the field type from a runtime value.
+   */
+  private inferType(value: unknown): FieldType {
+    if (value === null || value === undefined) return 'string';
+    if (Array.isArray(value)) return 'array';
+    if (typeof value === 'object') return 'object';
+    const jsType = typeof value;
+    if (jsType === 'number' || jsType === 'boolean' || jsType === 'string') {
+      return jsType;
+    }
+    return 'string';
+  }
+
+  async introspectForSDK(company: string): Promise<IntrospectionResponseDto> {
+    const brands = await this.brandRepo.find({
+      where: { company },
+      order: { createdAt: 'DESC' },
+    });
+
+    const brandInfos: BrandInfoDto[] = await Promise.all(
+      brands.map(async (brand) => {
+        const definitions = await this.configDefinitionRepo.find({
+          where: { brand: { id: brand.id }, company },
+        });
+
+        const configInfos: ConfigInfoDto[] = await Promise.all(
+          definitions.map(async (def) => {
+            const activeConfig = await this.getActiveConfigForSDK(brand.name, def.name, company);
+            const keys: KeyInfoDto[] = activeConfig
+              ? Object.entries(activeConfig.formData).map(([name, value]) => ({
+                  name,
+                  type: this.inferType(value),
+                  value,
+                }))
+              : [];
+
+            return {
+              name: def.name,
+              description: activeConfig?.description,
+              keys,
+              version: activeConfig?.version || 1,
+            };
+          })
+        );
+
+        return {
+          name: brand.name,
+          description: brand.description,
+          configs: configInfos,
+        };
+      })
+    );
+
+    return {
+      company,
+      brands: brandInfos,
+      generatedAt: new Date(),
+    };
   }
 
   async getConfigVersions(userId: string, brandId: number, configName: string, company: string): Promise<Config[]> {
