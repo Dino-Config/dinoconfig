@@ -402,4 +402,10 @@ export interface RequestOptions {
    * @default false
    */
   forceRefresh?: boolean;
+
+  /**
+   * Custom TTL (time-to-live) for this specific cached request in milliseconds.
+   * Overrides the default TTL from cache configuration.
+   */
+  ttl?: number;
 }
