@@ -72,7 +72,7 @@ The demo uses constants that can be modified in `src/index.ts`:
 
 ```typescript
 // Demo configuration - change these to match your setup
-const DEMO_BRAND = 'Paysafe';
+const DEMO_BRAND = 'DemoBrand';
 const DEMO_CONFIG = 'MyConfig';
 const DEMO_KEY = 'test';
 ```

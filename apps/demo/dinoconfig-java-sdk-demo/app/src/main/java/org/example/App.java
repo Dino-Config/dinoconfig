@@ -79,7 +79,7 @@ public class App {
         System.out.println("✓ getConfigValue(brandName, configName, configValueKey)");
         System.out.println();
 
-        ApiResponse<Object> response = configAPI.getConfigValue("Paysafe", "MyConfig", "test", new RequestOptions());
+        ApiResponse<Object> response = configAPI.getConfigValue("DemoBrand", "MyConfig", "test", new RequestOptions());
         System.out.println("Config value: " + response.getData());
         
         // Demonstrate how to retrieve a configuration value

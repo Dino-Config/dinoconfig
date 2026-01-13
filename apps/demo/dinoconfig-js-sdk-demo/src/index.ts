@@ -19,7 +19,7 @@ const DEFAULT_BASE_URL = 'http://localhost:3000';
 const DEFAULT_TIMEOUT = 10000;
 
 /** Demo configuration - change these to match your setup */
-const DEMO_BRAND = 'Paysafe';
+const DEMO_BRAND = 'DemoBrand';
 const DEMO_CONFIG = 'MyConfig';
 const DEMO_KEY = 'test';
 
