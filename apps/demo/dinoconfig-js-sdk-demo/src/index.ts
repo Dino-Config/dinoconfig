@@ -42,7 +42,7 @@ class DinoConfigJSDemo {
       console.log('=========================================');
       console.log('Available API Methods');
       console.log('=========================================');
-      console.log('✓ dinoconfig.configs.getConfigValue(brandName, configName, configValueKey)');
+      console.log('✓ dinoconfig.configs.getValue(brandName, configName, keyName)');
       console.log();
 
       // Demonstrate cache functionality
@@ -57,12 +57,12 @@ class DinoConfigJSDemo {
 
       // First request - should hit the network (cache miss)
       console.log('1️⃣ First Request (Cache Miss Expected):');
-      console.log(`   Calling: getConfigValue("${brandName}", "${configName}", "${configKey}")`);
+      console.log(`   Calling: getValue("${brandName}", "${configName}", "${configKey}")`);
       const start1 = performance.now();
       let duration1 = 0;
       
       try {
-        const response1 = await dinoconfig.configs.getConfigValue(
+        const response1 = await dinoconfig.configs.getValue(
           brandName,
           configName,
           configKey
@@ -90,11 +90,11 @@ class DinoConfigJSDemo {
 
       // Second request - should hit cache (cache hit)
       console.log('2️⃣ Second Request (Cache Hit Expected):');
-      console.log(`   Calling: getConfigValue("${brandName}", "${configName}", "${configKey}")`);
+      console.log(`   Calling: getValue("${brandName}", "${configName}", "${configKey}")`);
       const start2 = performance.now();
       
       try {
-        const response2 = await dinoconfig.configs.getConfigValue(
+        const response2 = await dinoconfig.configs.getValue(
           brandName,
           configName,
           configKey
@@ -122,11 +122,11 @@ class DinoConfigJSDemo {
 
       // Third request - force refresh (bypass cache)
       console.log('3️⃣ Third Request (Force Refresh - Bypass Cache):');
-      console.log(`   Calling: getConfigValue("${brandName}", "${configName}", "${configKey}", { forceRefresh: true })`);
+      console.log(`   Calling: getValue("${brandName}", "${configName}", "${configKey}", { forceRefresh: true })`);
       const start3 = performance.now();
       
       try {
-        const response3 = await dinoconfig.configs.getConfigValue(
+        const response3 = await dinoconfig.configs.getValue(
           brandName,
           configName,
           configKey,
@@ -159,11 +159,11 @@ class DinoConfigJSDemo {
       console.log('   ✓ Cache invalidated');
 
       // Request after invalidation - should hit network again
-      console.log(`\n   Calling: getConfigValue("${brandName}", "${configName}", "${configKey}")`);
+      console.log(`\n   Calling: getValue("${brandName}", "${configName}", "${configKey}")`);
       const start4 = performance.now();
       
       try {
-        const response4 = await dinoconfig.configs.getConfigValue(
+        const response4 = await dinoconfig.configs.getValue(
           brandName,
           configName,
           configKey
@@ -203,7 +203,7 @@ class DinoConfigJSDemo {
       console.log();
       console.log('// Prefetch into cache:');
       console.log('await dinoconfig.cache.prefetch("key", async () => {');
-      console.log('  return await dinoconfig.configs.getConfigValue(...);');
+      console.log('  return await dinoconfig.configs.getValue(...);');
       console.log('});');
       console.log();
 
@@ -225,15 +225,15 @@ class DinoConfigJSDemo {
       console.log('});');
       console.log();
       console.log('// Get config value (automatically cached):');
-      console.log('const response = await dinoconfig.configs.getConfigValue("mybrand", "myconfig", "mykey");');
+      console.log('const response = await dinoconfig.configs.getValue("mybrand", "myconfig", "mykey");');
       console.log();
       console.log('// Force refresh (bypass cache):');
-      console.log('const response = await dinoconfig.configs.getConfigValue("mybrand", "myconfig", "mykey", {');
+      console.log('const response = await dinoconfig.configs.getValue("mybrand", "myconfig", "mykey", {');
       console.log('  forceRefresh: true');
       console.log('});');
       console.log();
       console.log('// Disable cache for specific request:');
-      console.log('const response = await dinoconfig.configs.getConfigValue("mybrand", "myconfig", "mykey", {');
+      console.log('const response = await dinoconfig.configs.getValue("mybrand", "myconfig", "mykey", {');
       console.log('  cache: false');
       console.log('});');
       console.log();
@@ -245,7 +245,7 @@ class DinoConfigJSDemo {
       console.log('1. Install: npm install @dinoconfig/dinoconfig-js-sdk');
       console.log('2. Import: import { dinoconfigApi } from "@dinoconfig/dinoconfig-js-sdk";');
       console.log('3. Initialize: const dinoconfig = await dinoconfigApi({ apiKey: "your-api-key" });');
-      console.log('4. Get config value: const response = await dinoconfig.configs.getConfigValue(brandName, configName, key);');
+      console.log('4. Get config value: const response = await dinoconfig.configs.getValue(brandName, configName, key);');
       console.log('\nSee README.md for complete documentation.');
     } catch (error: any) {
       console.error('✗ Error during SDK initialization:');
