@@ -8,143 +8,237 @@
 import { HttpClient } from './http-client';
 import { ApiResponse, RequestOptions } from './types';
 
+/** Base path for SDK API endpoints */
+const API_BASE_PATH = '/api/sdk/brands';
+
+/**
+ * Full configuration data returned by the API.
+ */
+export interface ConfigData {
+  readonly name: string;
+  readonly description?: string;
+  readonly values: Readonly<Record<string, unknown>>;
+  readonly version: number;
+  readonly keys: readonly string[];
+  readonly createdAt: Date;
+  readonly updatedAt?: Date;
+}
+
+/** Internal response shape from backend */
+interface ConfigDetailResponse {
+  name: string;
+  description?: string;
+  formData: Record<string, unknown>;
+  version: number;
+  keys: string[];
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/** Parsed path components */
+interface ParsedConfigPath {
+  brand: string;
+  config: string;
+}
+
+/** Parsed path components with key */
+interface ParsedValuePath extends ParsedConfigPath {
+  key: string;
+}
+
 /**
  * Configuration API class for interacting with DinoConfig configurations.
- * 
- * This class provides methods to retrieve configuration values from the
- * DinoConfig API. It handles request formatting, error handling, and
- * response parsing automatically.
- * 
+ *
  * @class ConfigAPI
  * @example
  * ```typescript
- * // ConfigAPI is accessed through the SDK instance
  * const dinoconfig = await dinoconfigApi({ apiKey: 'dino_...' });
- * 
- * // Use the configs API
- * const response = await dinoconfig.configs.getConfigValue(
- *   'MyBrand',
- *   'AppSettings',
- *   'theme'
- * );
- * 
- * console.log('Theme:', response.data); // e.g., 'dark'
+ *
+ * // Get entire config
+ * const config = await dinoconfig.configs.get('MyBrand', 'AppSettings');
+ * console.log('All values:', config.data.values);
+ *
+ * // Get single value (shorthand)
+ * const theme = await dinoconfig.configs.getValue('MyBrand.AppSettings.theme');
+ * console.log('Theme:', theme.data);
  * ```
  */
 export class ConfigAPI {
+  constructor(private readonly httpClient: HttpClient) {}
+
   /**
-   * Creates a new ConfigAPI instance.
-   * 
-   * @param {HttpClient} httpClient - The HTTP client for making API requests
-   * @internal This constructor is called internally by the SDK
+   * Retrieves an entire configuration with all its values.
+   *
+   * @example
+   * ```typescript
+   * // Shorthand: get('Brand.Config')
+   * const config = await dinoconfig.configs.get('Acme.AppSettings');
+   *
+   * // Full params: get(brand, config)
+   * const config = await dinoconfig.configs.get('Acme', 'AppSettings');
+   * console.log(config.data.values);
+   * ```
    */
-  constructor(private httpClient: HttpClient) {}
+  get(path: string, options?: RequestOptions): Promise<ApiResponse<ConfigData>>;
+  get(brandName: string, configName: string, options?: RequestOptions): Promise<ApiResponse<ConfigData>>;
+  async get(
+    brandNameOrPath: string,
+    configNameOrOptions?: string | RequestOptions,
+    options?: RequestOptions
+  ): Promise<ApiResponse<ConfigData>> {
+    const { brand, config, requestOptions } = this.parseConfigArgs(
+      brandNameOrPath,
+      configNameOrOptions,
+      options
+    );
+
+    const response = await this.httpClient.get<ConfigDetailResponse>(
+      this.buildConfigUrl(brand, config),
+      requestOptions
+    );
+
+    return {
+      ...response,
+      data: this.transformConfigResponse(response.data),
+    };
+  }
 
   /**
    * Retrieves a specific configuration value from DinoConfig.
-   * 
-   * This method fetches a single value from a configuration by specifying
-   * the brand name, configuration name, and the key within the configuration.
-   * 
-   * @async
-   * @method getConfigValue
-   * @param {string} brandName - The name of the brand containing the configuration
-   * @param {string} configName - The name of the configuration
-   * @param {string} configValueKey - The key of the specific value to retrieve
-   * @param {RequestOptions} [options] - Optional request configuration
-   * @returns {Promise<ApiResponse<any>>} A Promise resolving to the API response with the config value
-   * @throws {ApiError} If the request fails (e.g., 401, 403, 404, 500)
-   * 
-   * @example Basic usage
+   *
+   * @example
    * ```typescript
-   * const response = await dinoconfig.configs.getConfigValue(
-   *   'Acme',           // brand name
-   *   'AppSettings',    // config name
-   *   'theme'           // config value key
-   * );
-   * 
-   * if (response.success) {
-   *   console.log('Theme:', response.data); // 'dark'
-   * }
+   * // Shorthand: getValue('Brand.Config.Key')
+   * const response = await dinoconfig.configs.getValue('Acme.AppSettings.theme');
+   *
+   * // Full params: getValue(brand, config, key)
+   * const response = await dinoconfig.configs.getValue('Acme', 'AppSettings', 'theme');
+   * console.log('Theme:', response.data);
    * ```
-   * 
-   * @example Retrieving a feature flag
-   * ```typescript
-   * const response = await dinoconfig.configs.getConfigValue(
-   *   'MyApp',
-   *   'FeatureFlags',
-   *   'enableBetaFeatures'
-   * );
-   * 
-   * const isBetaEnabled = response.data === true;
-   * if (isBetaEnabled) {
-   *   // Show beta features
-   * }
-   * ```
-   * 
-   * @example With custom request options
-   * ```typescript
-   * const response = await dinoconfig.configs.getConfigValue(
-   *   'MyBrand',
-   *   'CriticalConfig',
-   *   'databaseUrl',
-   *   {
-   *     timeout: 30000,  // 30 second timeout
-   *     retries: 5,      // Retry up to 5 times
-   *     headers: {
-   *       'X-Request-ID': 'unique-id-123'
-   *     }
-   *   }
-   * );
-   * ```
-   * 
-   * @example Error handling
-   * ```typescript
-   * try {
-   *   const response = await dinoconfig.configs.getConfigValue(
-   *     'MyBrand',
-   *     'MyConfig',
-   *     'myKey'
-   *   );
-   *   console.log('Value:', response.data);
-   * } catch (error: any) {
-   *   if (error.status === 404) {
-   *     console.log('Configuration or key not found');
-   *   } else if (error.status === 401) {
-   *     console.log('Unauthorized - check your API key');
-   *   } else {
-   *     console.log('Error:', error.message);
-   *   }
-   * }
-   * ```
-   * 
-   * @example Conditional logic based on config value
-   * ```typescript
-   * async function getMaxUploadSize(): Promise<number> {
-   *   const response = await dinoconfig.configs.getConfigValue(
-   *     'MyApp',
-   *     'Limits',
-   *     'maxUploadSizeMB'
-   *   );
-   *   
-   *   // Convert to bytes, default to 10MB if not found
-   *   return (response.data ?? 10) * 1024 * 1024;
-   * }
-   * ```
-   * 
-   * @see {@link RequestOptions} for available request customization options
-   * @see {@link ApiResponse} for the response structure
    */
-  async getConfigValue(
-    brandName: string,
-    configName: string,
-    configValueKey: string,
+  getValue(path: string, options?: RequestOptions): Promise<ApiResponse<unknown>>;
+  getValue(brandName: string, configName: string, keyName: string, options?: RequestOptions): Promise<ApiResponse<unknown>>;
+  async getValue(
+    brandNameOrPath: string,
+    configNameOrOptions?: string | RequestOptions,
+    keyName?: string,
     options?: RequestOptions
-  ): Promise<ApiResponse<any>> {
-    const response = await this.httpClient.get<any>(
-      `/api/sdk/brands/${brandName}/configs/${configName}/${configValueKey}`,
+  ): Promise<ApiResponse<unknown>> {
+    const { brand, config, key, requestOptions } = this.parseValueArgs(
+      brandNameOrPath,
+      configNameOrOptions,
+      keyName,
       options
     );
-    return response;
+
+    return this.httpClient.get<unknown>(
+      this.buildValueUrl(brand, config, key),
+      requestOptions
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Private helpers
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Parses arguments for the get() method.
+   */
+  private parseConfigArgs(
+    brandNameOrPath: string,
+    configNameOrOptions?: string | RequestOptions,
+    options?: RequestOptions
+  ): { brand: string; config: string; requestOptions?: RequestOptions } {
+    if (typeof configNameOrOptions === 'string') {
+      return {
+        brand: brandNameOrPath,
+        config: configNameOrOptions,
+        requestOptions: options,
+      };
+    }
+
+    const parsed = this.parsePath(brandNameOrPath, 2);
+    return {
+      brand: parsed[0],
+      config: parsed[1],
+      requestOptions: configNameOrOptions,
+    };
+  }
+
+  /**
+   * Parses arguments for the getValue() method.
+   */
+  private parseValueArgs(
+    brandNameOrPath: string,
+    configNameOrOptions?: string | RequestOptions,
+    keyName?: string,
+    options?: RequestOptions
+  ): { brand: string; config: string; key: string; requestOptions?: RequestOptions } {
+    if (typeof configNameOrOptions === 'string') {
+      return {
+        brand: brandNameOrPath,
+        config: configNameOrOptions,
+        key: keyName!,
+        requestOptions: options,
+      };
+    }
+
+    const parsed = this.parsePath(brandNameOrPath, 3);
+    return {
+      brand: parsed[0],
+      config: parsed[1],
+      key: parsed[2],
+      requestOptions: configNameOrOptions,
+    };
+  }
+
+  /**
+   * Parses a dot-notation path into components.
+   */
+  private parsePath(path: string, expectedParts: number): string[] {
+    const parts = path.split('.');
+    if (parts.length !== expectedParts) {
+      const expected = expectedParts === 2
+        ? 'brandName.configName'
+        : 'brandName.configName.keyName';
+      throw new Error(`Invalid path format "${path}". Expected "${expected}"`);
+    }
+    return parts;
+  }
+
+  /**
+   * Builds the URL for fetching an entire config.
+   */
+  private buildConfigUrl(brand: string, config: string): string {
+    return `${API_BASE_PATH}/${this.encode(brand)}/configs/${this.encode(config)}`;
+  }
+
+  /**
+   * Builds the URL for fetching a single value.
+   */
+  private buildValueUrl(brand: string, config: string, key: string): string {
+    return `${API_BASE_PATH}/${this.encode(brand)}/configs/${this.encode(config)}/${this.encode(key)}`;
+  }
+
+  /**
+   * URL-encodes a path segment.
+   */
+  private encode(value: string): string {
+    return encodeURIComponent(value);
+  }
+
+  /**
+   * Transforms the backend response to the public ConfigData shape.
+   */
+  private transformConfigResponse(data: ConfigDetailResponse): ConfigData {
+    return {
+      name: data.name,
+      description: data.description,
+      values: data.formData,
+      version: data.version,
+      keys: data.keys,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    };
   }
 }

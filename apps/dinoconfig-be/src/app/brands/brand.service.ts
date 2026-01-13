@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { Brand } from './entities/brand.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateBrandDto } from './dto/create-brand.dto';
+import { BrandListResponseDto, BrandSummaryDto } from '../configs/dto/sdk-discovery.dto';
+import { ConfigDefinition } from '../configs/entities/config-definition.entity';
 
 @Injectable()
 export class BrandsService {
   constructor(
     @InjectRepository(Brand) private brandRepo: Repository<Brand>,
-    @InjectRepository(User) private userRepo: Repository<User>
+    @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(ConfigDefinition) private configDefinitionRepo: Repository<ConfigDefinition>
   ) {}
 
   async findAllByUser(userId: number): Promise<Brand[]> {
@@ -51,5 +54,29 @@ export class BrandsService {
       },
       relations: ['user']
     });
+  }
+
+  async listBrandsForSDK(company: string): Promise<BrandListResponseDto> {
+    const brands = await this.findAllByCompany(company);
+
+    const brandSummaries: BrandSummaryDto[] = await Promise.all(
+      brands.map(async (brand) => {
+        const configCount = await this.configDefinitionRepo.count({
+          where: { brand: { id: brand.id }, company },
+        });
+
+        return {
+          name: brand.name,
+          description: brand.description,
+          configCount,
+          createdAt: brand.createdAt,
+        };
+      })
+    );
+
+    return {
+      brands: brandSummaries,
+      total: brandSummaries.length,
+    };
   }
 }
