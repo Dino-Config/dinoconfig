@@ -7,6 +7,7 @@
 
 import { HttpClient } from './http-client';
 import { ApiResponse, RequestOptions } from './types';
+import { CacheManager } from './cache/cache-manager';
 
 /** Base path for SDK API endpoints */
 const API_BASE_PATH = '/api/sdk/brands';
@@ -49,6 +50,10 @@ interface ParsedValuePath extends ParsedConfigPath {
 /**
  * Configuration API class for interacting with DinoConfig configurations.
  *
+ * This class provides methods to retrieve configuration values from the
+ * DinoConfig API. It handles request formatting, error handling, response
+ * parsing, and caching automatically.
+ *
  * @class ConfigAPI
  * @example
  * ```typescript
@@ -64,7 +69,10 @@ interface ParsedValuePath extends ParsedConfigPath {
  * ```
  */
 export class ConfigAPI {
-  constructor(private readonly httpClient: HttpClient) {}
+  constructor(
+    private readonly httpClient: HttpClient,
+    private readonly cacheManager?: CacheManager
+  ) {}
 
   /**
    * Retrieves an entire configuration with all its values.
@@ -92,15 +100,31 @@ export class ConfigAPI {
       options
     );
 
+    const cacheKey = `config:${brand}:${config}`;
+    const useCache = this.cacheManager && requestOptions?.cache !== false && !requestOptions?.forceRefresh;
+
+    if (useCache) {
+      const cached = await this.cacheManager.get<ApiResponse<ConfigData>>(cacheKey);
+      if (cached !== null) {
+        return cached;
+      }
+    }
+
     const response = await this.httpClient.get<ConfigDetailResponse>(
       this.buildConfigUrl(brand, config),
       requestOptions
     );
 
-    return {
+    const transformedResponse: ApiResponse<ConfigData> = {
       ...response,
       data: this.transformConfigResponse(response.data),
     };
+
+    if (useCache && response.success) {
+      await this.cacheManager!.set(cacheKey, transformedResponse, { ttl: requestOptions?.ttl });
+    }
+
+    return transformedResponse;
   }
 
   /**
@@ -131,10 +155,26 @@ export class ConfigAPI {
       options
     );
 
-    return this.httpClient.get<unknown>(
+    const cacheKey = `config:${brand}:${config}:${key}`;
+    const useCache = this.cacheManager && requestOptions?.cache !== false && !requestOptions?.forceRefresh;
+
+    if (useCache) {
+      const cached = await this.cacheManager.get<ApiResponse<unknown>>(cacheKey);
+      if (cached !== null) {
+        return cached;
+      }
+    }
+
+    const response = await this.httpClient.get<unknown>(
       this.buildValueUrl(brand, config, key),
       requestOptions
     );
+
+    if (useCache && response.success) {
+      await this.cacheManager!.set(cacheKey, response, { ttl: requestOptions?.ttl });
+    }
+
+    return response;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

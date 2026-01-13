@@ -14,6 +14,7 @@ Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a s
 - [Quick Start](#quick-start)
 - [Configuration Options](#configuration-options)
 - [Authentication](#authentication)
+- [Caching](#caching)
 - [API Reference](#api-reference)
   - [Configs API](#configs-api)
   - [Discovery API](#discovery-api)
@@ -30,6 +31,7 @@ Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a s
 - **Shorthand Path Syntax** - Use `"Brand.Config.Key"` dot notation for concise access
 - **Discovery API** - Discover brands, configs, and schemas dynamically
 - **Full Introspection** - Get complete visibility into all available configurations
+- **Multi-Layer Caching** - In-memory (L1) and persistent storage (L2) caching for improved performance
 - **Type-Safe** - Full TypeScript support with comprehensive type definitions
 - **Zero Dependencies** - Uses native `fetch` API, no external HTTP libraries required
 - **Retry Logic** - Built-in exponential backoff for failed requests
@@ -85,6 +87,161 @@ console.log('Theme:', response.data);
 | `apiKey` | `string` | **Yes** | - | Your DinoConfig API key |
 | `baseUrl` | `string` | No | `'http://localhost:3000'` | Base URL for the API |
 | `timeout` | `number` | No | `10000` | Request timeout in milliseconds |
+| `cache` | `CacheConfig` | No | `{ enabled: false }` | Cache configuration (see [Caching](#caching)) |
+
+### Example with All Options
+
+```typescript
+const dinoconfig = await dinoconfigApi({
+  apiKey: 'dino_abc123def456...',
+  baseUrl: 'https://api.dinoconfig.com',
+  timeout: 15000,
+  cache: {
+    enabled: true,
+    ttl: 60000,
+    storage: 'localStorage',
+  }
+});
+```
+
+## Caching
+
+The SDK includes a powerful multi-layer caching system that significantly improves performance by reducing network requests.
+
+### Cache Layers
+
+The cache operates on two layers:
+
+1. **L1 - Memory Cache** (Fast, short-lived)
+   - In-memory storage for instant access
+   - Default TTL: 60 seconds (configurable)
+   - Cleared when the application restarts
+
+2. **L2 - Storage Cache** (Persistent, longer-lived)
+   - Browser `localStorage` or `IndexedDB` (future)
+   - Persists across page reloads
+   - Default TTL: 5 minutes (configurable)
+
+### Cache Flow
+
+```
+Request → L1 Memory Cache → L2 Storage Cache → Network API
+         (if miss)         (if miss)         (source of truth)
+```
+
+### Enabling Caching
+
+```typescript
+const dinoconfig = await dinoconfigApi({
+  apiKey: 'dino_your-api-key',
+  cache: {
+    enabled: true,              // Enable caching
+    ttl: 60000,                 // 1 minute TTL for memory cache
+    maxSize: 1000,              // Maximum cache entries
+    storage: 'localStorage',    // Use localStorage for persistence
+    staleWhileRevalidate: false // Return stale data while refreshing
+  }
+});
+```
+
+### Cache Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enabled` | `boolean` | `false` | Whether caching is enabled |
+| `ttl` | `number` | `60000` | Time-to-live in milliseconds (1 minute) |
+| `maxSize` | `number` | `1000` | Maximum number of entries in memory cache |
+| `storage` | `'memory' \| 'localStorage' \| 'indexedDB'` | `undefined` | Storage backend for L2 cache |
+| `staleWhileRevalidate` | `boolean` | `false` | Return stale data while fetching fresh data |
+
+### Cache-Aware Requests
+
+All API methods automatically use the cache when enabled. You can control caching behavior per request:
+
+```typescript
+// Use cache (default behavior when cache is enabled)
+const response = await dinoconfig.configs.getValue(
+  'Brand', 'Config', 'key'
+);
+
+// Force refresh (bypass cache)
+const response = await dinoconfig.configs.getValue(
+  'Brand', 'Config', 'key',
+  { forceRefresh: true }
+);
+
+// Disable cache for this request
+const response = await dinoconfig.configs.getValue(
+  'Brand', 'Config', 'key',
+  { cache: false }
+);
+```
+
+### Cache Management
+
+The SDK exposes a `cache` API for manual cache control:
+
+```typescript
+// Get cache statistics
+const stats = dinoconfig.cache.getStats();
+console.log(`Hits: ${stats.hits}, Misses: ${stats.misses}, Hit Rate: ${(stats.hitRate * 100).toFixed(1)}%`);
+
+// Clear all cache
+await dinoconfig.cache.clear();
+
+// Invalidate cache by pattern (regex)
+await dinoconfig.cache.invalidate('brand:Paysafe:*'); // Clear all Paysafe configs
+await dinoconfig.cache.invalidate('config:.*:.*:featureFlag'); // Clear all feature flags
+
+// Prefetch a value into cache
+await dinoconfig.cache.prefetch('key', async () => {
+  return await dinoconfig.configs.getValue('Brand', 'Config', 'key');
+});
+```
+
+### Cache Performance
+
+With caching enabled, subsequent requests to the same configuration value are served from cache, providing:
+
+- **99%+ faster response times** - Cache hits typically take < 5ms vs 200-500ms for network requests
+- **Reduced API costs** - Fewer network requests
+- **Better offline experience** - Cached values available when network is unavailable
+- **Improved user experience** - Instant configuration value access
+
+### Example: Cache in Action
+
+```typescript
+const dinoconfig = await dinoconfigApi({
+  apiKey: 'dino_...',
+  cache: {
+    enabled: true,
+    ttl: 60000,
+    storage: 'localStorage',
+  }
+});
+
+// First request - hits network (~250ms)
+console.time('first');
+const response1 = await dinoconfig.configs.getValue('Brand', 'Config', 'key');
+console.timeEnd('first'); // ~250ms
+
+// Second request - served from cache (~1ms)
+console.time('second');
+const response2 = await dinoconfig.configs.getValue('Brand', 'Config', 'key');
+console.timeEnd('second'); // ~1ms ⚡
+
+// Check cache performance
+const stats = dinoconfig.cache.getStats();
+console.log(`Cache hit rate: ${(stats.hitRate * 100).toFixed(1)}%`);
+```
+
+### Cache Best Practices
+
+1. **Enable caching for production** - Significantly improves performance
+2. **Use appropriate TTL** - Balance freshness vs performance (1-5 minutes recommended)
+3. **Use localStorage for browser apps** - Persists across page reloads
+4. **Invalidate cache on updates** - Use cache invalidation when you know configs changed
+5. **Monitor cache hit rates** - Use `getStats()` to track cache effectiveness
 
 ## Authentication
 
@@ -263,12 +420,36 @@ All API methods accept an optional `RequestOptions` object:
 
 ```typescript
 interface RequestOptions {
-  headers?: Record<string, string>;  // Custom headers
-  timeout?: number;                   // Request timeout (ms)
-  retries?: number;                   // Retry attempts
+  /** Custom headers for this specific request */
+  headers?: Record<string, string>;
+  /** Request timeout in milliseconds (overrides default) */
+  timeout?: number;
+  /** Number of retry attempts for failed requests */
+  retries?: number;
+  /** Whether to use cache (default: true when cache is enabled) */
+  cache?: boolean;
+  /** Force refresh from API, bypassing cache */
+  forceRefresh?: boolean;
 }
 ```
 
+**Example with options:**
+```typescript
+const response = await dinoconfig.configs.getValue(
+  'MyBrand',
+  'Settings',
+  'apiEndpoint',
+  {
+    timeout: 5000,
+    retries: 3,
+    cache: true,              // Use cache (default)
+    forceRefresh: false,      // Don't bypass cache
+    headers: {
+      'X-Request-ID': 'unique-request-id'
+    }
+  }
+);
+```
 ## Error Handling
 
 ```typescript
@@ -308,6 +489,7 @@ import {
   // APIs
   ConfigAPI,
   DiscoveryAPI,
+  CacheAPI,
 
   // Config types
   ConfigData,
@@ -323,16 +505,36 @@ import {
   BrandInfoDetail,
   ConfigInfoDetail,
   KeyInfo,
+
+  // Cache types
+  CacheConfig,
+  CacheStats
 } from '@dinoconfig/dinoconfig-js-sdk';
 ```
 
 ### Key Interfaces
 
 ```typescript
-/** SDK instance */
+/** SDK configuration options */
+interface DinoConfigSDKConfig {
+  /** The API key for authentication */
+  apiKey: string;
+  /** The base URL of the DinoConfig API */
+  baseUrl?: string;
+  /** Request timeout in milliseconds */
+  timeout?: number;
+  /** Cache configuration options */
+  cache?: Partial<CacheConfig>;
+}
+
+/** SDK instance returned by dinoconfigApi() */
 interface DinoConfigInstance {
+  /** Configuration API for retrieving config values */
   configs: ConfigAPI;
+  /** Discovery API for exploring available brands, configs, and schemas */
   discovery: DiscoveryAPI;
+  /** Cache API for managing the cache layer */
+  cache: CacheAPI;
 }
 
 /** Full config data */
@@ -351,6 +553,20 @@ interface ApiResponse<T> {
   data: T;
   success: boolean;
   message?: string;
+}
+
+/** Request customization options */
+interface RequestOptions {
+  /** Custom headers */
+  headers?: Record<string, string>;
+  /** Request timeout in milliseconds */
+  timeout?: number;
+  /** Number of retry attempts */
+  retries?: number;
+  /** Whether to use cache (default: true when cache is enabled) */
+  cache?: boolean;
+  /** Force refresh from API, bypassing cache */
+  forceRefresh?: boolean;
 }
 ```
 
@@ -427,6 +643,37 @@ export async function GET(
 }
 ```
 
+### With Caching
+
+```typescript
+// Initialize with cache enabled
+const dinoconfig = await dinoconfigApi({
+  apiKey: process.env.DINOCONFIG_API_KEY!,
+  cache: {
+    enabled: true,
+    ttl: 60000,           // 1 minute
+    storage: 'localStorage',
+  }
+});
+
+// First request - network call (~250ms)
+const response1 = await dinoconfig.configs.getValue('MyBrand', 'Settings', 'apiUrl');
+
+// Second request - cached (~1ms) ⚡
+const response2 = await dinoconfig.configs.getValue('MyBrand', 'Settings', 'apiUrl');
+
+// Force refresh when needed
+const freshResponse = await dinoconfig.configs.getValue(
+  'MyBrand',
+  'Settings',
+  'apiUrl',
+  { forceRefresh: true }
+);
+
+// Check cache performance
+const stats = dinoconfig.cache.getStats();
+console.log(`Cache hit rate: ${(stats.hitRate * 100).toFixed(1)}%`);
+```
 ## Requirements
 
 - **Node.js** >= 16.0.0

@@ -27,7 +27,8 @@ export class RadioGroupElementComponent {
       : [];
   });
 
-  onValueChange(newValue: string): void {
+  onValueChange(event: any): void {
+    const newValue = event?.value ?? event;
     this.valueChange.emit(newValue);
   }
 }

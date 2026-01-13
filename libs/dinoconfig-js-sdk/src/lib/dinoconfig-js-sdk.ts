@@ -10,6 +10,48 @@ import { HttpClient } from './http-client';
 import { ConfigAPI } from './config-api';
 import { DiscoveryAPI } from './discovery-api';
 import { DinoConfigSDKConfig } from './types';
+import { CacheManager } from './cache/cache-manager';
+import { CacheConfig, CacheStats } from './cache/cache.types';
+
+/**
+ * Cache API interface.
+ */
+export interface CacheAPI {
+  /**
+   * Get a value from cache.
+   */
+  get<T>(key: string): Promise<T | null>;
+
+  /**
+   * Set a value in cache.
+   */
+  set<T>(key: string, value: T, options?: { ttl?: number }): Promise<void>;
+
+  /**
+   * Delete a value from cache.
+   */
+  delete(key: string): Promise<void>;
+
+  /**
+   * Clear all cache entries.
+   */
+  clear(): Promise<void>;
+
+  /**
+   * Invalidate entries matching a pattern.
+   */
+  invalidate(pattern?: string): Promise<void>;
+
+  /**
+   * Prefetch a value into cache.
+   */
+  prefetch<T>(key: string, fetcher: () => Promise<T>): Promise<T>;
+
+  /**
+   * Get cache statistics.
+   */
+  getStats(): CacheStats;
+}
 
 /**
  * DinoConfig SDK instance interface.
@@ -31,6 +73,9 @@ import { DinoConfigSDKConfig } from './types';
  *
  * // Discovery
  * const brands = await dinoconfig.discovery.listBrands();
+ *
+ * // Cache management
+ * await dinoconfig.cache.invalidate('brand:.*');
  * ```
  */
 export interface DinoConfigInstance {
@@ -57,6 +102,13 @@ export interface DinoConfigInstance {
    * @see {@link DiscoveryAPI}
    */
   discovery: DiscoveryAPI;
+
+  /**
+   * Cache API for managing the cache layer.
+   * 
+   * @see {@link CacheAPI}
+   */
+  cache: CacheAPI;
 }
 
 /**
@@ -109,6 +161,7 @@ export async function dinoconfigApi(config: DinoConfigSDKConfig): Promise<DinoCo
     apiKey,
     baseUrl = 'http://localhost:3000',
     timeout = 10000,
+    cache: cacheConfig,
   } = config;
 
   // Create HTTP client with base configuration
@@ -119,9 +172,19 @@ export async function dinoconfigApi(config: DinoConfigSDKConfig): Promise<DinoCo
     'X-API-Key': apiKey,
   });
 
+  // Initialize cache if enabled
+  const cacheManager = new CacheManager({
+    enabled: cacheConfig?.enabled ?? false,
+    ttl: cacheConfig?.ttl ?? 60000,
+    maxSize: cacheConfig?.maxSize ?? 1000,
+    storage: cacheConfig?.storage,
+    staleWhileRevalidate: cacheConfig?.staleWhileRevalidate ?? false,
+  });
+
   // Return initialized SDK instance with all APIs
   return {
-    configs: new ConfigAPI(httpClient),
+    configs: new ConfigAPI(httpClient, cacheManager),
     discovery: new DiscoveryAPI(httpClient),
+    cache: cacheManager,
   };
 }

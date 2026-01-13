@@ -59,7 +59,7 @@
 export { dinoconfigApi } from './lib/dinoconfig-js-sdk';
 
 /** SDK instance type */
-export type { DinoConfigInstance } from './lib/dinoconfig-js-sdk';
+export type { DinoConfigInstance, CacheAPI } from './lib/dinoconfig-js-sdk';
 
 /** SDK configuration options */
 export type { DinoConfigSDKConfig, ApiResponse, RequestOptions } from './lib/types';
@@ -104,3 +104,10 @@ export type {
   /** Key information with name, type, and value */
   KeyInfo,
 } from './lib/discovery-api';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cache API
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Cache API types */
+export type { CacheConfig, CacheEntry, CacheOptions, CacheStats } from './lib/cache';

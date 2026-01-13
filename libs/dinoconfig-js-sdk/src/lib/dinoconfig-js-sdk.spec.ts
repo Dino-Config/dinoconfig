@@ -96,7 +96,7 @@ describe('dinoconfigApi', () => {
   });
 
   describe('API Modules', () => {
-    it('should expose configs API with getConfigValue method', async () => {
+    it('should expose configs API with getValue method', async () => {
       mockTokenExchange();
 
       const dinoconfig = await dinoconfigApi({
@@ -104,7 +104,7 @@ describe('dinoconfigApi', () => {
       });
 
       expect(dinoconfig.configs).toBeDefined();
-      expect(typeof dinoconfig.configs.getConfigValue).toBe('function');
+      expect(typeof dinoconfig.configs.getValue).toBe('function');
     });
 
     it('should use the access token for API calls', async () => {
@@ -121,7 +121,7 @@ describe('dinoconfigApi', () => {
         json: vi.fn().mockResolvedValue({ value: 'test-value' }),
       });
 
-      await dinoconfig.configs.getConfigValue('brand', 'config', 'key');
+      await dinoconfig.configs.getValue('brand', 'config', 'key');
 
       // Second call should be the config API call with Bearer token
       expect(global.fetch).toHaveBeenLastCalledWith(

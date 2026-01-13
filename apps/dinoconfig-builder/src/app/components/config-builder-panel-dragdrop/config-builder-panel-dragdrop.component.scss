@@ -5,17 +5,14 @@
   .unsaved-changes-snackbar {
     position: fixed;
     bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 2000;
     animation: slideUpSnackbar 0.3s ease-out;
     box-sizing: border-box;
-
-    @media (min-width: 1201px) {
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 800px;
-      padding: 0 24px;
-    }
+    width: 100%;
+    max-width: 800px;
+    padding: 0 24px;
 
     @media (max-width: 1200px) and (min-width: 991px) {
       left: 304px;
@@ -25,6 +22,7 @@
       width: auto;
       margin: 0;
       padding: 0;
+      animation: slideUpSnackbarRight 0.3s ease-out;
     }
 
     @media (max-width: 990px) and (min-width: 641px) {
@@ -35,6 +33,7 @@
       width: auto;
       margin: 0;
       padding: 0;
+      animation: slideUpSnackbarRight 0.3s ease-out;
     }
 
     @media (max-width: 640px) {
@@ -46,6 +45,7 @@
       width: auto;
       margin: 0;
       padding: 0;
+      animation: slideUpSnackbarRight 0.3s ease-out;
     }
 
     .snackbar-content {
@@ -346,6 +346,17 @@
 }
 
 @keyframes slideUpSnackbar {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes slideUpSnackbarRight {
   from {
     opacity: 0;
     transform: translateY(20px);

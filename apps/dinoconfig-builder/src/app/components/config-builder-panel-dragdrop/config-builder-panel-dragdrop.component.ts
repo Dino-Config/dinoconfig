@@ -189,9 +189,9 @@ export class ConfigBuilderPanelDragDropComponent {
     this.notification.emit({ type: 'success', message: `Field "${newField.label || newField.name}" added successfully!` });
   }
 
-  private checkForUnsavedChanges(): void {
+  private checkForUnsavedChanges(formDataOverride?: Record<string, any>): void {
     const fields = this.gridFields();
-    const formData = this.currentFormData();
+    const formData = formDataOverride ?? this.currentFormData();
 
     let hasFieldChanges = false;
     let hasFormDataChanges = false;
@@ -246,7 +246,7 @@ export class ConfigBuilderPanelDragDropComponent {
 
   onFormDataValueChange(formData: Record<string, any>): void {
     this.formDataChange.emit(formData);
-    this.checkForUnsavedChanges();
+    this.checkForUnsavedChanges(formData);
   }
 
   onEditField(field: GridFieldConfig): void {
