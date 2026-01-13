@@ -5,6 +5,8 @@
  * @version 1.0.0
  */
 
+import { CacheConfig } from './cache/cache.types';
+
 /**
  * Configuration options for initializing the DinoConfig SDK.
  * 
@@ -14,7 +16,12 @@
  * const config: DinoConfigSDKConfig = {
  *   apiKey: 'dino_your-api-key-here',
  *   baseUrl: 'https://api.dinoconfig.com',
- *   timeout: 15000
+ *   timeout: 15000,
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 60000,
+ *     storage: 'localStorage',
+ *   }
  * };
  * ```
  */
@@ -48,6 +55,24 @@ export interface DinoConfigSDKConfig {
    * @example 15000 // 15 seconds
    */
   timeout?: number;
+
+  /**
+   * Cache configuration options.
+   * Enables multi-layer caching (memory + storage) for improved performance.
+   * 
+   * @default { enabled: false }
+   * @example
+   * ```typescript
+   * cache: {
+   *   enabled: true,
+   *   ttl: 60000,           // 1 minute
+   *   maxSize: 1000,
+   *   storage: 'localStorage',
+   *   staleWhileRevalidate: true,
+   * }
+   * ```
+   */
+  cache?: Partial<CacheConfig>;
 }
 
 /**
@@ -363,4 +388,18 @@ export interface RequestOptions {
    * @example 3 // Retry up to 3 times
    */
   retries?: number;
+
+  /**
+   * Whether to use cache for this request.
+   * 
+   * @default true
+   */
+  cache?: boolean;
+
+  /**
+   * Force refresh from API, bypassing cache.
+   * 
+   * @default false
+   */
+  forceRefresh?: boolean;
 }
