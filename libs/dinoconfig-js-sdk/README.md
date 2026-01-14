@@ -18,6 +18,7 @@ Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a s
 - [API Reference](#api-reference)
   - [Configs API](#configs-api)
   - [Discovery API](#discovery-api)
+- [Code Generation](#code-generation)
 - [Error Handling](#error-handling)
 - [TypeScript Support](#typescript-support)
 - [Examples](#examples)
@@ -32,6 +33,7 @@ Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a s
 - **Discovery API** - Discover brands, configs, and schemas dynamically
 - **Full Introspection** - Get complete visibility into all available configurations
 - **Multi-Layer Caching** - In-memory (L1) and persistent storage (L2) caching for improved performance
+- **Code Generation** - Generate TypeScript types from your config schemas
 - **Type-Safe** - Full TypeScript support with comprehensive type definitions
 - **Zero Dependencies** - Uses native `fetch` API, no external HTTP libraries required
 - **Retry Logic** - Built-in exponential backoff for failed requests
@@ -450,6 +452,41 @@ const response = await dinoconfig.configs.getValue(
   }
 );
 ```
+
+## Code Generation
+
+Generate TypeScript types from your DinoConfig schemas using the [@dinoconfig/cli](https://www.npmjs.com/package/@dinoconfig/cli) package:
+
+```bash
+# Install CLI
+npm install -g @dinoconfig/cli
+
+# Generate types
+npx @dinoconfig/cli codegen --api-key=dino_xxx --output=./src/types/dinoconfig.d.ts
+```
+
+### Usage with Generated Types
+
+```typescript
+import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+import { DinoConfig } from './types/dinoconfig';
+
+const dinoconfig = await dinoconfigApi({
+  apiKey: process.env.DINOCONFIG_API_KEY!
+});
+
+// Full type safety with generics
+const flags = await dinoconfig.configs.get<DinoConfig.MyBrand.FeatureFlags>(
+  'MyBrand',
+  'FeatureFlags'
+);
+
+// TypeScript knows the exact types!
+flags.data.values.enableDarkMode; // boolean ✓
+flags.data.values.maxUploadSize;  // number ✓
+```
+
+For full documentation, see [@dinoconfig/cli](https://www.npmjs.com/package/@dinoconfig/cli).
 ## Error Handling
 
 ```typescript
