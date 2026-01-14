@@ -14,11 +14,12 @@ const API_BASE_PATH = '/api/sdk/brands';
 
 /**
  * Full configuration data returned by the API.
+ * @template T - The shape of the configuration values (defaults to Record<string, unknown>)
  */
-export interface ConfigData {
+export interface ConfigData<T = Record<string, unknown>> {
   readonly name: string;
   readonly description?: string;
-  readonly values: Readonly<Record<string, unknown>>;
+  readonly values: Readonly<T>;
   readonly version: number;
   readonly keys: readonly string[];
   readonly createdAt: Date;
@@ -34,17 +35,6 @@ interface ConfigDetailResponse {
   keys: string[];
   createdAt: Date;
   updatedAt?: Date;
-}
-
-/** Parsed path components */
-interface ParsedConfigPath {
-  brand: string;
-  config: string;
-}
-
-/** Parsed path components with key */
-interface ParsedValuePath extends ParsedConfigPath {
-  key: string;
 }
 
 /**
@@ -77,6 +67,7 @@ export class ConfigAPI {
   /**
    * Retrieves an entire configuration with all its values.
    *
+   * @template T - The shape of the configuration values for type safety
    * @example
    * ```typescript
    * // Shorthand: get('Brand.Config')
@@ -85,15 +76,20 @@ export class ConfigAPI {
    * // Full params: get(brand, config)
    * const config = await dinoconfig.configs.get('Acme', 'AppSettings');
    * console.log(config.data.values);
+   *
+   * // With generated types for full type safety
+   * import { DinoConfig } from './types/dinoconfig';
+   * const config = await dinoconfig.configs.get<DinoConfig.Acme.AppSettings>('Acme', 'AppSettings');
+   * config.data.values.theme; // fully typed!
    * ```
    */
-  get(path: string, options?: RequestOptions): Promise<ApiResponse<ConfigData>>;
-  get(brandName: string, configName: string, options?: RequestOptions): Promise<ApiResponse<ConfigData>>;
-  async get(
+  get<T = Record<string, unknown>>(path: string, options?: RequestOptions): Promise<ApiResponse<ConfigData<T>>>;
+  get<T = Record<string, unknown>>(brandName: string, configName: string, options?: RequestOptions): Promise<ApiResponse<ConfigData<T>>>;
+  async get<T = Record<string, unknown>>(
     brandNameOrPath: string,
     configNameOrOptions?: string | RequestOptions,
     options?: RequestOptions
-  ): Promise<ApiResponse<ConfigData>> {
+  ): Promise<ApiResponse<ConfigData<T>>> {
     const { brand, config, requestOptions } = this.parseConfigArgs(
       brandNameOrPath,
       configNameOrOptions,
@@ -104,7 +100,7 @@ export class ConfigAPI {
     const useCache = this.cacheManager && requestOptions?.cache !== false && !requestOptions?.forceRefresh;
 
     if (useCache) {
-      const cached = await this.cacheManager.get<ApiResponse<ConfigData>>(cacheKey);
+      const cached = await this.cacheManager.get<ApiResponse<ConfigData<T>>>(cacheKey);
       if (cached !== null) {
         return cached;
       }
@@ -115,9 +111,9 @@ export class ConfigAPI {
       requestOptions
     );
 
-    const transformedResponse: ApiResponse<ConfigData> = {
+    const transformedResponse: ApiResponse<ConfigData<T>> = {
       ...response,
-      data: this.transformConfigResponse(response.data),
+      data: this.transformConfigResponse<T>(response.data),
     };
 
     if (useCache && response.success) {
@@ -130,6 +126,7 @@ export class ConfigAPI {
   /**
    * Retrieves a specific configuration value from DinoConfig.
    *
+   * @template T - The expected type of the value for type safety
    * @example
    * ```typescript
    * // Shorthand: getValue('Brand.Config.Key')
@@ -138,16 +135,20 @@ export class ConfigAPI {
    * // Full params: getValue(brand, config, key)
    * const response = await dinoconfig.configs.getValue('Acme', 'AppSettings', 'theme');
    * console.log('Theme:', response.data);
+   *
+   * // With type parameter for type safety
+   * const theme = await dinoconfig.configs.getValue<string>('Acme', 'AppSettings', 'theme');
+   * const maxUsers = await dinoconfig.configs.getValue<number>('Acme', 'AppSettings', 'maxUsers');
    * ```
    */
-  getValue(path: string, options?: RequestOptions): Promise<ApiResponse<unknown>>;
-  getValue(brandName: string, configName: string, keyName: string, options?: RequestOptions): Promise<ApiResponse<unknown>>;
-  async getValue(
+  getValue<T = unknown>(path: string, options?: RequestOptions): Promise<ApiResponse<T>>;
+  getValue<T = unknown>(brandName: string, configName: string, keyName: string, options?: RequestOptions): Promise<ApiResponse<T>>;
+  async getValue<T = unknown>(
     brandNameOrPath: string,
     configNameOrOptions?: string | RequestOptions,
     keyName?: string,
     options?: RequestOptions
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<ApiResponse<T>> {
     const { brand, config, key, requestOptions } = this.parseValueArgs(
       brandNameOrPath,
       configNameOrOptions,
@@ -159,13 +160,13 @@ export class ConfigAPI {
     const useCache = this.cacheManager && requestOptions?.cache !== false && !requestOptions?.forceRefresh;
 
     if (useCache) {
-      const cached = await this.cacheManager.get<ApiResponse<unknown>>(cacheKey);
+      const cached = await this.cacheManager.get<ApiResponse<T>>(cacheKey);
       if (cached !== null) {
         return cached;
       }
     }
 
-    const response = await this.httpClient.get<unknown>(
+    const response = await this.httpClient.get<T>(
       this.buildValueUrl(brand, config, key),
       requestOptions
     );
@@ -270,11 +271,11 @@ export class ConfigAPI {
   /**
    * Transforms the backend response to the public ConfigData shape.
    */
-  private transformConfigResponse(data: ConfigDetailResponse): ConfigData {
+  private transformConfigResponse<T>(data: ConfigDetailResponse): ConfigData<T> {
     return {
       name: data.name,
       description: data.description,
-      values: data.formData,
+      values: data.formData as T,
       version: data.version,
       keys: data.keys,
       createdAt: data.createdAt,

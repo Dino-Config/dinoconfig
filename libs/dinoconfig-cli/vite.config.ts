@@ -7,7 +7,7 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/apps/dinoconfig-js-sdk',
+  cacheDir: '../../node_modules/.vite/libs/dinoconfig-cli',
   plugins: [
     nxViteTsPaths(),
     nxCopyAssetsPlugin(['*.md']),
@@ -18,20 +18,28 @@ export default defineConfig(() => ({
     }),
   ],
   build: {
-    outDir: '../../dist/apps/dinoconfig-js-sdk',
+    outDir: '../../dist/libs/dinoconfig-cli',
     emptyOutDir: true,
     reportCompressedSize: true,
     commonjsOptions: {
       transformMixedEsModules: true,
     },
     lib: {
-      entry: 'src/index.ts',
-      name: 'dinoconfig-js-sdk',
-      fileName: 'index',
+      entry: {
+        index: 'src/index.ts',
+        'bin/dinoconfig': 'src/bin/dinoconfig.ts',
+        'bin/codegen': 'src/bin/codegen.ts',
+      },
       formats: ['es' as const],
     },
     rollupOptions: {
-      external: [],
+      external: [
+        'fs',
+        'path',
+        'node:fs',
+        'node:path',
+        '@dinoconfig/dinoconfig-js-sdk',
+      ],
     },
   },
   test: {
@@ -41,7 +49,7 @@ export default defineConfig(() => ({
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
-      reportsDirectory: '../../coverage/apps/dinoconfig-js-sdk',
+      reportsDirectory: '../../coverage/libs/dinoconfig-cli',
       provider: 'v8' as const,
     },
   },

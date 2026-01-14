@@ -1,0 +1,67 @@
+{
+  "name": "@dinoconfig/cli",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "bin": {
+    "dinoconfig": "./bin/dinoconfig.js",
+    "dinoconfig-codegen": "./bin/codegen.js"
+  },
+  "description": "DinoConfig CLI - Command-line tools for DinoConfig including type generation",
+  "keywords": [
+    "dinoconfig",
+    "cli",
+    "codegen",
+    "typescript",
+    "type-generation",
+    "configuration",
+    "config"
+  ],
+  "author": {
+    "name": "DinoConfig Team",
+    "email": "support@dinoconfig.com",
+    "url": "https://dinoconfig.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/dinoconfig/dinoconfig-cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dinoconfig/dinoconfig-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dinoconfig/dinoconfig-cli/issues",
+    "email": "support@dinoconfig.com"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "bin/**/*.js",
+    "bin/**/*.d.ts",
+    "lib/**/*.js",
+    "lib/**/*.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@dinoconfig/dinoconfig-js-sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
