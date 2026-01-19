@@ -5,6 +5,7 @@
 
 import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
 import { TypeGenerator } from './type-generator';
+import { JavaModelGenerator } from './java-model-generator';
 import { DEFAULT_OUTPUT, DEFAULT_BASE_URL, DEFAULT_NAMESPACE } from './constants';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -128,6 +129,109 @@ export async function generateTypes(options: GenerateTypesOptions): Promise<Gene
       success: true,
       outputPath: absolutePath,
       content,
+      stats: {
+        brands: brands.length,
+        configs: totalConfigs,
+        keys: totalKeys,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Options for generating Java models.
+ */
+export interface GenerateJavaModelsOptions {
+  /** DinoConfig API key */
+  apiKey: string;
+  /** API base URL */
+  baseUrl?: string;
+  /** Output directory path (where the generated folder will be created) */
+  output?: string;
+}
+
+/**
+ * Result of Java model generation.
+ */
+export interface GenerateJavaModelsResult {
+  /** Whether generation was successful */
+  success: boolean;
+  /** Output directory path */
+  outputDir?: string;
+  /** Generated file paths */
+  generatedFiles?: string[];
+  /** Error message if failed */
+  error?: string;
+  /** Statistics about generated models */
+  stats?: GenerateTypesStats;
+}
+
+/**
+ * Generates Java model classes from DinoConfig schemas.
+ *
+ * @param options - Generation options
+ * @returns Generation result
+ *
+ * @example
+ * ```typescript
+ * import { generateJavaModels } from '@dinoconfig/cli';
+ *
+ * const result = await generateJavaModels({
+ *   apiKey: 'dino_xxx',
+ *   output: './libs/dinoconfig-java-sdk/lib/src/main/java',
+ * });
+ *
+ * if (result.success) {
+ *   console.log(`Generated ${result.stats?.configs} config models`);
+ * }
+ * ```
+ */
+export async function generateJavaModels(
+  options: GenerateJavaModelsOptions
+): Promise<GenerateJavaModelsResult> {
+  const {
+    apiKey,
+    baseUrl = DEFAULT_BASE_URL,
+    output = './libs/dinoconfig-java-sdk/lib/src/main/java/com/dinoconfig/sdk/generated',
+  } = options;
+
+  try {
+    const dinoconfig = await dinoconfigApi({ apiKey, baseUrl });
+    const response = await dinoconfig.discovery.introspect();
+
+    if (!response.success || !response.data) {
+      return {
+        success: false,
+        error: response.message || 'Failed to fetch introspection data',
+      };
+    }
+
+    const { brands } = response.data;
+    const { configs: totalConfigs, keys: totalKeys } = countStats(brands);
+
+    const generator = new JavaModelGenerator();
+    const files = generator.generate(response.data);
+
+    const absoluteOutputDir = path.resolve(process.cwd(), output);
+    const generatedFiles: string[] = [];
+
+    // Write all generated files
+    for (const [filePath, content] of files.entries()) {
+      const fullPath = path.join(absoluteOutputDir, filePath);
+      ensureDirectoryExists(fullPath);
+      fs.writeFileSync(fullPath, content, 'utf-8');
+      generatedFiles.push(fullPath);
+    }
+
+    return {
+      success: true,
+      outputDir: absoluteOutputDir,
+      generatedFiles,
       stats: {
         brands: brands.length,
         configs: totalConfigs,

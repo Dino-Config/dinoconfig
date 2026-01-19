@@ -5,203 +5,196 @@
  */
 package com.dinoconfig.sdk.model;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Options for customizing individual API requests.
- * 
+ *
  * <p>This class allows you to customize request behavior on a per-request basis,
- * including timeouts, retries, and custom headers.
- * 
- * <p><b>Basic Usage:</b>
+ * including timeouts, retries, and custom headers. It supports both traditional
+ * setter methods and a fluent builder pattern.
+ *
+ * <p><b>Builder Pattern (Recommended):</b>
  * <pre>{@code
- * // Empty options (use defaults)
- * RequestOptions options = new RequestOptions();
- * 
- * ApiResponse<Object> response = configAPI.getConfigValue(
- *     "mybrand", "myconfig", "mykey", options
+ * RequestOptions options = RequestOptions.builder()
+ *     .timeout(30000L)
+ *     .retries(3)
+ *     .header("X-Request-ID", UUID.randomUUID().toString())
+ *     .build();
+ *
+ * ApiResponse<Object> response = configAPI.getValue(
+ *     "MyBrand", "MyConfig", "myKey", options
  * );
  * }</pre>
- * 
- * <p><b>Custom Timeout:</b>
+ *
+ * <p><b>Traditional Setter Style:</b>
  * <pre>{@code
  * RequestOptions options = new RequestOptions();
- * options.setTimeout(30000L);  // 30 second timeout
- * 
- * ApiResponse<Object> response = configAPI.getConfigValue(
- *     "mybrand", "myconfig", "mykey", options
- * );
+ * options.setTimeout(30000L);
+ * options.setRetries(3);
+ * options.addHeader("X-Request-ID", "unique-id");
  * }</pre>
- * 
- * <p><b>With Retries:</b>
- * <pre>{@code
- * RequestOptions options = new RequestOptions();
- * options.setRetries(3);  // Retry up to 3 times on failure
- * 
- * ApiResponse<Object> response = configAPI.getConfigValue(
- *     "mybrand", "myconfig", "mykey", options
- * );
- * }</pre>
- * 
- * <p><b>With Custom Headers:</b>
- * <pre>{@code
- * RequestOptions options = new RequestOptions();
- * options.setHeaders(Map.of(
- *     "X-Request-ID", UUID.randomUUID().toString(),
- *     "X-Custom-Header", "custom-value"
- * ));
- * 
- * ApiResponse<Object> response = configAPI.getConfigValue(
- *     "mybrand", "myconfig", "mykey", options
- * );
- * }</pre>
- * 
- * <p><b>Full Example:</b>
- * <pre>{@code
- * RequestOptions options = new RequestOptions();
- * options.setTimeout(30000L);  // 30 second timeout
- * options.setRetries(5);       // Retry up to 5 times
- * options.setHeaders(Map.of(
- *     "X-Request-ID", UUID.randomUUID().toString()
- * ));
- * 
- * ApiResponse<Object> response = configAPI.getConfigValue(
- *     "mybrand", "critical-config", "database-url", options
- * );
- * }</pre>
- * 
+ *
  * <p><b>Retry Behavior:</b>
  * <ul>
  *   <li>Only server errors (5xx) and network errors are retried</li>
  *   <li>Client errors (4xx) are NOT retried (except 429 rate limiting)</li>
  *   <li>Retries use exponential backoff: 1s, 2s, 4s, 8s, etc.</li>
  * </ul>
- * 
+ *
  * @author DinoConfig Team
  * @version 1.0.0
  * @since 1.0.0
  */
-public class RequestOptions {
-    
-    /**
-     * Custom headers to include in this specific request.
-     * 
-     * <p>These headers are merged with the default headers. If a header
-     * key exists in both, the value from this map takes precedence.
-     */
+public final class RequestOptions {
+
     private Map<String, String> headers;
-    
-    /**
-     * Request timeout in milliseconds.
-     * 
-     * <p>Overrides the default timeout set during SDK initialization.
-     * If {@code null}, the SDK default timeout is used.
-     */
     private Long timeout;
-    
-    /**
-     * Number of retry attempts for failed requests.
-     * 
-     * <p>Uses exponential backoff between retries:
-     * <ul>
-     *   <li>1st retry: 1 second delay</li>
-     *   <li>2nd retry: 2 seconds delay</li>
-     *   <li>3rd retry: 4 seconds delay</li>
-     *   <li>And so on...</li>
-     * </ul>
-     * 
-     * <p>Default: {@code 0} (no retries)
-     */
     private Integer retries;
-    
+    private Boolean cache;
+    private Boolean forceRefresh;
+
     /**
      * Default constructor.
-     * 
+     *
      * <p>Creates options with no customizations (uses SDK defaults).
      */
     public RequestOptions() {
+        this.headers = new HashMap<>();
     }
-    
+
     /**
-     * Constructor with all fields.
-     * 
-     * @param headers Custom headers for this request
-     * @param timeout Request timeout in milliseconds
-     * @param retries Number of retry attempts
+     * Private constructor for builder.
      */
-    public RequestOptions(Map<String, String> headers, Long timeout, Integer retries) {
-        this.headers = headers;
-        this.timeout = timeout;
-        this.retries = retries;
+    private RequestOptions(Builder builder) {
+        this.headers = builder.headers != null ? new HashMap<>(builder.headers) : new HashMap<>();
+        this.timeout = builder.timeout;
+        this.retries = builder.retries;
+        this.cache = builder.cache;
+        this.forceRefresh = builder.forceRefresh;
     }
-    
+
+    /**
+     * Creates a new builder for fluent construction.
+     *
+     * <p><b>Example:</b>
+     * <pre>{@code
+     * RequestOptions options = RequestOptions.builder()
+     *     .timeout(30000L)
+     *     .retries(3)
+     *     .header("X-Request-ID", "unique-id")
+     *     .build();
+     * }</pre>
+     *
+     * @return A new Builder instance
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Creates RequestOptions with just a timeout.
+     *
+     * @param timeout The timeout in milliseconds
+     * @return New RequestOptions with the specified timeout
+     */
+    public static RequestOptions withTimeout(long timeout) {
+        return builder().timeout(timeout).build();
+    }
+
+    /**
+     * Creates RequestOptions with just retries.
+     *
+     * @param retries The number of retry attempts
+     * @return New RequestOptions with the specified retries
+     */
+    public static RequestOptions withRetries(int retries) {
+        return builder().retries(retries).build();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Getters
+    // ─────────────────────────────────────────────────────────────────────────────
+
     /**
      * Returns the custom headers.
-     * 
-     * @return Map of header names to values, or {@code null} if not set
+     *
+     * @return Map of header names to values, never null
      */
     public Map<String, String> getHeaders() {
-        return headers;
+        return Collections.unmodifiableMap(headers);
     }
-    
-    /**
-     * Sets custom headers for this request.
-     * 
-     * <p><b>Example:</b>
-     * <pre>{@code
-     * options.setHeaders(Map.of(
-     *     "X-Request-ID", "unique-id-123",
-     *     "X-Custom-Header", "custom-value"
-     * ));
-     * }</pre>
-     * 
-     * @param headers Map of header names to values
-     * @return This RequestOptions instance for method chaining
-     */
-    public RequestOptions setHeaders(Map<String, String> headers) {
-        this.headers = headers;
-        return this;
-    }
-    
-    /**
-     * Adds a single header to this request.
-     * 
-     * <p><b>Example:</b>
-     * <pre>{@code
-     * options.addHeader("X-Request-ID", "unique-id-123")
-     *        .addHeader("X-Custom-Header", "value");
-     * }</pre>
-     * 
-     * @param key Header name
-     * @param value Header value
-     * @return This RequestOptions instance for method chaining
-     */
-    public RequestOptions addHeader(String key, String value) {
-        if (this.headers == null) {
-            this.headers = new HashMap<>();
-        }
-        this.headers.put(key, value);
-        return this;
-    }
-    
+
     /**
      * Returns the request timeout.
-     * 
+     *
      * @return Timeout in milliseconds, or {@code null} to use SDK default
      */
     public Long getTimeout() {
         return timeout;
     }
-    
+
+    /**
+     * Returns the number of retry attempts.
+     *
+     * @return Number of retries, or {@code null} to use SDK default (0)
+     */
+    public Integer getRetries() {
+        return retries;
+    }
+
+    /**
+     * Returns whether caching is enabled.
+     *
+     * @return true if caching is enabled, false if disabled, null for default behavior
+     */
+    public Boolean getCache() {
+        return cache;
+    }
+
+    /**
+     * Returns whether to force refresh (bypass cache).
+     *
+     * @return true to force refresh, false otherwise
+     */
+    public Boolean getForceRefresh() {
+        return forceRefresh;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Fluent Setters (for backward compatibility and chaining)
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Sets custom headers for this request.
+     *
+     * @param headers Map of header names to values
+     * @return This RequestOptions instance for method chaining
+     */
+    public RequestOptions setHeaders(Map<String, String> headers) {
+        this.headers = headers != null ? new HashMap<>(headers) : new HashMap<>();
+        return this;
+    }
+
+    /**
+     * Adds a single header to this request.
+     *
+     * @param key   Header name
+     * @param value Header value
+     * @return This RequestOptions instance for method chaining
+     */
+    public RequestOptions addHeader(String key, String value) {
+        Objects.requireNonNull(key, "Header key cannot be null");
+        this.headers.put(key, value);
+        return this;
+    }
+
     /**
      * Sets the request timeout.
-     * 
-     * <p><b>Example:</b>
-     * <pre>{@code
-     * options.setTimeout(30000L);  // 30 second timeout
-     * }</pre>
-     * 
+     *
      * @param timeout Timeout in milliseconds
      * @return This RequestOptions instance for method chaining
      */
@@ -209,27 +202,10 @@ public class RequestOptions {
         this.timeout = timeout;
         return this;
     }
-    
-    /**
-     * Returns the number of retry attempts.
-     * 
-     * @return Number of retries, or {@code null} to use SDK default (0)
-     */
-    public Integer getRetries() {
-        return retries;
-    }
-    
+
     /**
      * Sets the number of retry attempts for failed requests.
-     * 
-     * <p><b>Note:</b> Only server errors (5xx) and network errors are retried.
-     * Client errors (4xx) are not retried.
-     * 
-     * <p><b>Example:</b>
-     * <pre>{@code
-     * options.setRetries(3);  // Retry up to 3 times
-     * }</pre>
-     * 
+     *
      * @param retries Number of retry attempts (0 = no retries)
      * @return This RequestOptions instance for method chaining
      */
@@ -237,40 +213,159 @@ public class RequestOptions {
         this.retries = retries;
         return this;
     }
-    
+
     /**
-     * Creates a builder for fluent construction.
-     * 
-     * <p><b>Example:</b>
-     * <pre>{@code
-     * RequestOptions options = RequestOptions.builder()
-     *     .timeout(30000L)
-     *     .retries(3)
-     *     .addHeader("X-Request-ID", "unique-id")
-     *     .build();
-     * }</pre>
-     * 
-     * @return A new RequestOptions instance for fluent building
+     * Sets whether caching is enabled for this request.
+     *
+     * @param cache true to enable caching, false to disable
+     * @return This RequestOptions instance for method chaining
      */
-    public static RequestOptions builder() {
-        return new RequestOptions();
-    }
-    
-    /**
-     * Returns this instance (for builder pattern compatibility).
-     * 
-     * @return This RequestOptions instance
-     */
-    public RequestOptions build() {
+    public RequestOptions setCache(Boolean cache) {
+        this.cache = cache;
         return this;
     }
-    
+
+    /**
+     * Sets whether to force refresh (bypass cache).
+     *
+     * @param forceRefresh true to bypass cache and fetch fresh data
+     * @return This RequestOptions instance for method chaining
+     */
+    public RequestOptions setForceRefresh(Boolean forceRefresh) {
+        this.forceRefresh = forceRefresh;
+        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RequestOptions that = (RequestOptions) o;
+        return Objects.equals(headers, that.headers)
+                && Objects.equals(timeout, that.timeout)
+                && Objects.equals(retries, that.retries)
+                && Objects.equals(cache, that.cache)
+                && Objects.equals(forceRefresh, that.forceRefresh);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(headers, timeout, retries, cache, forceRefresh);
+    }
+
     @Override
     public String toString() {
         return "RequestOptions{" +
                 "headers=" + headers +
                 ", timeout=" + timeout +
                 ", retries=" + retries +
+                ", cache=" + cache +
+                ", forceRefresh=" + forceRefresh +
                 '}';
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Builder
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Builder for creating RequestOptions instances.
+     *
+     * <p><b>Example:</b>
+     * <pre>{@code
+     * RequestOptions options = RequestOptions.builder()
+     *     .timeout(30000L)
+     *     .retries(3)
+     *     .header("X-Request-ID", "unique-id")
+     *     .header("X-Custom-Header", "value")
+     *     .cache(true)
+     *     .build();
+     * }</pre>
+     */
+    public static final class Builder {
+        private Map<String, String> headers = new HashMap<>();
+        private Long timeout;
+        private Integer retries;
+        private Boolean cache;
+        private Boolean forceRefresh;
+
+        private Builder() {}
+
+        /**
+         * Sets all headers at once.
+         *
+         * @param headers Map of header names to values
+         * @return This builder
+         */
+        public Builder headers(Map<String, String> headers) {
+            this.headers = headers != null ? new HashMap<>(headers) : new HashMap<>();
+            return this;
+        }
+
+        /**
+         * Adds a single header.
+         *
+         * @param key   Header name
+         * @param value Header value
+         * @return This builder
+         */
+        public Builder header(String key, String value) {
+            Objects.requireNonNull(key, "Header key cannot be null");
+            this.headers.put(key, value);
+            return this;
+        }
+
+        /**
+         * Sets the request timeout.
+         *
+         * @param timeout Timeout in milliseconds
+         * @return This builder
+         */
+        public Builder timeout(long timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        /**
+         * Sets the number of retry attempts.
+         *
+         * @param retries Number of retries (0 = no retries)
+         * @return This builder
+         */
+        public Builder retries(int retries) {
+            this.retries = retries;
+            return this;
+        }
+
+        /**
+         * Sets whether caching is enabled.
+         *
+         * @param cache true to enable caching
+         * @return This builder
+         */
+        public Builder cache(boolean cache) {
+            this.cache = cache;
+            return this;
+        }
+
+        /**
+         * Sets whether to force refresh (bypass cache).
+         *
+         * @param forceRefresh true to bypass cache
+         * @return This builder
+         */
+        public Builder forceRefresh(boolean forceRefresh) {
+            this.forceRefresh = forceRefresh;
+            return this;
+        }
+
+        /**
+         * Builds the RequestOptions instance.
+         *
+         * @return New RequestOptions instance
+         */
+        public RequestOptions build() {
+            return new RequestOptions(this);
+        }
     }
 }

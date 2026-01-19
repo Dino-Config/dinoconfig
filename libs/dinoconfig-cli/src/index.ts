@@ -17,11 +17,18 @@
  */
 
 // Codegen API
-export { generateTypes } from './lib/codegen';
-export type { GenerateTypesOptions, GenerateTypesResult, GenerateTypesStats } from './lib/codegen';
+export { generateTypes, generateJavaModels } from './lib/codegen';
+export type { 
+  GenerateTypesOptions, 
+  GenerateTypesResult, 
+  GenerateTypesStats,
+  GenerateJavaModelsOptions,
+  GenerateJavaModelsResult,
+} from './lib/codegen';
 
-// Type generator class
+// Type generator classes
 export { TypeGenerator } from './lib/type-generator';
+export { JavaModelGenerator } from './lib/java-model-generator';
 
 // Constants (for advanced usage)
 export {
