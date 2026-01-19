@@ -1,0 +1,23 @@
+<dc-base-form-element
+  [config]="config()"
+  [isEditable]="isEditable()"
+  (edit)="edit.emit()"
+  (delete)="delete.emit()"
+>
+  <mat-form-field appearance="outline" class="w-full">
+    <mat-label>{{ config().label || config().name }}</mat-label>
+    <input
+      matInput
+      [matTimepicker]="picker"
+      (ngModelChange)="valueChange.emit($event)"
+      [ngModel]="value()"
+      [placeholder]="'Select ' + (config().label || config().name)"
+      [required]="config().required ?? false"
+    />
+    <mat-timepicker-toggle matIconSuffix [for]="picker"></mat-timepicker-toggle>
+    <mat-timepicker #picker></mat-timepicker>
+    @if (config().required) {
+      <mat-hint class="required-hint">* Required</mat-hint>
+    }
+  </mat-form-field>
+</dc-base-form-element>

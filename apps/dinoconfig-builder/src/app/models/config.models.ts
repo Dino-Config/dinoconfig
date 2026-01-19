@@ -12,9 +12,7 @@ export type FieldType =
   | "tel"
   | "search"
   | "time"
-  | "datetime-local"
-  | "month"
-  | "week"
+  | "datetime"
   | "date";
 
 export interface FieldConfig {

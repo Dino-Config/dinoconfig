@@ -184,8 +184,8 @@ export class FormElementPaletteComponent {
       </svg>`
     },
     {
-      id: 'datetime-local',
-      type: 'datetime-local',
+      id: 'datetime',
+      type: 'datetime',
       label: 'Date & Time',
       category: 'date',
       icon: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -195,28 +195,6 @@ export class FormElementPaletteComponent {
         <path d="M10 10v2l1.5 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>`
     },
-    {
-      id: 'month-picker',
-      type: 'month',
-      label: 'Month',
-      category: 'date',
-      icon: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2.5" y="4.5" width="15" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M2.5 8.5h15M6 3v3M14 3v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M5 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>`
-    },
-    {
-      id: 'week-picker',
-      type: 'week',
-      label: 'Week',
-      category: 'date',
-      icon: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2.5" y="4.5" width="15" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M2.5 8.5h15M6 3v3M14 3v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M5 12h10M5 15h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>`
-    }
   ];
 
   filteredItems = computed(() => {

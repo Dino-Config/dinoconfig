@@ -37,11 +37,9 @@ export class FieldTypeSelectorComponent {
     { value: 'checkbox', label: 'Checkbox', icon: '☑️', description: 'True/false toggle', category: 'choice' },
     { value: 'select', label: 'Select', icon: '📋', description: 'Dropdown selection', category: 'choice' },
     { value: 'radio', label: 'Radio', icon: '🔘', description: 'Radio button group', category: 'choice' },
-    { value: 'time', label: 'Time', icon: '🕐', description: 'Time picker', category: 'date' },
-    { value: 'datetime-local', label: 'Date & Time', icon: '📅', description: 'Date and time picker', category: 'date' },
-    { value: 'month', label: 'Month', icon: '📆', description: 'Month picker', category: 'date' },
-    { value: 'week', label: 'Week', icon: '📊', description: 'Week picker', category: 'date' },
     { value: 'date', label: 'Date', icon: '📅', description: 'Date picker', category: 'date' },
+    { value: 'time', label: 'Time', icon: '🕐', description: 'Time picker', category: 'date' },
+    { value: 'datetime', label: 'Date & Time', icon: '📅', description: 'Date and time picker', category: 'date' },
   ];
 
   categories = [

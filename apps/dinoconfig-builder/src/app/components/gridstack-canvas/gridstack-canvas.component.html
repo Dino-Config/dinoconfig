@@ -102,6 +102,26 @@
               (delete)="onDelete(field.id)"
             />
           }
+          @case ('dc-time-picker-element') {
+            <dc-time-picker-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
+          @case ('dc-datetime-picker-element') {
+            <dc-datetime-picker-element
+              [config]="field"
+              [value]="formData()[field.name]"
+              [isEditable]="true"
+              (valueChange)="onValueChange(field.name, $event)"
+              (edit)="onEdit(field)"
+              (delete)="onDelete(field.id)"
+            />
+          }
           @default {
             <dc-text-input-element
               [config]="field"

@@ -1,0 +1,41 @@
+<dc-base-form-element
+  [config]="config()"
+  [isEditable]="isEditable()"
+  (edit)="edit.emit()"
+  (delete)="delete.emit()"
+>
+  <div class="datetime-picker-container">
+    <mat-form-field appearance="outline" class="date-field">
+      <mat-label>{{ config().label || config().name }} (Date)</mat-label>
+      <input
+        matInput
+        [matDatepicker]="datepicker"
+        [ngModel]="value()"
+        (ngModelChange)="onValueChange($event)"
+        [placeholder]="'Select date'"
+        [required]="config().required ?? false"
+      />
+      <mat-datepicker-toggle matIconSuffix [for]="datepicker"></mat-datepicker-toggle>
+      <mat-datepicker #datepicker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="time-field">
+      <mat-label>{{ config().label || config().name }} (Time)</mat-label>
+      <input
+        matInput
+        [matTimepicker]="timepicker"
+        [ngModel]="value()"
+        (ngModelChange)="onValueChange($event)"
+        [ngModelOptions]="{updateOn: 'blur'}"
+        [placeholder]="'Select time'"
+        [required]="config().required ?? false"
+      />
+      <mat-timepicker-toggle matIconSuffix [for]="timepicker"></mat-timepicker-toggle>
+      <mat-timepicker #timepicker></mat-timepicker>
+    </mat-form-field>
+  </div>
+
+  @if (config().required) {
+    <mat-hint class="required-hint">* Required</mat-hint>
+  }
+</dc-base-form-element>
