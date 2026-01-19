@@ -14,6 +14,8 @@ import { RadioGroupElementComponent } from '../form-elements/radio-group-element
 import { SelectElementComponent } from '../form-elements/select-element/select-element.component';
 import { RangeElementComponent } from '../form-elements/range-element/range-element.component';
 import { DatePickerElementComponent } from '../form-elements/date-picker-element/date-picker-element.component';
+import { TimePickerElementComponent } from '../form-elements/time-picker-element/time-picker-element.component';
+import { DatetimePickerElementComponent } from '../form-elements/datetime-picker-element/datetime-picker-element.component';
 
 @Component({
   selector: 'dc-gridstack-canvas',
@@ -29,7 +31,9 @@ import { DatePickerElementComponent } from '../form-elements/date-picker-element
     RadioGroupElementComponent,
     SelectElementComponent,
     RangeElementComponent,
-    DatePickerElementComponent
+    DatePickerElementComponent,
+    TimePickerElementComponent,
+    DatetimePickerElementComponent
   ],
   templateUrl: './gridstack-canvas.component.html',
   styleUrl: './gridstack-canvas.component.scss'

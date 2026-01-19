@@ -7,7 +7,7 @@ import { FieldType, FieldConfig } from '../models/config.models';
 export class FieldUtilsService {
   private readonly TEXT_TYPES: FieldType[] = [
     'text', 'textarea', 'email', 'password', 'url', 'tel', 'search',
-    'time', 'datetime-local', 'month', 'week', 'date'
+    'time', 'datetime', 'date'
   ];
 
   private readonly NUMBER_TYPES: FieldType[] = ['number', 'range'];
@@ -48,6 +48,8 @@ export class FieldUtilsService {
         return { w: 2, h: 1 };
       case 'select':
         return { w: 5, h: 1 };
+      case 'datetime':
+        return { w: 7, h: 1 };
       default:
         return { w: 4, h: 1 };
     }
