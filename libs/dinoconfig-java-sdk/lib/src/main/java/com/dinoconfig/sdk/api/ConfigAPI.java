@@ -9,6 +9,8 @@ import com.dinoconfig.sdk.http.HttpClient;
 import com.dinoconfig.sdk.model.ApiResponse;
 import com.dinoconfig.sdk.model.ConfigData;
 import com.dinoconfig.sdk.model.RequestOptions;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -65,6 +67,9 @@ public class ConfigAPI {
     /** The HTTP client for making API requests */
     private final HttpClient httpClient;
 
+    /** Shared ObjectMapper for JSON conversion with JavaTimeModule support */
+    private final ObjectMapper objectMapper;
+
     /**
      * Constructs a new ConfigAPI instance.
      *
@@ -78,6 +83,18 @@ public class ConfigAPI {
      */
     public ConfigAPI(HttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient, "HttpClient cannot be null");
+        this.objectMapper = createObjectMapper();
+    }
+
+    /**
+     * Creates and configures an ObjectMapper instance with JavaTimeModule support.
+     *
+     * @return A configured ObjectMapper instance
+     */
+    private static ObjectMapper createObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        return mapper;
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -146,7 +163,8 @@ public class ConfigAPI {
     public ApiResponse<ConfigData> get(String brandName, String configName, RequestOptions options) throws IOException {
         validateBrandName(brandName);
         validateConfigName(configName);
-        return httpClient.get(buildConfigUrl(brandName, configName), options);
+        ApiResponse<Object> response = httpClient.get(buildConfigUrl(brandName, configName), options);
+        return extractConfigData(response);
     }
 
     /**
@@ -432,5 +450,56 @@ public class ConfigAPI {
         if (keyName == null || keyName.trim().isEmpty()) {
             throw new IllegalArgumentException("Key name cannot be null or empty");
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Private: Response Conversion Helpers
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Extracts ConfigData from the API response wrapper.
+     *
+     * @param response The raw API response
+     * @return An ApiResponse containing ConfigData
+     */
+    private ApiResponse<ConfigData> extractConfigData(ApiResponse<Object> response) {
+        ConfigData configData = convertValue(response.getData(), ConfigData.class);
+        return wrapResponse(configData, response);
+    }
+
+    /**
+     * Converts a response data object to the specified type.
+     *
+     * @param <T> The target type
+     * @param data The data to convert
+     * @param targetClass The target class
+     * @return The converted object, or null if conversion fails
+     */
+    private <T> T convertValue(Object data, Class<T> targetClass) {
+        if (data == null) {
+            return null;
+        }
+
+        try {
+            return objectMapper.convertValue(data, targetClass);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Wraps data in an ApiResponse with the same success and message from the original response.
+     *
+     * @param <T> The data type
+     * @param data The response data
+     * @param originalResponse The original ApiResponse to copy metadata from
+     * @return A new ApiResponse with the data and original metadata
+     */
+    private <T> ApiResponse<T> wrapResponse(T data, ApiResponse<Object> originalResponse) {
+        return new ApiResponse<>(
+            data,
+            originalResponse.getSuccess(),
+            originalResponse.getMessage()
+        );
     }
 }

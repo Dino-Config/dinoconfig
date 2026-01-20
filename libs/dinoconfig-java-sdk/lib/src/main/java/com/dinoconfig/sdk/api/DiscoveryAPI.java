@@ -8,12 +8,14 @@ package com.dinoconfig.sdk.api;
 import com.dinoconfig.sdk.http.HttpClient;
 import com.dinoconfig.sdk.model.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -62,6 +64,9 @@ public class DiscoveryAPI {
     /** The HTTP client for making API requests */
     private final HttpClient httpClient;
 
+    /** Shared ObjectMapper for JSON conversion with JavaTimeModule support */
+    private final ObjectMapper objectMapper;
+
     /**
      * Constructs a new DiscoveryAPI instance.
      *
@@ -75,6 +80,18 @@ public class DiscoveryAPI {
      */
     public DiscoveryAPI(HttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient, "HttpClient cannot be null");
+        this.objectMapper = createObjectMapper();
+    }
+
+    /**
+     * Creates and configures an ObjectMapper instance with JavaTimeModule support.
+     *
+     * @return A configured ObjectMapper instance
+     */
+    private static ObjectMapper createObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        return mapper;
     }
 
     /**
@@ -115,7 +132,7 @@ public class DiscoveryAPI {
      * @see BrandInfo
      */
     public ApiResponse<List<BrandInfo>> listBrands(RequestOptions options) throws IOException {
-        ApiResponse<BrandListResponse> response = httpClient.get(
+        ApiResponse<Object> response = httpClient.get(
                 API_BASE_PATH + "/brands",
                 options
         );
@@ -165,7 +182,7 @@ public class DiscoveryAPI {
      */
     public ApiResponse<List<ConfigInfo>> listConfigs(String brandName, RequestOptions options) throws IOException {
         validateBrandName(brandName);
-        ApiResponse<ConfigListResponse> response = httpClient.get(
+        ApiResponse<Object> response = httpClient.get(
                 buildBrandUrl(brandName) + "/configs",
                 options
         );
@@ -277,7 +294,8 @@ public class DiscoveryAPI {
      * @see IntrospectionResult
      */
     public ApiResponse<IntrospectionResult> introspect(RequestOptions options) throws IOException {
-        return httpClient.get(API_BASE_PATH + "/introspect", options);
+        ApiResponse<Object> response = httpClient.get(API_BASE_PATH + "/introspect", options);
+        return extractIntrospectionResult(response);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -326,22 +344,127 @@ public class DiscoveryAPI {
     /**
      * Extracts brands from the API response wrapper.
      */
-    private ApiResponse<List<BrandInfo>> extractBrands(ApiResponse<BrandListResponse> response) {
-        return new ApiResponse<>(
-                response.getData() != null ? response.getData().getBrands() : null,
-                response.getSuccess(),
-                response.getMessage()
+    private ApiResponse<List<BrandInfo>> extractBrands(ApiResponse<Object> response) {
+        List<BrandInfo> brands = convertResponseData(
+            response.getData(),
+            BrandListResponse.class,
+            BrandListResponse::getBrands,
+            "brands",
+            BrandInfo.class
         );
+        
+        return wrapResponse(brands, response);
     }
 
     /**
      * Extracts configs from the API response wrapper.
      */
-    private ApiResponse<List<ConfigInfo>> extractConfigs(ApiResponse<ConfigListResponse> response) {
+    private ApiResponse<List<ConfigInfo>> extractConfigs(ApiResponse<Object> response) {
+        List<ConfigInfo> configs = convertResponseData(
+            response.getData(),
+            ConfigListResponse.class,
+            ConfigListResponse::getConfigs,
+            "configs",
+            ConfigInfo.class
+        );
+        
+        return wrapResponse(configs, response);
+    }
+
+    /**
+     * Extracts introspection result from the API response wrapper.
+     */
+    private ApiResponse<IntrospectionResult> extractIntrospectionResult(ApiResponse<Object> response) {
+        IntrospectionResult result = convertValue(response.getData(), IntrospectionResult.class);
+        return wrapResponse(result, response);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Private: Response Conversion Helpers
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Converts a response data object to the specified type.
+     *
+     * @param <T> The target type
+     * @param data The data to convert
+     * @param targetClass The target class
+     * @return The converted object, or null if conversion fails
+     */
+    private <T> T convertValue(Object data, Class<T> targetClass) {
+        if (data == null) {
+            return null;
+        }
+        
+        try {
+            return objectMapper.convertValue(data, targetClass);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Converts response data from a list response wrapper to a list of items.
+     * Handles both direct wrapper conversion and fallback extraction from Map.
+     *
+     * @param <T> The item type in the list
+     * @param <R> The response wrapper type
+     * @param data The response data (may be Map or wrapper object)
+     * @param wrapperClass The wrapper class type
+     * @param extractor Function to extract the list from the wrapper
+     * @param mapKey The key to extract from Map if wrapper conversion fails
+     * @param itemClass The class of items in the list
+     * @return The list of items, or null if conversion fails
+     */
+    @SuppressWarnings("unchecked")
+    private <T, R> List<T> convertResponseData(
+            Object data,
+            Class<R> wrapperClass,
+            java.util.function.Function<R, List<T>> extractor,
+            String mapKey,
+            Class<T> itemClass
+    ) {
+        if (data == null) {
+            return null;
+        }
+
+        try {
+            // Try converting to wrapper class first
+            R wrapper = objectMapper.convertValue(data, wrapperClass);
+            return wrapper != null ? extractor.apply(wrapper) : null;
+        } catch (Exception e) {
+            // Fallback: extract directly from Map if conversion fails
+            if (data instanceof Map) {
+                Map<String, Object> dataMap = (Map<String, Object>) data;
+                Object itemsObj = dataMap.get(mapKey);
+                if (itemsObj instanceof List) {
+                    try {
+                        return objectMapper.convertValue(
+                            itemsObj,
+                            objectMapper.getTypeFactory().constructCollectionType(List.class, itemClass)
+                        );
+                    } catch (Exception ex) {
+                        return null;
+                    }
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Wraps data in an ApiResponse with the same success and message from the original response.
+     *
+     * @param <T> The data type
+     * @param data The response data
+     * @param originalResponse The original ApiResponse to copy metadata from
+     * @return A new ApiResponse with the data and original metadata
+     */
+    private <T> ApiResponse<T> wrapResponse(T data, ApiResponse<Object> originalResponse) {
         return new ApiResponse<>(
-                response.getData() != null ? response.getData().getConfigs() : null,
-                response.getSuccess(),
-                response.getMessage()
+            data,
+            originalResponse.getSuccess(),
+            originalResponse.getMessage()
         );
     }
 

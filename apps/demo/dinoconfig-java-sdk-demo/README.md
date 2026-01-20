@@ -53,41 +53,141 @@ Or directly:
 java -jar app/build/libs/app.jar your-api-key-here
 ```
 
-## Usage Example
+## Usage Examples
+
+### Basic Setup
 
 ```java
 import com.dinoconfig.sdk.DinoConfigSDK;
 import com.dinoconfig.sdk.DinoConfigSDKFactory;
 import com.dinoconfig.sdk.api.ConfigAPI;
+import com.dinoconfig.sdk.api.DiscoveryAPI;
 import com.dinoconfig.sdk.model.*;
 
-// Initialize SDK
+// Initialize SDK (simplest way)
 DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_your-api-key-here");
 
-// Get API instance
-ConfigAPI api = sdk.getConfigAPI();
+// With custom base URL
+DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_your-api-key", "https://api.dinoconfig.com");
 
-// Get a specific configuration value
-ApiResponse<Object> response = api.getConfigValue("mybrand", "myconfig", "mykey", new RequestOptions());
+// With all options
+DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_your-api-key", "https://api.dinoconfig.com", 15000L);
+```
 
+### Config API - Getting Entire Configurations
+
+```java
+ConfigAPI configAPI = sdk.getConfigAPI();
+
+// Get entire configuration
+ApiResponse<ConfigData> response = configAPI.get("MyBrand", "AppSettings");
 if (response.getSuccess()) {
-    Object value = response.getData();
-    System.out.println("Config value: " + value);
+    ConfigData config = response.getData();
+    System.out.printf("Config: %s (v%d)%n", config.getName(), config.getVersion());
+    
+    // Get all values as a map
+    Map<String, Object> values = config.getValues();
+    
+    // Get typed values
+    String theme = config.getValue("theme", String.class);
+    Boolean darkMode = config.getValue("darkMode", Boolean.class);
+    Integer maxUsers = config.getValue("maxUsers", Integer.class);
 }
+```
+
+### Config API - Getting Single Values
+
+```java
+// Get a single configuration value
+ApiResponse<Object> response = configAPI.getValue("MyBrand", "AppSettings", "theme");
+if (response.getSuccess()) {
+    String theme = (String) response.getData();
+    System.out.println("Theme: " + theme);
+}
+
+// Using path-based shorthand
+ApiResponse<Object> value = configAPI.getValue("MyBrand.AppSettings.theme");
+if (value.getSuccess()) {
+    String theme = (String) value.getData();
+}
+```
+
+### Discovery API - Exploring Configurations
+
+```java
+DiscoveryAPI discoveryAPI = sdk.getDiscoveryAPI();
+
+// List all brands
+ApiResponse<List<BrandInfo>> brandsResponse = discoveryAPI.listBrands();
+if (brandsResponse.getSuccess()) {
+    for (BrandInfo brand : brandsResponse.getData()) {
+        System.out.printf("Brand: %s (%d configs)%n", 
+            brand.getName(), brand.getConfigCount());
+    }
+}
+
+// List configs for a brand
+ApiResponse<List<ConfigInfo>> configsResponse = discoveryAPI.listConfigs("MyBrand");
+if (configsResponse.getSuccess()) {
+    for (ConfigInfo config : configsResponse.getData()) {
+        System.out.printf("Config: %s (v%d)%n", 
+            config.getName(), config.getVersion());
+    }
+}
+
+// Full introspection
+ApiResponse<IntrospectionResult> introspection = discoveryAPI.introspect();
+if (introspection.getSuccess()) {
+    IntrospectionResult result = introspection.getData();
+    System.out.printf("Company: %s%n", result.getCompany());
+    System.out.printf("Total brands: %d%n", result.getBrandCount());
+    System.out.printf("Total configs: %d%n", result.getTotalConfigCount());
+    System.out.printf("Total keys: %d%n", result.getTotalKeyCount());
+}
+```
+
+### Request Options
+
+```java
+RequestOptions options = new RequestOptions();
+options.setTimeout(30000L);  // 30 second timeout
+options.setRetries(3);       // Retry up to 3 times
+
+ApiResponse<ConfigData> response = configAPI.get("MyBrand", "AppSettings", options);
 ```
 
 ## Demo Features
 
-The demo application includes:
+The demo application showcases:
 
-1. **SDK Initialization** - Shows how to create and configure the SDK
-2. **Configuration Value Retrieval** - Demonstrates how to retrieve configuration values
-3. **Request Options** - Shows how to customize request behavior
-4. **Error Handling** - Demonstrates proper error handling patterns
+1. **SDK Initialization** - Multiple factory methods for creating SDK instances
+2. **Discovery API** - Exploring available brands, configs, and schemas
+3. **Config Retrieval** - Getting entire configurations with typed access
+4. **Value Retrieval** - Getting single configuration values
+5. **Path Shorthand** - Using dot-separated paths for convenience (e.g., "Brand.Config.key")
+6. **Request Options** - Customizing timeouts and retries
+7. **Error Handling** - Proper response checking and error handling patterns
+8. **Introspection** - Full introspection capabilities for code generation
 
 ## API Methods Available
 
-- `getConfigValue(brandName, configName, configValueKey, options)` - Get a specific configuration value by brand name, config name, and config value key
+### Config API
+
+- `get(brandName, configName)` - Get entire configuration
+- `get(brandName, configName, options)` - Get entire configuration with custom options
+- `get(path)` - Get entire configuration using path shorthand ("Brand.Config")
+- `getValue(brandName, configName, keyName)` - Get single configuration value
+- `getValue(brandName, configName, keyName, options)` - Get single value with custom options
+- `getValue(path)` - Get single value using path shorthand ("Brand.Config.key")
+
+### Discovery API
+
+- `listBrands()` - List all accessible brands
+- `listBrands(options)` - List brands with custom options
+- `listConfigs(brandName)` - List all configs for a brand
+- `listConfigs(brandName, options)` - List configs with custom options
+- `getSchema(brandName, configName)` - Get schema for a configuration
+- `introspect()` - Full introspection of all brands, configs, and keys
 
 ## Testing
 

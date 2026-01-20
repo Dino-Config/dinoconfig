@@ -8,6 +8,8 @@ package com.dinoconfig.sdk.http;
 import com.dinoconfig.sdk.model.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import okhttp3.*;
 
 import java.io.IOException;
@@ -66,6 +68,8 @@ public class HttpClient {
         this.baseUrl = baseUrl.replaceAll("/$", "");
         this.defaultTimeout = timeout;
         this.objectMapper = new ObjectMapper();
+        // Register JavaTimeModule for Java 8 date/time types support
+        this.objectMapper.registerModule(new JavaTimeModule());
         this.defaultHeaders = new HashMap<>();
         
         // Configure OkHttpClient with timeouts
@@ -241,14 +245,40 @@ public class HttpClient {
                     }
                     
                     // Parse response
-                    T responseData;
+                    ApiResponse<T> apiResponse;
                     if (responseBody.isEmpty()) {
-                        responseData = null;
+                        apiResponse = new ApiResponse<>(null, true);
                     } else {
-                        responseData = objectMapper.readValue(responseBody, new TypeReference<T>() {});
+                        try {
+                            // Try to deserialize as ApiResponse structure first
+                            TypeFactory typeFactory = objectMapper.getTypeFactory();
+                            com.fasterxml.jackson.databind.JavaType responseType = typeFactory.constructParametricType(
+                                ApiResponse.class, 
+                                Object.class
+                            );
+                            @SuppressWarnings("unchecked")
+                            ApiResponse<Object> rawResponse = objectMapper.readValue(responseBody, responseType);
+                            
+                            // If it has success field, it's already wrapped in ApiResponse
+                            if (rawResponse.getSuccess() != null) {
+                                @SuppressWarnings("unchecked")
+                                T responseData = (T) rawResponse.getData();
+                                apiResponse = new ApiResponse<>(responseData, rawResponse.getSuccess(), rawResponse.getMessage());
+                            } else {
+                                // Not wrapped, treat entire response as data
+                                @SuppressWarnings("unchecked")
+                                T responseData = (T) objectMapper.readValue(responseBody, Object.class);
+                                apiResponse = new ApiResponse<>(responseData, true);
+                            }
+                        } catch (Exception e) {
+                            // If deserialization as ApiResponse fails, treat entire response as data
+                            @SuppressWarnings("unchecked")
+                            T responseData = (T) objectMapper.readValue(responseBody, Object.class);
+                            apiResponse = new ApiResponse<>(responseData, true);
+                        }
                     }
                     
-                    return new ApiResponse<>(responseData, true);
+                    return apiResponse;
                 }
                 
             } catch (ApiError e) {
