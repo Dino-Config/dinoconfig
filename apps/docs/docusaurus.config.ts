@@ -6,24 +6,14 @@ const config: Config = {
   title: 'DinoConfig Developer Docs',
   tagline: 'Configuration management made simple',
   favicon: 'img/favicon.ico',
-
-  future: {
-    v4: true,
-  },
-
+  future: { v4: true },
   url: 'https://developer.dinoconfig.com',
   baseUrl: '/',
-
   organizationName: 'dinoconfig',
   projectName: 'dinoconfig',
-
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-
-  i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
-  },
+  i18n: { defaultLocale: 'en', locales: ['en'] },
 
   presets: [
     [
@@ -34,42 +24,20 @@ const config: Config = {
           editUrl: 'https://github.com/dinoconfig/dinoconfig/tree/main/apps/docs/',
         },
         blog: false,
-        theme: {
-          customCss: './src/css/custom.css',
-        },
+        theme: { customCss: './src/css/custom.css' },
       } satisfies Preset.Options,
     ],
   ],
 
   themeConfig: {
-    image: 'img/dinoconfig-social-card.png',
-    colorMode: {
-      defaultMode: 'light',
-      respectPrefersColorScheme: true,
-    },
+    colorMode: { defaultMode: 'light', respectPrefersColorScheme: true },
     navbar: {
       title: 'DinoConfig',
-      logo: {
-        alt: 'DinoConfig Logo',
-        src: 'img/logo.svg',
-      },
+      logo: { alt: 'DinoConfig Logo', src: 'img/logo.svg' },
       items: [
-        {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
-          position: 'left',
-          label: 'Documentation',
-        },
-        {
-          href: 'https://github.com/dinoconfig/dinoconfig',
-          label: 'GitHub',
-          position: 'right',
-        },
-        {
-          href: 'https://dinoconfig.com',
-          label: 'Dashboard',
-          position: 'right',
-        },
+        { type: 'docSidebar', sidebarId: 'docsSidebar', position: 'left', label: 'Documentation' },
+        { href: 'https://github.com/dinoconfig/dinoconfig', label: 'GitHub', position: 'right' },
+        { href: 'https://dinoconfig.com', label: 'Dashboard', position: 'right' },
       ],
     },
     footer: {
@@ -78,48 +46,20 @@ const config: Config = {
         {
           title: 'Documentation',
           items: [
-            {
-              label: 'Introduction',
-              to: '/docs/introduction',
-            },
-            {
-              label: 'JavaScript SDK',
-              to: '/docs/javascript-sdk/getting-started',
-            },
-            {
-              label: 'Java SDK',
-              to: '/docs/java-sdk/getting-started',
-            },
+            { label: 'Introduction', to: '/docs/introduction' },
+            { label: 'JavaScript SDK', to: '/docs/javascript-sdk/getting-started' },
+            { label: 'Java SDK', to: '/docs/java-sdk/getting-started' },
           ],
         },
         {
-          title: 'SDKs',
+          title: 'Links',
           items: [
-            {
-              label: 'JavaScript SDK',
-              to: '/docs/javascript-sdk/getting-started',
-            },
-            {
-              label: 'Java SDK',
-              to: '/docs/java-sdk/getting-started',
-            },
-          ],
-        },
-        {
-          title: 'More',
-          items: [
-            {
-              label: 'GitHub',
-              href: 'https://github.com/dinoconfig/dinoconfig',
-            },
-            {
-              label: 'Dashboard',
-              href: 'https://dinoconfig.com',
-            },
+            { label: 'GitHub', href: 'https://github.com/dinoconfig/dinoconfig' },
+            { label: 'Dashboard', href: 'https://dinoconfig.com' },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} DinoConfig. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} DinoConfig.`,
     },
     prism: {
       theme: prismThemes.github,
