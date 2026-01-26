@@ -1,15 +1,15 @@
 {
-  "name": "docs",
+  "name": "dinoconfig-docs",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/docs/src",
+  "sourceRoot": "apps/dinoconfig-docs/src",
   "tags": ["type:docs", "scope:public"],
   "targets": {
     "start": {
       "executor": "nx:run-commands",
       "options": {
         "command": "npm run start",
-        "cwd": "apps/docs"
+        "cwd": "apps/dinoconfig-docs"
       },
       "continuous": true
     },
@@ -18,7 +18,7 @@
       "outputs": ["{projectRoot}/build"],
       "options": {
         "command": "npm run build",
-        "cwd": "apps/docs"
+        "cwd": "apps/dinoconfig-docs"
       },
       "cache": true
     },
@@ -26,7 +26,7 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "npm run serve",
-        "cwd": "apps/docs"
+        "cwd": "apps/dinoconfig-docs"
       },
       "continuous": true,
       "dependsOn": ["build"]
@@ -35,14 +35,14 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "npm run clear",
-        "cwd": "apps/docs"
+        "cwd": "apps/dinoconfig-docs"
       }
     },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
         "command": "npm run deploy",
-        "cwd": "apps/docs"
+        "cwd": "apps/dinoconfig-docs"
       },
       "dependsOn": ["build"]
     },
@@ -50,7 +50,7 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "npm run typecheck",
-        "cwd": "apps/docs"
+        "cwd": "apps/dinoconfig-docs"
       },
       "cache": true
     }
