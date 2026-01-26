@@ -5,6 +5,8 @@
 
 import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
 import { TypeGenerator } from './type-generator';
+import { JavaModelGenerator, derivePackageFromPath } from './java-model-generator';
+import { updateProjectDependencies, type DependencyUpdateResult } from './dependency-updater';
 import { DEFAULT_OUTPUT, DEFAULT_BASE_URL, DEFAULT_NAMESPACE } from './constants';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -133,6 +135,133 @@ export async function generateTypes(options: GenerateTypesOptions): Promise<Gene
         configs: totalConfigs,
         keys: totalKeys,
       },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Options for generating Java models.
+ */
+export interface GenerateJavaModelsOptions {
+  /** DinoConfig API key */
+  apiKey: string;
+  /** API base URL */
+  baseUrl?: string;
+  /** Output directory path (where the generated folder will be created) */
+  output?: string;
+  /** 
+   * Base package for generated classes (e.g., 'org.example.models').
+   * If not specified, automatically derived from output path.
+   */
+  package?: string;
+  /** Skip updating the project's build file with required dependencies */
+  skipDependencyUpdate?: boolean;
+}
+
+/**
+ * Result of Java model generation.
+ */
+export interface GenerateJavaModelsResult {
+  /** Whether generation was successful */
+  success: boolean;
+  /** Output directory path */
+  outputDir?: string;
+  /** Generated file paths */
+  generatedFiles?: string[];
+  /** Error message if failed */
+  error?: string;
+  /** Statistics about generated models */
+  stats?: GenerateTypesStats;
+  /** Result of dependency update operation */
+  dependencyUpdate?: DependencyUpdateResult;
+  /** The base package used for generated classes */
+  basePackage?: string;
+}
+
+/**
+ * Generates Java model classes from DinoConfig schemas.
+ *
+ * @param options - Generation options
+ * @returns Generation result
+ *
+ * @example
+ * ```typescript
+ * import { generateJavaModels } from '@dinoconfig/cli';
+ *
+ * const result = await generateJavaModels({
+ *   apiKey: 'dino_xxx',
+ *   output: './libs/dinoconfig-java-sdk/lib/src/main/java',
+ * });
+ *
+ * if (result.success) {
+ *   console.log(`Generated ${result.stats?.configs} config models`);
+ * }
+ * ```
+ */
+export async function generateJavaModels(
+  options: GenerateJavaModelsOptions
+): Promise<GenerateJavaModelsResult> {
+  const {
+    apiKey,
+    baseUrl = DEFAULT_BASE_URL,
+    output = './libs/dinoconfig-java-sdk/lib/src/main/java/com/dinoconfig/sdk/generated',
+    skipDependencyUpdate = false,
+  } = options;
+
+  try {
+    const dinoconfig = await dinoconfigApi({ apiKey, baseUrl });
+    const response = await dinoconfig.discovery.introspect();
+
+    if (!response.success || !response.data) {
+      return {
+        success: false,
+        error: response.message || 'Failed to fetch introspection data',
+      };
+    }
+
+    const { brands } = response.data;
+    const { configs: totalConfigs, keys: totalKeys } = countStats(brands);
+
+    // Determine the base package: explicit option > derived from path > default
+    const absoluteOutputDir = path.resolve(process.cwd(), output);
+    const basePackage = options.package ?? derivePackageFromPath(absoluteOutputDir);
+
+    const generator = new JavaModelGenerator({ basePackage });
+    const files = generator.generate(response.data);
+
+    const generatedFiles: string[] = [];
+
+    // Write all generated files - files are now written relative to output dir
+    // The generator returns paths like "brandname/ConfigName.java" (without base package path)
+    for (const [filePath, content] of files.entries()) {
+      const fullPath = path.join(absoluteOutputDir, filePath);
+      ensureDirectoryExists(fullPath);
+      fs.writeFileSync(fullPath, content, 'utf-8');
+      generatedFiles.push(fullPath);
+    }
+
+    // Update project dependencies if not skipped
+    let dependencyUpdate: DependencyUpdateResult | undefined;
+    if (!skipDependencyUpdate) {
+      dependencyUpdate = updateProjectDependencies(absoluteOutputDir);
+    }
+
+    return {
+      success: true,
+      outputDir: absoluteOutputDir,
+      generatedFiles,
+      stats: {
+        brands: brands.length,
+        configs: totalConfigs,
+        keys: totalKeys,
+      },
+      dependencyUpdate,
+      basePackage: generator.getBasePackage(),
     };
   } catch (error) {
     return {

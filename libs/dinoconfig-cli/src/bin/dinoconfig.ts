@@ -22,17 +22,22 @@ USAGE:
 
 COMMANDS:
   codegen     Generate TypeScript types from DinoConfig schemas
+  javagen     Generate Java model classes from DinoConfig schemas
 
 OPTIONS:
   -h, --help      Show this help message
   -v, --version   Show version number
 
 EXAMPLES:
-  # Generate types
+  # Generate TypeScript types
   npx ${CLI_NAME} codegen --api-key=dino_abc123
 
-  # Show codegen help
+  # Generate Java models
+  npx ${CLI_NAME} javagen --api-key=dino_abc123
+
+  # Show command help
   npx ${CLI_NAME} codegen --help
+  npx ${CLI_NAME} javagen --help
 
 For more information, visit: https://docs.dinoconfig.com
 `);
@@ -62,6 +67,11 @@ async function main(): Promise<void> {
     case 'codegen': {
       const { runCodegen } = await import('./codegen.js');
       await runCodegen(args.slice(1));
+      break;
+    }
+    case 'javagen': {
+      const { runJavagen } = await import('./javagen.js');
+      await runJavagen(args.slice(1));
       break;
     }
     default:
