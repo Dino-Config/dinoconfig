@@ -1,7 +1,8 @@
 ---
 sidebar_position: 4
-title: Discovery API
-description: Explore and introspect your DinoConfig brands, configurations, and schemas using the Discovery API.
+title: Discovery API Reference
+description: Explore and introspect your DinoConfig brands, configurations, and schemas using the Discovery API. List brands, configs, and get schemas.
+keywords: [discovery api, list brands, list configs, get schema, introspection, javascript sdk api]
 ---
 
 # Discovery API

@@ -1,7 +1,8 @@
 ---
 sidebar_position: 2
-title: Configuration
-description: Configure the DinoConfig JavaScript SDK with custom options for authentication, caching, and request handling.
+title: SDK Configuration Options
+description: Configure the DinoConfig JavaScript SDK with custom options for authentication, caching, timeouts, and request handling.
+keywords: [javascript sdk configuration, caching, timeout, api key, authentication, sdk options]
 ---
 
 # Configuration

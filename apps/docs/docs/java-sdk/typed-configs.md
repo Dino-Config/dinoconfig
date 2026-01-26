@@ -1,7 +1,8 @@
 ---
 sidebar_position: 5
 title: Typed Configurations
-description: Generate type-safe Java model classes for your DinoConfig configurations.
+description: Generate type-safe Java model classes for your DinoConfig configurations. Use Jackson annotations, Lombok, and Java records for type safety.
+keywords: [typed configs, type safety, code generation, jackson, lombok, java records, pojo]
 ---
 
 # Typed Configurations

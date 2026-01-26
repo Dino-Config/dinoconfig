@@ -1,7 +1,8 @@
 ---
 sidebar_position: 6
-title: Examples
-description: Real-world examples for the DinoConfig Java SDK.
+title: Java SDK Examples
+description: Real-world examples and integration patterns for the DinoConfig Java SDK. Spring Boot, Quarkus, caching, and testing examples.
+keywords: [examples, spring boot, quarkus, caffeine cache, feature flags, testing, integration patterns]
 ---
 
 # Examples

@@ -1,7 +1,8 @@
 ---
 sidebar_position: 1
-title: Getting Started
-description: Learn how to install and initialize the DinoConfig JavaScript SDK in your project.
+title: Getting Started with JavaScript SDK
+description: Learn how to install and initialize the DinoConfig JavaScript SDK in your Node.js or browser project. Complete guide with TypeScript support.
+keywords: [javascript sdk, typescript, npm, node.js, configuration management, dinoconfig, installation, setup]
 ---
 
 # Getting Started with JavaScript SDK

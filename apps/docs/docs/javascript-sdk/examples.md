@@ -1,7 +1,8 @@
 ---
 sidebar_position: 7
-title: Examples
-description: Real-world examples for the DinoConfig JavaScript SDK.
+title: JavaScript SDK Examples
+description: Real-world examples and integration patterns for the DinoConfig JavaScript SDK. React, Next.js, Express, and testing examples.
+keywords: [examples, react, next.js, express, feature flags, testing, integration patterns]
 ---
 
 # Examples

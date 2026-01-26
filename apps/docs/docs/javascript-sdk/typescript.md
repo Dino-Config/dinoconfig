@@ -1,7 +1,8 @@
 ---
 sidebar_position: 6
 title: TypeScript Integration
-description: Generate fully type-safe configuration access with the DinoConfig CLI and TypeScript.
+description: Generate fully type-safe configuration access with the DinoConfig CLI and TypeScript. Create typed interfaces for your configs.
+keywords: [typescript, type safety, code generation, cli, typed configs, generics]
 ---
 
 # TypeScript Integration

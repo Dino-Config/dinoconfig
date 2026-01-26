@@ -1,7 +1,8 @@
 ---
 sidebar_position: 1
-title: Introduction
-description: DinoConfig Developer Documentation - Learn how to integrate configuration management into your applications.
+title: Introduction to DinoConfig
+description: DinoConfig is a modern configuration management platform. Learn how to integrate type-safe configuration management into your JavaScript and Java applications.
+keywords: [dinoconfig, configuration management, SDK, JavaScript, TypeScript, Java, feature flags, remote config, API]
 ---
 
 # DinoConfig Developer Documentation

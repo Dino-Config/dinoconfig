@@ -1,7 +1,8 @@
 ---
 sidebar_position: 3
-title: Configs API
-description: Fetch configurations and values using the DinoConfig Java SDK Configs API.
+title: Configs API Reference
+description: Fetch configurations and values using the DinoConfig Java SDK Configs API. Learn to use get(), getAs(), and getValue() methods.
+keywords: [configs api, get configuration, getValue, getAs, fetch config, java sdk api, typed configs]
 ---
 
 # Configs API

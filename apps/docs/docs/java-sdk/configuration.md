@@ -1,7 +1,8 @@
 ---
 sidebar_position: 2
-title: Configuration
-description: Configure the DinoConfig Java SDK with custom options for authentication, timeouts, and request handling.
+title: SDK Configuration Options
+description: Configure the DinoConfig Java SDK with custom options for authentication, timeouts, and request handling. Builder pattern and Spring Boot integration.
+keywords: [java sdk configuration, timeout, api key, authentication, spring boot, quarkus, sdk options]
 ---
 
 # Configuration

@@ -1,7 +1,8 @@
 ---
 sidebar_position: 3
-title: Configs API
-description: Fetch configurations and values using the DinoConfig JavaScript SDK Configs API.
+title: Configs API Reference
+description: Fetch configurations and values using the DinoConfig JavaScript SDK Configs API. Learn to use get() and getValue() methods.
+keywords: [configs api, get configuration, getValue, fetch config, javascript sdk api]
 ---
 
 # Configs API

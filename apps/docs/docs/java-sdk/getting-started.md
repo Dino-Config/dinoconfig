@@ -1,7 +1,8 @@
 ---
 sidebar_position: 1
-title: Getting Started
-description: Learn how to install and initialize the DinoConfig Java SDK in your project.
+title: Getting Started with Java SDK
+description: Learn how to install and initialize the DinoConfig Java SDK in your project. Complete guide for Java 21+ with Maven and Gradle setup.
+keywords: [java sdk, maven, gradle, spring boot, configuration management, dinoconfig, installation, setup]
 ---
 
 # Getting Started with Java SDK

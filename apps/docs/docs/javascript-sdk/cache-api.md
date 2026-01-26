@@ -1,7 +1,8 @@
 ---
 sidebar_position: 5
-title: Cache API
-description: Optimize performance with the DinoConfig JavaScript SDK's multi-layer caching system.
+title: Cache API Reference
+description: Optimize performance with the DinoConfig JavaScript SDK's multi-layer caching system. Configure localStorage, IndexedDB, and memory caching.
+keywords: [cache api, caching, performance, localStorage, indexedDB, memory cache, ttl]
 ---
 
 # Cache API
