@@ -1,0 +1,8 @@
+# DinoConfig Developer Documentation
+# https://developer.dinoconfig.com
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://developer.dinoconfig.com/sitemap.xml

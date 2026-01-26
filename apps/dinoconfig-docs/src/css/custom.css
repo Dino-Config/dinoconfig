@@ -1,0 +1,177 @@
+/**
+ * DinoConfig Developer Documentation
+ * Custom styling based on dinoconfig-host-fe design system
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --ifm-color-primary: #667eea;
+  --ifm-color-primary-dark: #5568d3;
+  --ifm-color-primary-darker: #4a5cc8;
+  --ifm-color-primary-darkest: #3d4ea5;
+  --ifm-color-primary-light: #7a90f0;
+  --ifm-color-primary-lighter: #8fa2f5;
+  --ifm-color-primary-lightest: #a4b4fa;
+
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --ifm-font-family-monospace: 'Monaco', 'Menlo', monospace;
+  --ifm-heading-font-weight: 700;
+  --ifm-code-font-size: 90%;
+  --ifm-border-radius: 8px;
+
+  --dino-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --dino-border-color: #e9ecef;
+  --docusaurus-highlighted-code-line-bg: rgba(102, 126, 234, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #8fa2f5;
+  --ifm-color-primary-dark: #7a90f0;
+  --ifm-color-primary-darker: #667eea;
+  --ifm-color-primary-darkest: #5568d3;
+  --ifm-color-primary-light: #a4b4fa;
+  --ifm-color-primary-lighter: #b9c4fc;
+  --ifm-color-primary-lightest: #ced5fd;
+  --ifm-background-color: #1a1a1a;
+  --ifm-background-surface-color: #242424;
+  --dino-border-color: #333;
+  --docusaurus-highlighted-code-line-bg: rgba(102, 126, 234, 0.2);
+}
+
+/* Navbar */
+.navbar {
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--dino-border-color);
+}
+
+.navbar__title {
+  font-weight: 700;
+  background: var(--dino-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Sidebar */
+.menu__link {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.menu__link--active {
+  background: var(--dino-gradient);
+  color: white !important;
+  font-weight: 600;
+}
+
+.menu__link:hover:not(.menu__link--active) {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.menu__list-item-collapsible .menu__link--active {
+  background: none !important;
+  color: var(--ifm-color-primary) !important;
+}
+
+/* Code */
+code {
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+}
+
+[data-theme='dark'] code {
+  background: rgba(143, 162, 245, 0.15);
+}
+
+/* Tables */
+table {
+  display: table;
+  width: 100%;
+}
+
+table thead {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+table thead th {
+  font-weight: 600;
+}
+
+[data-theme='dark'] table thead {
+  background: rgba(102, 126, 234, 0.15);
+}
+
+/* SDK Cards (Introduction page) */
+.sdk-card {
+  display: block;
+  padding: 1.5rem;
+  border-radius: var(--ifm-border-radius);
+  border: 2px solid var(--dino-border-color);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.sdk-card:hover {
+  border-color: var(--ifm-color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  text-decoration: none;
+}
+
+.sdk-card__logo {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sdk-card__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--ifm-heading-color);
+}
+
+.sdk-card__description {
+  color: var(--ifm-color-content-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge--primary {
+  background: var(--dino-gradient);
+  color: white;
+}
+
+/* Footer */
+.footer {
+  background: #1a1a1a;
+}
+
+.footer__title {
+  color: white;
+  font-weight: 600;
+}
+
+/* Scrollbar */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 70px;
+}
+
+/* Selection */
+::selection {
+  background: rgba(102, 126, 234, 0.3);
+}
