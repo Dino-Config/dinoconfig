@@ -28,7 +28,19 @@ export type {
 
 // Type generator classes
 export { TypeGenerator } from './lib/type-generator';
-export { JavaModelGenerator } from './lib/java-model-generator';
+export { JavaModelGenerator, derivePackageFromPath } from './lib/java-model-generator';
+export type { JavaModelGeneratorOptions } from './lib/java-model-generator';
+
+// Dependency management
+export {
+  updateProjectDependencies,
+  getRequiredDependencies,
+  formatDependenciesForDisplay,
+} from './lib/dependency-updater';
+export type {
+  RequiredDependency,
+  DependencyUpdateResult,
+} from './lib/dependency-updater';
 
 // Constants (for advanced usage)
 export {

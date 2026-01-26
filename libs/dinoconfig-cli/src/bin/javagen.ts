@@ -23,8 +23,10 @@ interface CliOptions {
   apiKey?: string;
   baseUrl?: string;
   output?: string;
+  package?: string;
   help?: boolean;
   version?: boolean;
+  skipDeps?: boolean;
 }
 
 function parseArgs(args: string[]): CliOptions {
@@ -41,6 +43,10 @@ function parseArgs(args: string[]): CliOptions {
       options.baseUrl = arg.split('=')[1];
     } else if (arg.startsWith('--output=') || arg.startsWith('-o=')) {
       options.output = arg.split('=')[1];
+    } else if (arg.startsWith('--package=') || arg.startsWith('-p=')) {
+      options.package = arg.split('=')[1];
+    } else if (arg === '--skip-deps' || arg === '--no-deps') {
+      options.skipDeps = true;
     }
   }
 
@@ -60,6 +66,8 @@ OPTIONS:
   --api-key=<key>       Required. Your DinoConfig API key
   --baseUrl=<url>       API base URL (default: ${DEFAULT_BASE_URL})
   --output=<path>       Output directory path (default: ${DEFAULT_JAVA_OUTPUT})
+  --package=<pkg>       Base package for generated classes (auto-derived from output path)
+  --skip-deps           Skip automatic dependency update in build file
   -h, --help            Show this help message
   -v, --version         Show version number
 
@@ -67,51 +75,116 @@ EXAMPLES:
   # Generate Java models with default settings
   npx ${CLI_NAME} javagen --api-key=dino_abc123
 
-  # Generate Java models to custom path
-  npx ${CLI_NAME} javagen --api-key=dino_abc123 --output=./src/main/java/com/example/generated
+  # Generate Java models to custom path (package auto-derived from path)
+  npx ${CLI_NAME} javagen --api-key=dino_abc123 --output=./src/main/java/org/example/models
+  # This will use package: org.example.models
 
-  # Use production API
-  npx ${CLI_NAME} javagen --api-key=dino_abc123 --baseUrl=https://api.dinoconfig.com
+  # Generate with explicit package
+  npx ${CLI_NAME} javagen --api-key=dino_abc123 --output=./src/main/java/org/example/models --package=org.example.config
+
+  # Skip automatic dependency updates
+  npx ${CLI_NAME} javagen --api-key=dino_abc123 --skip-deps
+
+PACKAGE RESOLUTION:
+  The base package for generated classes is determined in this order:
+  1. Explicit --package option (if provided)
+  2. Auto-derived from --output path (looks for src/main/java/ pattern)
+  3. Default: com.dinoconfig.sdk.generated
 
 GENERATED OUTPUT:
-  The tool generates Java POJO classes in a generated folder:
-  - Each brand gets its own package
+  The tool generates Java POJO classes:
+  - Each brand gets its own subpackage
   - Each config gets its own class with typed fields
   - Classes follow Java best practices (immutable, Jackson annotations, etc.)
+  - Automatically adds Jackson dependency to your build.gradle or pom.xml
 
-  Example generated structure:
-    com/dinoconfig/sdk/generated/
+  Example with --output=./src/main/java/org/example/models:
+    org/example/models/
       mybrand/
-        FeatureFlags.java
+        FeatureFlags.java    (package org.example.models.mybrand)
         AppSettings.java
 
-  Usage with the SDK:
-    import com.dinoconfig.sdk.generated.mybrand.FeatureFlags;
-    
-    ApiResponse<ConfigData> response = configAPI.get("MyBrand", "FeatureFlags");
-    ConfigData config = response.getData();
-    // Use generated models for type safety
+DEPENDENCIES:
+  Generated models require Jackson for JSON serialization:
+  
+  Gradle:
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.16.1'
+  
+  Maven:
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.16.1</version>
+    </dependency>
 `);
 }
 
-function logConfig(baseUrl: string, output: string): void {
+function logConfig(baseUrl: string, output: string, pkg?: string): void {
   console.log(`\n🦖 DinoConfig Java Model Generator v${CLI_VERSION}\n`);
   console.log(`  Base URL:  ${baseUrl}`);
   console.log(`  Output:    ${output}`);
+  if (pkg) {
+    console.log(`  Package:   ${pkg} (explicit)`);
+  } else {
+    console.log(`  Package:   (auto-derived from output path)`);
+  }
   console.log('');
 }
 
-function logSuccess(output: string, stats?: { brands: number; configs: number; keys: number }): void {
+interface DependencyUpdateResult {
+  success: boolean;
+  projectType?: 'gradle' | 'maven' | 'unknown';
+  buildFilePath?: string;
+  addedDependencies?: string[];
+  existingDependencies?: string[];
+  error?: string;
+  warnings?: string[];
+}
+
+function logSuccess(
+  output: string,
+  stats?: { brands: number; configs: number; keys: number },
+  depUpdate?: DependencyUpdateResult,
+  basePackage?: string
+): void {
   console.log('\n✅ Java models generated successfully!\n');
   if (stats) {
     console.log(`  Generated ${stats.brands} brand(s)`);
     console.log(`  Generated ${stats.configs} config class(es) with ${stats.keys} field(s)`);
   }
   console.log(`  Output directory: ${output}`);
+  if (basePackage) {
+    console.log(`  Base package: ${basePackage}`);
+  }
+
+  // Show dependency update results
+  if (depUpdate) {
+    console.log('');
+    if (depUpdate.success && depUpdate.addedDependencies && depUpdate.addedDependencies.length > 0) {
+      console.log(`  📦 Dependencies added to ${depUpdate.buildFilePath}:`);
+      for (const dep of depUpdate.addedDependencies) {
+        console.log(`     + ${dep}`);
+      }
+    } else if (depUpdate.success && depUpdate.existingDependencies && depUpdate.existingDependencies.length > 0) {
+      console.log(`  📦 Dependencies already present in ${depUpdate.buildFilePath}`);
+    } else if (!depUpdate.success && depUpdate.error) {
+      console.log(`  ⚠️  Could not update dependencies: ${depUpdate.error}`);
+      if (depUpdate.warnings) {
+        console.log('');
+        console.log('  Please add manually:');
+        for (const warning of depUpdate.warnings) {
+          console.log(`     ${warning}`);
+        }
+      }
+    }
+  }
+
   console.log('');
   console.log('  Usage in your Java code:');
   console.log('');
-  console.log('    import com.dinoconfig.sdk.generated.brandname.ConfigName;');
+  const examplePackage = basePackage ?? 'com.dinoconfig.sdk.generated';
+  console.log(`    import ${examplePackage}.brandname.ConfigName;`);
   console.log('');
 }
 
@@ -137,7 +210,7 @@ export async function runJavagen(args: string[]): Promise<void> {
   const baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
   const output = options.output ?? DEFAULT_JAVA_OUTPUT;
 
-  logConfig(baseUrl, output);
+  logConfig(baseUrl, output, options.package);
 
   console.log('  → Initializing SDK...');
   console.log('  → Fetching configuration schemas...');
@@ -146,6 +219,8 @@ export async function runJavagen(args: string[]): Promise<void> {
     apiKey: options.apiKey,
     baseUrl,
     output,
+    package: options.package,
+    skipDependencyUpdate: options.skipDeps,
   });
 
   if (!result.success) {
@@ -155,10 +230,19 @@ export async function runJavagen(args: string[]): Promise<void> {
 
   console.log(`  → Found ${result.stats?.brands} brand(s)`);
   console.log(`  → Found ${result.stats?.configs} config(s) with ${result.stats?.keys} key(s)`);
+  console.log(`  → Using package: ${result.basePackage}`);
   console.log('  → Generating Java model classes...');
   console.log(`  → Writing to ${output}...`);
 
-  logSuccess(output, result.stats);
+  if (!options.skipDeps) {
+    if (result.dependencyUpdate?.success && result.dependencyUpdate.addedDependencies?.length) {
+      console.log('  → Updating project dependencies...');
+    } else if (result.dependencyUpdate?.success) {
+      console.log('  → Dependencies already present');
+    }
+  }
+
+  logSuccess(output, result.stats, result.dependencyUpdate, result.basePackage);
 }
 
 // Run directly if called as main script

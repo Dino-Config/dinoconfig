@@ -207,6 +207,118 @@ public class ConfigAPI {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // Get Configuration as Typed Model
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Retrieves a configuration and deserializes it directly to a typed model class.
+     *
+     * <p>This method allows you to fetch configuration data and automatically
+     * deserialize it into a generated model class, providing full type safety.
+     *
+     * <p><b>Example with generated model:</b>
+     * <pre>{@code
+     * // Import your generated model
+     * import org.example.models.demo.MyConfig;
+     *
+     * ConfigAPI configAPI = dinoconfig.getConfigAPI();
+     *
+     * // Get config with full type safety
+     * ApiResponse<MyConfig> response = configAPI.getAs("Demo", "MyConfig", MyConfig.class);
+     * if (response.getSuccess()) {
+     *     MyConfig config = response.getData();
+     *     String test = config.getTest();
+     *     String novoPolje = config.getNovoPolje();
+     * }
+     * }</pre>
+     *
+     * @param <T>        The type of the model class
+     * @param brandName  The name of the brand containing the configuration.
+     *                   Must not be {@code null} or empty.
+     * @param configName The name of the configuration.
+     *                   Must not be {@code null} or empty.
+     * @param modelClass The class to deserialize the configuration values into.
+     *                   Must have Jackson annotations or matching field names.
+     * @return An {@link ApiResponse} containing the typed model instance
+     * @throws IOException if a network error occurs or the request times out
+     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
+     * @throws IllegalArgumentException if any parameter is null or empty
+     */
+    public <T> ApiResponse<T> getAs(String brandName, String configName, Class<T> modelClass) throws IOException {
+        return getAs(brandName, configName, modelClass, new RequestOptions());
+    }
+
+    /**
+     * Retrieves a configuration and deserializes it to a typed model class with custom options.
+     *
+     * <p><b>Example with custom options:</b>
+     * <pre>{@code
+     * RequestOptions options = new RequestOptions();
+     * options.setTimeout(30000L);
+     *
+     * ApiResponse<MyConfig> response = configAPI.getAs("Demo", "MyConfig", MyConfig.class, options);
+     * }</pre>
+     *
+     * @param <T>        The type of the model class
+     * @param brandName  The name of the brand. Must not be {@code null} or empty.
+     * @param configName The name of the configuration. Must not be {@code null} or empty.
+     * @param modelClass The class to deserialize the configuration values into
+     * @param options    Request options for customizing the request
+     * @return An {@link ApiResponse} containing the typed model instance
+     * @throws IOException if a network error occurs
+     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
+     * @throws IllegalArgumentException if any parameter is null or empty
+     */
+    public <T> ApiResponse<T> getAs(String brandName, String configName, Class<T> modelClass, RequestOptions options) throws IOException {
+        validateBrandName(brandName);
+        validateConfigName(configName);
+        Objects.requireNonNull(modelClass, "Model class cannot be null");
+        ApiResponse<Object> response = httpClient.get(buildConfigUrl(brandName, configName), options);
+        return extractTypedModel(response, modelClass);
+    }
+
+    /**
+     * Retrieves a configuration using path-based notation and deserializes it to a typed model.
+     *
+     * <p><b>Example:</b>
+     * <pre>{@code
+     * // These are equivalent:
+     * ApiResponse<MyConfig> response1 = configAPI.getAs("Demo", "MyConfig", MyConfig.class);
+     * ApiResponse<MyConfig> response2 = configAPI.getAs("Demo.MyConfig", MyConfig.class);
+     * }</pre>
+     *
+     * @param <T>        The type of the model class
+     * @param path       The dot-separated path in format "brandName.configName".
+     *                   Must not be {@code null} or empty.
+     * @param modelClass The class to deserialize the configuration values into
+     * @return An {@link ApiResponse} containing the typed model instance
+     * @throws IOException if a network error occurs
+     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
+     * @throws IllegalArgumentException if the path format is invalid
+     */
+    public <T> ApiResponse<T> getAs(String path, Class<T> modelClass) throws IOException {
+        return getAs(path, modelClass, new RequestOptions());
+    }
+
+    /**
+     * Retrieves a configuration using path-based notation and deserializes it to a typed model
+     * with custom request options.
+     *
+     * @param <T>        The type of the model class
+     * @param path       The dot-separated path in format "brandName.configName"
+     * @param modelClass The class to deserialize the configuration values into
+     * @param options    Request options for customizing the request
+     * @return An {@link ApiResponse} containing the typed model instance
+     * @throws IOException if a network error occurs
+     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
+     * @throws IllegalArgumentException if the path format is invalid
+     */
+    public <T> ApiResponse<T> getAs(String path, Class<T> modelClass, RequestOptions options) throws IOException {
+        String[] parts = parseConfigPath(path);
+        return getAs(parts[0], parts[1], modelClass, options);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // Get Single Value
     // ─────────────────────────────────────────────────────────────────────────────
 
@@ -465,6 +577,39 @@ public class ConfigAPI {
     private ApiResponse<ConfigData> extractConfigData(ApiResponse<Object> response) {
         ConfigData configData = convertValue(response.getData(), ConfigData.class);
         return wrapResponse(configData, response);
+    }
+
+    /**
+     * Extracts a typed model from the API response by deserializing the config values.
+     *
+     * <p>This method extracts the 'values' field from the configuration data
+     * and deserializes it directly into the specified model class.
+     *
+     * @param <T> The target model type
+     * @param response The raw API response
+     * @param modelClass The class to deserialize into
+     * @return An ApiResponse containing the typed model
+     */
+    @SuppressWarnings("unchecked")
+    private <T> ApiResponse<T> extractTypedModel(ApiResponse<Object> response, Class<T> modelClass) {
+        if (response.getData() == null) {
+            return wrapResponse(null, response);
+        }
+
+        try {
+            // First convert to ConfigData to extract the values
+            ConfigData configData = convertValue(response.getData(), ConfigData.class);
+            if (configData == null || configData.getValues() == null) {
+                return wrapResponse(null, response);
+            }
+
+            // Deserialize the values directly to the model class
+            T model = objectMapper.convertValue(configData.getValues(), modelClass);
+            return wrapResponse(model, response);
+        } catch (Exception e) {
+            // If conversion fails, return null data with the original response metadata
+            return wrapResponse(null, response);
+        }
     }
 
     /**
