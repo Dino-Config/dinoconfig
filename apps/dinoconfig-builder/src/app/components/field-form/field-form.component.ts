@@ -1,5 +1,5 @@
 import { Component, input, output, signal, computed, effect, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -16,7 +16,6 @@ export type FieldFormMode = 'add' | 'edit';
   selector: 'dc-field-form',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -24,7 +23,7 @@ export type FieldFormMode = 'add' | 'edit';
     MatButtonModule,
     MatIconModule,
     FieldTypeSelectorComponent
-  ],
+],
   templateUrl: './field-form.component.html',
   styleUrl: './field-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

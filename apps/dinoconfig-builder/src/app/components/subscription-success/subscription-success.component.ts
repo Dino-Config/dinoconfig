@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { SubscriptionService } from '../../services/subscription.service';
@@ -12,10 +12,9 @@ import { catchError, of } from 'rxjs';
   selector: 'dc-subscription-success',
   standalone: true,
   imports: [
-    CommonModule,
     MatButtonModule,
     SpinnerComponent
-  ],
+],
   templateUrl: './subscription-success.component.html',
   styleUrl: './subscription-success.component.scss'
 })

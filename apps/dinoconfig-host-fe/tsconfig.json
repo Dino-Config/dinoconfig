@@ -11,7 +11,8 @@
     "isolatedModules": true,
     "emitDecoratorMetadata": false,
     "module": "preserve",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "lib": ["dom", "es2022"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

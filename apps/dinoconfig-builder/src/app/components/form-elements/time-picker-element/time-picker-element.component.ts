@@ -1,5 +1,5 @@
 import { Component, input, output, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTimepickerModule } from '@angular/material/timepicker';
@@ -12,14 +12,13 @@ import { BaseFormElementComponent } from '../base-form-element/base-form-element
   selector: 'dc-time-picker-element',
   standalone: true,
   imports: [
-    CommonModule,
     MatFormFieldModule,
     MatInputModule,
     MatTimepickerModule,
     MatIconModule,
     FormsModule,
     BaseFormElementComponent
-  ],
+],
   templateUrl: './time-picker-element.component.html',
   styleUrl: './time-picker-element.component.scss'
 })

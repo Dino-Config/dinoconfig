@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 
@@ -7,10 +7,9 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
   selector: 'dc-config-modal',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatDialogModule
-  ],
+],
   templateUrl: './config-modal.component.html',
   styleUrl: './config-modal.component.scss'
 })

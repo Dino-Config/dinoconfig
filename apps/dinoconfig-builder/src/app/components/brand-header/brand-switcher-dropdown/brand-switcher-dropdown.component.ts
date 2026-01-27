@@ -1,5 +1,5 @@
 import { Component, input, output, signal, computed, OnInit, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { Brand } from '../../../models/user.models';
@@ -7,7 +7,7 @@ import { Brand } from '../../../models/user.models';
 @Component({
   selector: 'dc-brand-switcher-dropdown',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [FormsModule, MatIconModule],
   templateUrl: './brand-switcher-dropdown.component.html',
   styleUrl: './brand-switcher-dropdown.component.scss'
 })

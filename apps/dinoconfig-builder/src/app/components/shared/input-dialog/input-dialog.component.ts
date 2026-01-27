@@ -1,12 +1,12 @@
 import { Component, inject, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
   selector: 'dc-input-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, FormsModule],
+  imports: [MatDialogModule, FormsModule],
   template: `
     <div class="input-dialog">
       <div class="dialog-header">

@@ -1,5 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,12 +16,11 @@ export interface FieldEditModalData {
   selector: 'dc-field-edit-modal',
   standalone: true,
   imports: [
-    CommonModule,
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
     FieldFormComponent
-  ],
+],
   templateUrl: './field-edit-modal.component.html',
   styleUrl: './field-edit-modal.component.scss'
 })

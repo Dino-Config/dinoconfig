@@ -21,7 +21,7 @@ export class StripeService {
     }
 
     this.stripe = new Stripe(stripeSecretKey || 'sk_test_dummy', {
-      apiVersion: '2025-09-30.clover',
+      apiVersion: '2025-10-29.clover',
     });
   }
 

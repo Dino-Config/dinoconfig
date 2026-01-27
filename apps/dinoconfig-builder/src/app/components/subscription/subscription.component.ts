@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,11 +32,10 @@ interface Notification {
   selector: 'dc-subscription',
   standalone: true,
   imports: [
-    CommonModule,
     MatButtonModule,
     MatIconModule,
     SpinnerComponent
-  ],
+],
   templateUrl: './subscription.component.html',
   styleUrl: './subscription.component.scss'
 })

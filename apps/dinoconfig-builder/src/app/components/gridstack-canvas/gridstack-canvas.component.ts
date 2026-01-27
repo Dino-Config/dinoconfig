@@ -1,5 +1,5 @@
 import { Component, input, output, TrackByFunction, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { GridStackOptions, GridStackWidget } from 'gridstack';
 import { GridstackComponent, GridstackItemComponent } from 'gridstack/dist/angular';
 import { GridFieldConfig } from '../../models/config.models';
@@ -21,7 +21,6 @@ import { DatetimePickerElementComponent } from '../form-elements/datetime-picker
   selector: 'dc-gridstack-canvas',
   standalone: true,
   imports: [
-    CommonModule,
     GridstackComponent,
     GridstackItemComponent,
     TextInputElementComponent,
@@ -34,7 +33,7 @@ import { DatetimePickerElementComponent } from '../form-elements/datetime-picker
     DatePickerElementComponent,
     TimePickerElementComponent,
     DatetimePickerElementComponent
-  ],
+],
   templateUrl: './gridstack-canvas.component.html',
   styleUrl: './gridstack-canvas.component.scss'
 })

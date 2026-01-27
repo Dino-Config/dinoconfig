@@ -1,5 +1,5 @@
 import { Component, input, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { SubscriptionService } from '../../../services/subscription.service';
 import { LimitViolationsResult } from '../../../models/subscription.models';
@@ -7,7 +7,7 @@ import { LimitViolationsResult } from '../../../models/subscription.models';
 @Component({
   selector: 'dc-subscription-violation-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './subscription-violation-modal.component.html',
   styleUrl: './subscription-violation-modal.component.scss'
 })

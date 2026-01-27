@@ -1,5 +1,5 @@
 import { Component, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { BrandService } from '../../services/brand.service';
@@ -12,11 +12,10 @@ import { catchError, of } from 'rxjs';
   selector: 'dc-brand-add-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     SubscriptionLimitWarningComponent
-  ],
+],
   templateUrl: './brand-add-dialog.component.html',
   styleUrl: './brand-add-dialog.component.scss'
 })

@@ -1,21 +1,25 @@
 <section class="policies-page">
   <div class="container">
     <a routerLink="/" class="back-link">← Back to Home</a>
-    
+
     <div class="policies-header">
       <h1>Terms & Policies</h1>
       <p>We take privacy policies seriously and we value transparency.</p>
     </div>
 
     <div class="policies-content">
-      <div class="policies-categories" *ngFor="let category of policyCategories">
-        <h2>{{ category.title }}</h2>
-        <ul class="policies-list">
-          <li *ngFor="let item of category.items">
-            <a [routerLink]="item.route">{{ item.name }}</a>
-          </li>
-        </ul>
-      </div>
+      @for (category of policyCategories; track category) {
+        <div class="policies-categories">
+          <h2>{{ category.title }}</h2>
+          <ul class="policies-list">
+            @for (item of category.items; track item) {
+              <li>
+                <a [routerLink]="item.route">{{ item.name }}</a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     </div>
   </div>
 </section>

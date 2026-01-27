@@ -1,5 +1,5 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,11 +14,10 @@ import { catchError, of } from 'rxjs';
   selector: 'dc-profile',
   standalone: true,
   imports: [
-    CommonModule,
     MatButtonModule,
     MatIconModule,
     SpinnerComponent
-  ],
+],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })

@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { SubscriptionService } from '../../services/subscription.service';
@@ -10,9 +10,8 @@ import { catchError, of } from 'rxjs';
   selector: 'dc-subscription-cancel',
   standalone: true,
   imports: [
-    CommonModule,
     MatButtonModule
-  ],
+],
   templateUrl: './subscription-cancel.component.html',
   styleUrl: './subscription-cancel.component.scss'
 })

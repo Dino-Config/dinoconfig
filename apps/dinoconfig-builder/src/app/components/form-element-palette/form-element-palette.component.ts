@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output, ChangeDetectionStrategy, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FieldType } from '../../models/config.models';
 
@@ -20,7 +20,7 @@ interface Category {
 @Component({
   selector: 'dc-form-element-palette',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './form-element-palette.component.html',
   styleUrl: './form-element-palette.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

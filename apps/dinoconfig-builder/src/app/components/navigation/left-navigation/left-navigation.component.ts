@@ -1,5 +1,5 @@
 import { Component, input, signal, computed, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,14 +19,13 @@ import { NavMenuItemComponent } from '../../shared/nav-menu-item/nav-menu-item.c
   selector: 'dc-left-navigation',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatButtonModule,
     MatIconModule,
     SubscriptionTierBoxComponent,
     UserInfoComponent,
     NavMenuItemComponent
-  ],
+],
   templateUrl: './left-navigation.component.html',
   styleUrl: './left-navigation.component.scss'
 })

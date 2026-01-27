@@ -1,11 +1,11 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { GridFieldConfig } from '../../../models/config.models';
 
 @Component({
   selector: 'dc-base-form-element',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './base-form-element.component.html',
   styleUrl: './base-form-element.component.scss'
 })

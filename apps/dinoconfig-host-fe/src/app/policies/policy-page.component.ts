@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
@@ -13,7 +13,7 @@ interface PolicyContent {
 @Component({
   selector: 'app-policy-page',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './policy-page.component.html',
   styleUrls: ['./policy-page.component.scss']
 })

@@ -1,5 +1,5 @@
 import { Component, input, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { SubscriptionStatus } from '../../../models/subscription.models';
 import { SubscriptionService } from '../../../services/subscription.service';
@@ -7,7 +7,7 @@ import { SubscriptionService } from '../../../services/subscription.service';
 @Component({
   selector: 'dc-subscription-tier-box',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './subscription-tier-box.component.html',
   styleUrl: './subscription-tier-box.component.scss'
 })

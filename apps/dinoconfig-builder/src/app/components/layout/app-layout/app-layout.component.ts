@@ -1,5 +1,5 @@
 import { Component, signal, computed, inject, effect, DestroyRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,13 +16,12 @@ import { environment } from '../../../../environments/environment';
   selector: 'dc-app-layout',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatSidenavModule,
     LeftNavigationComponent,
     SubscriptionViolationModalComponent,
-    IdleWarningModalComponent,
-  ],
+    IdleWarningModalComponent
+],
   templateUrl: './app-layout.component.html',
   styleUrl: './app-layout.component.scss',
 })

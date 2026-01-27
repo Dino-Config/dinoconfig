@@ -1,5 +1,5 @@
 import { Component, input, output, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +9,7 @@ import { BaseFormElementComponent } from '../base-form-element/base-form-element
 @Component({
   selector: 'dc-text-input-element',
   standalone: true,
-  imports: [CommonModule, MatFormFieldModule, MatInputModule, FormsModule, BaseFormElementComponent],
+  imports: [MatFormFieldModule, MatInputModule, FormsModule, BaseFormElementComponent],
   templateUrl: './text-input-element.component.html',
   styleUrl: './text-input-element.component.scss'
 })

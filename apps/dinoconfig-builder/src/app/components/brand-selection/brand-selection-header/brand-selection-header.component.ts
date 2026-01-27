@@ -1,10 +1,10 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'dc-brand-selection-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './brand-selection-header.component.html',
   styleUrl: './brand-selection-header.component.scss'
 })

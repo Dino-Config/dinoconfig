@@ -30,10 +30,6 @@
         "{workspaceRoot}/eslint.config.mjs"
       ]
     },
-    "@nx/vite:test": {
-      "cache": true,
-      "inputs": ["default", "^production"]
-    },
     "@angular-devkit/build-angular:browser": {
       "cache": true,
       "dependsOn": ["^build"],
@@ -77,6 +73,10 @@
       ],
       "dependsOn": ["^build"],
       "cache": true
+    },
+    "@nx/vitest:test": {
+      "cache": true,
+      "inputs": ["default", "^production"]
     }
   },
   "generators": {
@@ -84,7 +84,7 @@
       "e2eTestRunner": "none",
       "linter": "eslint",
       "style": "scss",
-      "unitTestRunner": "vitest"
+      "unitTestRunner": "vitest-analog"
     },
     "@nx/react": {
       "application": {
@@ -134,7 +134,6 @@
       "plugin": "@nx/vite/plugin",
       "options": {
         "buildTargetName": "build",
-        "testTargetName": "test",
         "serveTargetName": "serve",
         "devTargetName": "dev",
         "previewTargetName": "preview",
@@ -142,6 +141,12 @@
         "typecheckTargetName": "typecheck",
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps"
+      }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testTargetName": "test"
       }
     }
   ],

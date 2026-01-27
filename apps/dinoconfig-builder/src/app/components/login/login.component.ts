@@ -1,5 +1,5 @@
 import { Component, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -10,11 +10,10 @@ import { ErrorMessages } from '../../constants/error-messages';
   selector: 'dc-login',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
-    AuthLayoutComponent,
-  ],
+    AuthLayoutComponent
+],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })

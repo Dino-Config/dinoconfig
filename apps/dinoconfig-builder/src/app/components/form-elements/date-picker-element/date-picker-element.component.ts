@@ -1,5 +1,5 @@
 import { Component, input, output, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -13,7 +13,6 @@ import { BaseFormElementComponent } from '../base-form-element/base-form-element
   selector: 'dc-date-picker-element',
   standalone: true,
   imports: [
-    CommonModule,
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
@@ -21,7 +20,7 @@ import { BaseFormElementComponent } from '../base-form-element/base-form-element
     MatIconModule,
     FormsModule,
     BaseFormElementComponent
-  ],
+],
   templateUrl: './date-picker-element.component.html',
   styleUrl: './date-picker-element.component.scss'
 })

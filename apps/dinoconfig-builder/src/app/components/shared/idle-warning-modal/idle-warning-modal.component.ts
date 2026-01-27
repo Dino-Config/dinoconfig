@@ -1,10 +1,10 @@
 import { Component, input, output, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'dc-idle-warning-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './idle-warning-modal.component.html',
   styleUrl: './idle-warning-modal.component.scss'
 })

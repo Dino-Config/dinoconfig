@@ -1,5 +1,5 @@
 import { Component, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -10,11 +10,10 @@ import { ErrorMessages } from '../../constants/error-messages';
   selector: 'dc-forgot-password',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
-    AuthLayoutComponent,
-  ],
+    AuthLayoutComponent
+],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss'
 })

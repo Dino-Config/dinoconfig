@@ -1,14 +1,13 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'dc-nav-menu-item',
   standalone: true,
   imports: [
-    CommonModule, 
     MatIconModule
-  ],
+],
   templateUrl: './nav-menu-item.component.html',
   styleUrl: './nav-menu-item.component.scss'
 })

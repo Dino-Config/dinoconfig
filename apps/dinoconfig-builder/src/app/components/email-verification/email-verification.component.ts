@@ -1,5 +1,5 @@
 import { Component, signal, effect, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { UserStateService } from '../../services/user-state.service';
 import { AuthService } from '../../services/auth.service';
@@ -9,7 +9,7 @@ import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'dc-email-verification',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './email-verification.component.html',
   styleUrl: './email-verification.component.scss'
 })

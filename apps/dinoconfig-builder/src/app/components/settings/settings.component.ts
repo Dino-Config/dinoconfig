@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, NavigationEnd } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,14 +29,13 @@ interface GeneratedApiKey {
   selector: 'dc-settings',
   standalone: true,
   imports: [
-    CommonModule,
     MatButtonModule,
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,
     FormsModule,
     SpinnerComponent
-  ],
+],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
 })

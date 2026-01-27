@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FieldType } from '../../models/config.models';
 
 interface FieldTypeOption {
@@ -13,7 +13,7 @@ interface FieldTypeOption {
 @Component({
   selector: 'dc-field-type-selector',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './field-type-selector.component.html',
   styleUrl: './field-type-selector.component.scss'
 })
