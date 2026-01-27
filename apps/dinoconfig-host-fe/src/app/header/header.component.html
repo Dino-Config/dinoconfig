@@ -35,29 +35,11 @@
           <span>Acceptable Use Policy</span>
         </button>
       </mat-menu>
-      <button mat-button class="nav-dropdown-btn" [matMenuTriggerFor]="developersMenu">
-        Developers
-        <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
-      </button>
-      <mat-menu #developersMenu="matMenu" class="nav-dropdown-menu" yPosition="below">
-        <button mat-menu-item (click)="navigateToDevelopers('docs')">
-          <span>Docs Home</span>
-        </button>
-        <button mat-menu-item (click)="navigateToDevelopers('api-docs')">
-          <span>API docs</span>
-        </button>
-        <button mat-menu-item (click)="navigateToDevelopers('blog')">
-          <span>Blog</span>
-        </button>
-        <button mat-menu-item (click)="navigateToDevelopers('guides')">
-          <span>Guides</span>
-        </button>
-        <button mat-menu-item (click)="navigateToDevelopers('quickstart')">
-          <span>Dinoconfig quickstart</span>
-        </button>
-      </mat-menu>
-      <a href="#pricing">Pricing</a>
-      <a class="builder-link" (click)="openBuilder()">Builder</a>
+      <a mat-button class="nav-dropdown-btn" href="https://developer.dinoconfig.com">
+        Developer
+      </a>
+      <a mat-button href="#pricing">Pricing</a>
+      <a mat-button class="builder-link" (click)="openBuilder()">Builder</a>
     </nav>
     <div class="auth-buttons desktop-only">
       <button mat-button class="login-btn" (click)="openLoginDialog()">Sign in</button>
@@ -73,7 +55,6 @@
     </button>
     <button mat-menu-item class="mobile-dropdown-btn" [matMenuTriggerFor]="mobilePlatformMenu">
       <span>Platform</span>
-      <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
     </button>
     <mat-menu #mobilePlatformMenu="matMenu" class="mobile-dropdown-menu" xPosition="before">
       <button mat-menu-item (click)="navigateToSection('features')">
@@ -85,7 +66,6 @@
     </mat-menu>
     <button mat-menu-item class="mobile-dropdown-btn" [matMenuTriggerFor]="mobileTermsMenu">
       <span>Terms & Policies</span>
-      <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
     </button>
     <mat-menu #mobileTermsMenu="matMenu" class="mobile-dropdown-menu" xPosition="before">
       <button mat-menu-item (click)="navigateToPolicy('privacy')">
@@ -98,35 +78,17 @@
         <span>Acceptable Use Policy</span>
       </button>
     </mat-menu>
-    <button mat-menu-item class="mobile-dropdown-btn" [matMenuTriggerFor]="mobileDevelopersMenu">
-      <span>Developers</span>
-      <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
-    </button>
-    <mat-menu #mobileDevelopersMenu="matMenu" class="mobile-dropdown-menu" xPosition="before">
-      <button mat-menu-item (click)="navigateToDevelopers('docs')">
-        <span>Docs Home</span>
-      </button>
-      <button mat-menu-item (click)="navigateToDevelopers('api-docs')">
-        <span>API docs</span>
-      </button>
-      <button mat-menu-item (click)="navigateToDevelopers('blog')">
-        <span>Blog</span>
-      </button>
-      <button mat-menu-item (click)="navigateToDevelopers('guides')">
-        <span>Guides</span>
-      </button>
-      <button mat-menu-item (click)="navigateToDevelopers('quickstart')">
-        <span>Dinoconfig quickstart</span>
-      </button>
-    </mat-menu>
+    <a mat-menu-item class="mobile-menu" href="https://developer.dinoconfig.com">
+      Developer
+    </a>
     <button mat-menu-item (click)="navigateToSection('pricing')">
       <span>Pricing</span>
     </button>
     <mat-divider></mat-divider>
-    <button mat-menu-item class="demo-menu-item" (click)="openCalendlyDialog()">
+    <button mat-menu-item class="mobile-menu" (click)="openCalendlyDialog()">
       <span>Book a Demo</span>
     </button>
-    <button mat-menu-item class="login-menu-item" (click)="openLoginDialog()">
+    <button mat-menu-item class="mobile-menu" (click)="openLoginDialog()">
       <span>Sign in</span>
     </button>
   </mat-menu>
