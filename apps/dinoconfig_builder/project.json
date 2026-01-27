@@ -1,9 +1,0 @@
-{
-  "name": "dinoconfig_builder",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/dinoconfig_builder/src",
-  "projectType": "application",
-  "tags": [],
-  "// targets": "to see all targets run: nx show project dinoconfig-builder --web",
-  "targets": {}
-}
