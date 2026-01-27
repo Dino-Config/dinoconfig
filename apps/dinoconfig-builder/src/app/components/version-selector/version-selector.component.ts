@@ -1,5 +1,5 @@
 import { Component, input, output, signal, effect, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -10,11 +10,10 @@ import { Config } from '../../models/config.models';
   selector: 'dc-version-selector',
   standalone: true,
   imports: [
-    CommonModule,
     MatButtonModule,
     MatIconModule,
     MatExpansionModule
-  ],
+],
   templateUrl: './version-selector.component.html',
   styleUrl: './version-selector.component.scss'
 })

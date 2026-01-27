@@ -1,5 +1,5 @@
 import { Component, input, output, signal, computed, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { GridFieldConfig } from '../../../models/config.models';
@@ -8,7 +8,7 @@ import { BaseFormElementComponent } from '../base-form-element/base-form-element
 @Component({
   selector: 'dc-range-element',
   standalone: true,
-  imports: [CommonModule, MatSliderModule, FormsModule, BaseFormElementComponent],
+  imports: [MatSliderModule, FormsModule, BaseFormElementComponent],
   templateUrl: './range-element.component.html',
   styleUrl: './range-element.component.scss'
 })

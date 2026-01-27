@@ -1,11 +1,11 @@
 import { Component, input, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'dc-subscription-limit-warning',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './subscription-limit-warning.component.html',
   styleUrl: './subscription-limit-warning.component.scss'
 })

@@ -1,5 +1,5 @@
 import { Component, input, output, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatRadioModule } from '@angular/material/radio';
 import { FormsModule } from '@angular/forms';
 import { GridFieldConfig } from '../../../models/config.models';
@@ -8,7 +8,7 @@ import { BaseFormElementComponent } from '../base-form-element/base-form-element
 @Component({
   selector: 'dc-radio-group-element',
   standalone: true,
-  imports: [CommonModule, MatRadioModule, FormsModule, BaseFormElementComponent],
+  imports: [MatRadioModule, FormsModule, BaseFormElementComponent],
   templateUrl: './radio-group-element.component.html',
   styleUrl: './radio-group-element.component.scss'
 })

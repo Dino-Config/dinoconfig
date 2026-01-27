@@ -1,12 +1,12 @@
 import { Component, input, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { User } from '../../../models/user.models';
 
 @Component({
   selector: 'dc-user-info',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './user-info.component.html',
   styleUrl: './user-info.component.scss'
 })

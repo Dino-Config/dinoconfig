@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterModule } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { BrandService } from '../../services/brand.service';
@@ -16,14 +16,13 @@ import { catchError, of } from 'rxjs';
   selector: 'dc-brand-selection',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     SpinnerComponent,
     EmptyStateComponent,
     ErrorStateComponent,
     BrandCardComponent,
     BrandSelectionHeaderComponent
-  ],
+],
   templateUrl: './brand-selection.component.html',
   styleUrl: './brand-selection.component.scss'
 })

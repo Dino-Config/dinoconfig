@@ -1,5 +1,5 @@
 import { Component, input, output, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -9,7 +9,7 @@ import { ConfigModalComponent } from '../config-modal/config-modal.component';
 @Component({
   selector: 'dc-config-sidebar',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule],
   templateUrl: './config-sidebar.component.html',
   styleUrl: './config-sidebar.component.scss'
 })

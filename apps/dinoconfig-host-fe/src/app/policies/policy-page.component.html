@@ -1,21 +1,24 @@
 <section class="policy-page">
   <div class="container">
     <a routerLink="/policies" class="back-link">← Back to Terms & Policies</a>
-    
-    <div class="policy-content" *ngIf="policyContent">
-      <div class="policy-header">
-        <h1>{{ policyContent.title }}</h1>
-        <p class="effective-date">Effective date: {{ policyContent.effectiveDate }}</p>
+
+    @if (policyContent) {
+      <div class="policy-content">
+        <div class="policy-header">
+          <h1>{{ policyContent.title }}</h1>
+          <p class="effective-date">Effective date: {{ policyContent.effectiveDate }}</p>
+        </div>
+        <div class="policy-body" [innerHTML]="formattedContent"></div>
       </div>
-      
-      <div class="policy-body" [innerHTML]="formattedContent"></div>
-    </div>
-    
-    <div *ngIf="!policyContent" class="policy-not-found">
-      <h1>Policy Not Found</h1>
-      <p>The requested policy document could not be found.</p>
-      <a routerLink="/policies" class="back-link">← Back to Terms & Policies</a>
-    </div>
+    }
+
+    @if (!policyContent) {
+      <div class="policy-not-found">
+        <h1>Policy Not Found</h1>
+        <p>The requested policy document could not be found.</p>
+        <a routerLink="/policies" class="back-link">← Back to Terms & Policies</a>
+      </div>
+    }
   </div>
 </section>
 

@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import { GridFieldConfig } from '../../../models/config.models';
@@ -8,7 +8,7 @@ import { BaseFormElementComponent } from '../base-form-element/base-form-element
 @Component({
   selector: 'dc-checkbox-element',
   standalone: true,
-  imports: [CommonModule, MatCheckboxModule, FormsModule, BaseFormElementComponent],
+  imports: [MatCheckboxModule, FormsModule, BaseFormElementComponent],
   templateUrl: './checkbox-element.component.html',
   styleUrl: './checkbox-element.component.scss'
 })

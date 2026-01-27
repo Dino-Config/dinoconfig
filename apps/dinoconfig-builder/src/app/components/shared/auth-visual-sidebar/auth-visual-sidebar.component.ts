@@ -1,10 +1,10 @@
 import { Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'dc-auth-visual-sidebar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './auth-visual-sidebar.component.html',
   styleUrl: './auth-visual-sidebar.component.scss'
 })

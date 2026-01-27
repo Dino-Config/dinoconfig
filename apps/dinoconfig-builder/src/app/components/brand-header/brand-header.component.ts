@@ -1,5 +1,5 @@
 import { Component, input, inject, signal, OnInit, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +11,7 @@ import { catchError, of } from 'rxjs';
 @Component({
   selector: 'dc-brand-header',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, BrandSwitcherDropdownComponent],
+  imports: [MatButtonModule, MatIconModule, BrandSwitcherDropdownComponent],
   templateUrl: './brand-header.component.html',
   styleUrl: './brand-header.component.scss'
 })

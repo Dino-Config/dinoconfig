@@ -1,5 +1,5 @@
 import { Component, input, output, viewChild, signal, computed, effect, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatDialog } from '@angular/material/dialog';
 import { Config, GridFieldConfig, FieldConfig } from '../../models/config.models';
 import { ConfigService } from '../../services/config.service';
@@ -12,7 +12,7 @@ import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.
 @Component({
   selector: 'dc-config-builder-panel-dragdrop',
   standalone: true,
-  imports: [CommonModule, FormElementPaletteComponent, GridStackCanvasComponent],
+  imports: [FormElementPaletteComponent, GridStackCanvasComponent],
   templateUrl: './config-builder-panel-dragdrop.component.html',
   styleUrl: './config-builder-panel-dragdrop.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

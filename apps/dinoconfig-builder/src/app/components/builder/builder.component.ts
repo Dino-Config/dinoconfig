@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfigService } from '../../services/config.service';
@@ -21,13 +21,12 @@ import { NotificationService } from '../../services/notification.service';
   selector: 'dc-builder',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     BrandHeaderComponent,
     ConfigSidebarComponent,
     SpinnerComponent,
     SubscriptionLimitWarningComponent
-  ],
+],
   templateUrl: './builder.component.html',
   styleUrl: './builder.component.scss'
 })

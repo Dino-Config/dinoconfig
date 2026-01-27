@@ -1,12 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { GridFieldConfig } from '../../models/config.models';
 
 @Component({
   selector: 'dc-form-element-wrapper',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './form-element-wrapper.component.html',
   styleUrl: './form-element-wrapper.component.scss'
 })

@@ -1,10 +1,10 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'dc-error-state',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './error-state.component.html',
   styleUrl: './error-state.component.scss'
 })

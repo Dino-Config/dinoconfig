@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -13,13 +13,12 @@ declare const Calendly: any;
   selector: 'calendly-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatProgressSpinnerModule
-  ],
+],
   templateUrl: './calendly-dialog.component.html',
   styleUrls: ['./calendly-dialog.component.scss']
 })

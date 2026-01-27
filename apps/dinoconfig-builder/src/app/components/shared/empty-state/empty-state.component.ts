@@ -1,10 +1,10 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'dc-empty-state',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './empty-state.component.html',
   styleUrl: './empty-state.component.scss'
 })

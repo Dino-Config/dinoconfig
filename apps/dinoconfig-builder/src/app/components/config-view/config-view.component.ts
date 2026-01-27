@@ -1,5 +1,5 @@
 import { Component, signal, computed, inject, OnInit, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute } from '@angular/router';
 import { ConfigService, ConfigVersionsResponse } from '../../services/config.service';
 import { Config } from '../../models/config.models';
@@ -14,11 +14,10 @@ import { catchError, of } from 'rxjs';
   selector: 'dc-config-view',
   standalone: true,
   imports: [
-    CommonModule,
     VersionSelectorComponent,
     ConfigBuilderPanelDragDropComponent,
     SpinnerComponent
-  ],
+],
   templateUrl: './config-view.component.html',
   styleUrl: './config-view.component.scss'
 })

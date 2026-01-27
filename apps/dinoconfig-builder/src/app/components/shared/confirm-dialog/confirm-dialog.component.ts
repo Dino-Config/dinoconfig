@@ -1,11 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
   selector: 'dc-confirm-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule],
+  imports: [MatDialogModule],
   template: `
     <div class="confirm-dialog">
       <div class="dialog-header">

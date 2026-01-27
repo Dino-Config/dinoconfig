@@ -1,5 +1,5 @@
 import { Component, input, output, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { ConfigService } from '../../services/config.service';
 import { Config } from '../../models/config.models';
@@ -7,7 +7,7 @@ import { Config } from '../../models/config.models';
 @Component({
   selector: 'dc-active-version-container',
   standalone: true,
-  imports: [CommonModule, MatButtonModule],
+  imports: [MatButtonModule],
   templateUrl: './active-version-container.component.html',
   styleUrl: './active-version-container.component.scss'
 })

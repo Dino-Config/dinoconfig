@@ -1,5 +1,5 @@
 import { Component, input, output, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +9,7 @@ import { BaseFormElementComponent } from '../base-form-element/base-form-element
 @Component({
   selector: 'dc-select-element',
   standalone: true,
-  imports: [CommonModule, MatFormFieldModule, MatSelectModule, FormsModule, BaseFormElementComponent],
+  imports: [MatFormFieldModule, MatSelectModule, FormsModule, BaseFormElementComponent],
   templateUrl: './select-element.component.html',
   styleUrl: './select-element.component.scss'
 })
