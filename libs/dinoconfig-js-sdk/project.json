@@ -1,20 +1,20 @@
 {
   "name": "dinoconfig-js-sdk",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/dinoconfig-js-sdk/src",
+  "sourceRoot": "libs/dinoconfig-js-sdk/src",
   "projectType": "library",
   "release": {
     "version": {
-      "manifestRootsToUpdate": ["dist/{projectRoot}"],
+      "manifestRootsToUpdate": ["dist/libs/dinoconfig-js-sdk"],
       "currentVersionResolver": "git-tag",
       "fallbackCurrentVersionResolver": "disk"
     }
   },
-  "tags": [],
+  "tags": ["scope:sdk", "type:lib", "lang:typescript"],
   "targets": {
     "nx-release-publish": {
       "options": {
-        "packageRoot": "dist/{projectRoot}"
+        "packageRoot": "dist/libs/dinoconfig-js-sdk"
       }
     }
   }

@@ -1,0 +1,36 @@
+# Source files (not needed in published package)
+src/
+tsconfig*.json
+vite.config.ts
+eslint.config.mjs
+*.spec.ts
+*.test.ts
+
+# Development files
+.editorconfig
+.gitignore
+.prettierrc
+.prettierignore
+
+# Nx/Build config
+project.json
+jest.config.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test & coverage
+coverage/
+__tests__/
+tests/
+*.spec.js
+*.test.js
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+*.tgz

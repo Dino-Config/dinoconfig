@@ -1,8 +1,9 @@
 {
-  "name": "@dinoconfig/dinoconfig-js-sdk",
-  "version": "1.0.0",
+  "name": "@dinoconfig/js-sdk",
+  "version": "0.0.0",
   "type": "module",
   "main": "./index.js",
+  "module": "./index.js",
   "types": "./index.d.ts",
   "description": "Official JavaScript/TypeScript SDK for DinoConfig API - Simple, type-safe configuration management",
   "keywords": [
@@ -15,7 +16,10 @@
     "config",
     "feature-flags",
     "remote-config",
-    "settings"
+    "settings",
+    "config-management",
+    "environment-variables",
+    "app-config"
   ],
   "author": {
     "name": "DinoConfig Team",
@@ -23,40 +27,51 @@
     "url": "https://dinoconfig.com"
   },
   "license": "MIT",
-  "homepage": "https://github.com/dinoconfig/dinoconfig-js-sdk#readme",
+  "homepage": "https://dinoconfig.com/docs/javascript-sdk",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dinoconfig/dinoconfig-js-sdk.git"
+    "url": "git+https://github.com/dinoconfig/dinoconfig.git",
+    "directory": "libs/dinoconfig-js-sdk"
   },
   "bugs": {
-    "url": "https://github.com/dinoconfig/dinoconfig-js-sdk/issues",
+    "url": "https://github.com/dinoconfig/dinoconfig/issues",
     "email": "support@dinoconfig.com"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/dinoconfig"
   },
   "files": [
     "index.js",
+    "index.js.map",
     "index.d.ts",
     "lib/**/*.js",
+    "lib/**/*.js.map",
     "lib/**/*.d.ts",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {
       "types": "./index.d.ts",
       "import": "./index.js",
       "default": "./index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "sideEffects": false,
   "dependencies": {},
+  "peerDependencies": {},
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

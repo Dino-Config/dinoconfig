@@ -1,9 +1,10 @@
 # DinoConfig JavaScript SDK
 
-[![npm version](https://badge.fury.io/js/%40dinoconfig%2Fdinoconfig-js-sdk.svg)](https://www.npmjs.com/package/@dinoconfig/dinoconfig-js-sdk)
+[![npm version](https://img.shields.io/npm/v/@dinoconfig/js-sdk.svg)](https://www.npmjs.com/package/@dinoconfig/js-sdk)
+[![npm downloads](https://img.shields.io/npm/dm/@dinoconfig/js-sdk.svg)](https://www.npmjs.com/package/@dinoconfig/js-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-16+-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 
 Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a simple, type-safe, and intuitive way to interact with DinoConfig's configuration management system.
 
@@ -43,19 +44,19 @@ Official JavaScript/TypeScript SDK for the DinoConfig API. This SDK provides a s
 
 ```bash
 # npm
-npm install @dinoconfig/dinoconfig-js-sdk
+npm install @dinoconfig/js-sdk
 
 # yarn
-yarn add @dinoconfig/dinoconfig-js-sdk
+yarn add @dinoconfig/js-sdk
 
 # pnpm
-pnpm add @dinoconfig/dinoconfig-js-sdk
+pnpm add @dinoconfig/js-sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi } from '@dinoconfig/js-sdk';
 
 // Initialize the SDK
 const dinoconfig = await dinoconfigApi({
@@ -468,7 +469,7 @@ npx @dinoconfig/cli codegen --api-key=dino_xxx --output=./src/types/dinoconfig.d
 ### Usage with Generated Types
 
 ```typescript
-import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi } from '@dinoconfig/js-sdk';
 import { DinoConfig } from './types/dinoconfig';
 
 const dinoconfig = await dinoconfigApi({
@@ -546,7 +547,7 @@ import {
   // Cache types
   CacheConfig,
   CacheStats
-} from '@dinoconfig/dinoconfig-js-sdk';
+} from '@dinoconfig/js-sdk';
 ```
 
 ### Key Interfaces
@@ -612,7 +613,7 @@ interface RequestOptions {
 ### Basic Usage
 
 ```typescript
-import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi } from '@dinoconfig/js-sdk';
 
 const dinoconfig = await dinoconfigApi({
   apiKey: process.env.DINOCONFIG_API_KEY!
@@ -631,7 +632,7 @@ console.log(value.data);
 
 ```typescript
 import express from 'express';
-import { dinoconfigApi, DinoConfigInstance } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi, DinoConfigInstance } from '@dinoconfig/js-sdk';
 
 let dinoconfig: DinoConfigInstance;
 
@@ -662,7 +663,7 @@ initApp();
 
 ```typescript
 // app/api/config/[...path]/route.ts
-import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi } from '@dinoconfig/js-sdk';
 import { NextResponse } from 'next/server';
 
 export async function GET(
@@ -713,7 +714,7 @@ console.log(`Cache hit rate: ${(stats.hitRate * 100).toFixed(1)}%`);
 ```
 ## Requirements
 
-- **Node.js** >= 16.0.0
+- **Node.js** >= 18.0.0 (for native `fetch` support)
 - **TypeScript** >= 5.0.0 (for TypeScript projects)
 
 ## Contributing
