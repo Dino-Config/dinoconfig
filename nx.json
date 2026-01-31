@@ -151,8 +151,20 @@
     }
   ],
   "release": {
+    "projects": ["dinoconfig-js-sdk", "dinoconfig-cli"],
+    "projectsRelationship": "independent",
     "version": {
-      "preVersionCommand": "npx nx run-many -t build"
+      "preVersionCommand": "npx nx run-many -t build",
+      "conventionalCommits": true
+    },
+    "changelog": {
+      "projectChangelogs": {
+        "createRelease": "github"
+      }
+    },
+    "git": {
+      "commit": true,
+      "tag": true
     }
   }
 }

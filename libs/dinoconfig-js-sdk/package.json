@@ -1,6 +1,6 @@
 {
   "name": "@dinoconfig/js-sdk",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "./index.js",
   "module": "./index.js",
@@ -27,7 +27,7 @@
     "url": "https://dinoconfig.com"
   },
   "license": "MIT",
-  "homepage": "https://dinoconfig.com/docs/javascript-sdk",
+  "homepage": "https://developer.dinoconfig.com/docs/javascript-sdk",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dinoconfig/dinoconfig.git",

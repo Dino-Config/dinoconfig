@@ -5,12 +5,12 @@
   "projectType": "library",
   "release": {
     "version": {
-      "manifestRootsToUpdate": ["dist/{projectRoot}"],
+      "manifestRootsToUpdate": ["dist/libs/dinoconfig-cli"],
       "currentVersionResolver": "git-tag",
       "fallbackCurrentVersionResolver": "disk"
     }
   },
-  "tags": ["cli"],
+  "tags": ["scope:cli", "type:lib", "lang:typescript"],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
@@ -24,7 +24,7 @@
     },
     "nx-release-publish": {
       "options": {
-        "packageRoot": "dist/{projectRoot}"
+        "packageRoot": "dist/libs/dinoconfig-cli"
       }
     }
   }
