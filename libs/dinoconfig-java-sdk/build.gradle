@@ -1,10 +1,15 @@
-// Root build.gradle for dinoconfig-java-sdk
-// This file is required for NX Gradle plugin integration
+/*
+ * DinoConfig Java SDK - Root Build Configuration
+ */
 
-// Apply common settings to all subprojects
 subprojects {
     repositories {
         mavenCentral()
     }
+    
+    afterEvaluate {
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = 'UTF-8'
+        }
+    }
 }
-
