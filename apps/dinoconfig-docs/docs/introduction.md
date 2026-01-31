@@ -35,7 +35,7 @@ DinoConfig is a modern configuration management platform that allows you to:
       <div className="sdk-card__logo">☕</div>
       <h3 className="sdk-card__title">Java SDK</h3>
       <div className="sdk-card__description">Enterprise-ready SDK for Java 21+ applications with OkHttp, Jackson integration, and thread-safe design.</div>
-      <span className="badge badge--primary">v1.1.0</span>
+      <span className="badge badge--primary">v1.0.0</span>
     </a>
   </div>
 </div>
