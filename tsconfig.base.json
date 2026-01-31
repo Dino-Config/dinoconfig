@@ -15,6 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@dinoconfig/js-sdk": ["libs/dinoconfig-js-sdk/src/index.ts"],
       "@dinoconfig/dinoconfig-js-sdk": ["libs/dinoconfig-js-sdk/src/index.ts"],
       "@dinoconfig/cli": ["libs/dinoconfig-cli/src/index.ts"]
     }

@@ -3,7 +3,7 @@
  * @module @dinoconfig/cli/codegen
  */
 
-import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi } from '@dinoconfig/js-sdk';
 import { TypeGenerator } from './type-generator';
 import { JavaModelGenerator, derivePackageFromPath } from './java-model-generator';
 import { updateProjectDependencies, type DependencyUpdateResult } from './dependency-updater';
