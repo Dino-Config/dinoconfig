@@ -7,10 +7,10 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/apps/dinoconfig-js-sdk',
+  cacheDir: '../../node_modules/.vite/libs/dinoconfig-js-sdk',
   plugins: [
     nxViteTsPaths(),
-    nxCopyAssetsPlugin(['*.md']),
+    nxCopyAssetsPlugin(['*.md', 'LICENSE']),
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(__dirname, 'tsconfig.lib.json'),
@@ -18,7 +18,7 @@ export default defineConfig(() => ({
     }),
   ],
   build: {
-    outDir: '../../dist/apps/dinoconfig-js-sdk',
+    outDir: '../../dist/libs/dinoconfig-js-sdk',
     emptyOutDir: true,
     reportCompressedSize: true,
     commonjsOptions: {
@@ -41,7 +41,7 @@ export default defineConfig(() => ({
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
-      reportsDirectory: '../../coverage/apps/dinoconfig-js-sdk',
+      reportsDirectory: '../../coverage/libs/dinoconfig-js-sdk',
       provider: 'v8' as const,
     },
   },
