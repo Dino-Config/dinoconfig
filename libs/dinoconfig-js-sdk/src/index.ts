@@ -48,7 +48,7 @@
  * ```
  *
  * @see {@link https://docs.dinoconfig.com | Documentation}
- * @see {@link https://github.com/dinoconfig/dinoconfig-js-sdk | GitHub}
+ * @see {@link https://github.com/Dino-Config/dinoconfig-js-sdk | GitHub}
  */
 
 // ─────────────────────────────────────────────────────────────────────────────

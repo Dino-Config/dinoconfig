@@ -30,11 +30,11 @@
   "homepage": "https://developer.dinoconfig.com/docs/javascript-sdk",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dinoconfig/dinoconfig.git",
+    "url": "git+https://github.com/Dino-Config/dinoconfig.git",
     "directory": "libs/dinoconfig-js-sdk"
   },
   "bugs": {
-    "url": "https://github.com/dinoconfig/dinoconfig/issues",
+    "url": "https://github.com/Dino-Config/dinoconfig/issues",
     "email": "support@dinoconfig.com"
   },
   "funding": {

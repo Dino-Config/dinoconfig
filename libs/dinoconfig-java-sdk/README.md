@@ -269,7 +269,7 @@ public class FeatureFlagService {
 ## Support
 
 - **Documentation**: [https://dinoconfig.com/docs](https://dinoconfig.com/docs)
-- **Issues**: [GitHub Issues](https://github.com/dinoconfig/dinoconfig/issues)
+- **Issues**: [GitHub Issues](https://github.com/Dino-Config/dinoconfig/issues)
 - **Email**: support@dinoconfig.com
 
 ## License

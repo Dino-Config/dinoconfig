@@ -65,8 +65,8 @@ publishing {
             pom {
                 name = 'DinoConfig Java SDK'
                 description = 'Official Java SDK for DinoConfig API - Type-safe configuration management'
-                url = 'https://github.com/dinoconfig/dinoconfig'
-                inceptionYear = '2024'
+                url = 'https://developer.dinoconfig.com/docs/java-sdk'
+                inceptionYear = '2025'
                 
                 licenses {
                     license {
@@ -84,9 +84,9 @@ publishing {
                 }
                 
                 scm {
-                    url = 'https://github.com/dinoconfig/dinoconfig'
-                    connection = 'scm:git:git://github.com/dinoconfig/dinoconfig.git'
-                    developerConnection = 'scm:git:ssh://git@github.com/dinoconfig/dinoconfig.git'
+                    url = 'https://github.com/Dino-Config/dinoconfig'
+                    connection = 'scm:git:git://github.com/Dino-Config/dinoconfig.git'
+                    developerConnection = 'scm:git:ssh://git@github.com/Dino-Config/dinoconfig.git'
                 }
             }
         }

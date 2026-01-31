@@ -721,7 +721,7 @@ console.log(`Cache hit rate: ${(stats.hitRate * 100).toFixed(1)}%`);
 
 ```bash
 # Clone and install
-git clone https://github.com/dinoconfig/dinoconfig-js-sdk.git
+git https://github.com/Dino-Config/dinoconfig
 npm install
 
 # Build

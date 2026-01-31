@@ -62,7 +62,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/dinoconfig/dinoconfig/tree/main/apps/docs/',
+          editUrl: 'https://github.com/Dino-Config/dinoconfig/tree/main/apps/docs/',
         },
         blog: false,
         theme: { customCss: './src/css/custom.css' },
@@ -98,7 +98,7 @@ const config: Config = {
       logo: { alt: 'DinoConfig Logo - Configuration Management Platform', src: 'img/logo.svg' },
       items: [
         { type: 'docSidebar', sidebarId: 'docsSidebar', position: 'left', label: 'Documentation' },
-        { href: 'https://github.com/dinoconfig/dinoconfig', label: 'GitHub', position: 'right' },
+        { href: 'https://github.com/Dino-Config/dinoconfig', label: 'GitHub', position: 'right' },
         { href: 'https://dinoconfig.com', label: 'Dashboard', position: 'right' },
       ],
     },
@@ -116,7 +116,7 @@ const config: Config = {
         {
           title: 'Links',
           items: [
-            { label: 'GitHub', href: 'https://github.com/dinoconfig/dinoconfig' },
+            { label: 'GitHub', href: 'https://github.com/Dino-Config/dinoconfig' },
             { label: 'Dashboard', href: 'https://dinoconfig.com' },
           ],
         },

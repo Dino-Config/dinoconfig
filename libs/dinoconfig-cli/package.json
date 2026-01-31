@@ -32,11 +32,11 @@
   "homepage": "https://developer.dinoconfig.com/docs/introduction",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dinoconfig/dinoconfig.git",
+    "url": "git+https://github.com/Dino-Config/dinoconfig",
     "directory": "libs/dinoconfig-cli"
   },
   "bugs": {
-    "url": "https://github.com/dinoconfig/dinoconfig/issues",
+    "url": "https://github.com/Dino-Config/dinoconfig/issues",
     "email": "support@dinoconfig.com"
   },
   "funding": {
