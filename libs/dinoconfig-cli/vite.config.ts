@@ -10,7 +10,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/libs/dinoconfig-cli',
   plugins: [
     nxViteTsPaths(),
-    nxCopyAssetsPlugin(['*.md']),
+    nxCopyAssetsPlugin(['*.md', 'LICENSE']),
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(__dirname, 'tsconfig.lib.json'),
@@ -39,7 +39,18 @@ export default defineConfig(() => ({
         'path',
         'node:fs',
         'node:path',
+        'node:fs/promises',
+        'node:url',
+        '@dinoconfig/js-sdk',
       ],
+      output: {
+        banner: (chunk) => {
+          if (chunk.fileName.startsWith('bin/')) {
+            return '#!/usr/bin/env node';
+          }
+          return '';
+        },
+      },
     },
   },
   test: {

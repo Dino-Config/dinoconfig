@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * DinoConfig Type Generator CLI
  *

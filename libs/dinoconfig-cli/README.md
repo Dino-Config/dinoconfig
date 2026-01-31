@@ -1,9 +1,11 @@
 # DinoConfig CLI
 
-[![npm version](https://badge.fury.io/js/%40dinoconfig%2Fcli.svg)](https://www.npmjs.com/package/@dinoconfig/cli)
+[![npm version](https://img.shields.io/npm/v/@dinoconfig/cli.svg)](https://www.npmjs.com/package/@dinoconfig/cli)
+[![npm downloads](https://img.shields.io/npm/dm/@dinoconfig/cli.svg)](https://www.npmjs.com/package/@dinoconfig/cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 
-Command-line tools for DinoConfig, including TypeScript type generation from your configuration schemas.
+Command-line tools for DinoConfig, including TypeScript and Java code generation from your configuration schemas.
 
 ## Installation
 
@@ -76,7 +78,7 @@ export namespace DinoConfig {
 #### Usage with SDK
 
 ```typescript
-import { dinoconfigApi } from '@dinoconfig/dinoconfig-js-sdk';
+import { dinoconfigApi } from '@dinoconfig/js-sdk';
 import { DinoConfig } from './types/dinoconfig';
 
 const dinoconfig = await dinoconfigApi({
@@ -139,12 +141,12 @@ Add type generation to your build process:
 
 ## Requirements
 
-- Node.js >= 16.0.0
+- Node.js >= 18.0.0
 - DinoConfig API key
 
 ## Related Packages
 
-- [@dinoconfig/dinoconfig-js-sdk](https://www.npmjs.com/package/@dinoconfig/dinoconfig-js-sdk) - JavaScript/TypeScript SDK
+- [@dinoconfig/js-sdk](https://www.npmjs.com/package/@dinoconfig/js-sdk) - JavaScript/TypeScript SDK
 
 ## License
 

@@ -1,22 +1,27 @@
 {
   "name": "@dinoconfig/cli",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "type": "module",
   "main": "./index.js",
+  "module": "./index.js",
   "types": "./index.d.ts",
   "bin": {
     "dinoconfig": "./bin/dinoconfig.js",
-    "dinoconfig-codegen": "./bin/codegen.js"
+    "dinoconfig-codegen": "./bin/codegen.js",
+    "dinoconfig-javagen": "./bin/javagen.js"
   },
-  "description": "DinoConfig CLI - Command-line tools for DinoConfig including type generation",
+  "description": "DinoConfig CLI - Command-line tools for DinoConfig including TypeScript and Java code generation",
   "keywords": [
     "dinoconfig",
     "cli",
     "codegen",
     "typescript",
+    "java",
     "type-generation",
     "configuration",
-    "config"
+    "config",
+    "code-generator",
+    "schema"
   ],
   "author": {
     "name": "DinoConfig Team",
@@ -24,44 +29,59 @@
     "url": "https://dinoconfig.com"
   },
   "license": "MIT",
-  "homepage": "https://github.com/dinoconfig/dinoconfig-cli#readme",
+  "homepage": "https://dinoconfig.com/docs/cli",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dinoconfig/dinoconfig-cli.git"
+    "url": "git+https://github.com/dinoconfig/dinoconfig.git",
+    "directory": "libs/dinoconfig-cli"
   },
   "bugs": {
-    "url": "https://github.com/dinoconfig/dinoconfig-cli/issues",
+    "url": "https://github.com/dinoconfig/dinoconfig/issues",
     "email": "support@dinoconfig.com"
   },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/dinoconfig"
+  },
   "files": [
-    "index.js",
-    "index.d.ts",
+    "*.js",
+    "*.js.map",
+    "*.d.ts",
+    "*.d.ts.map",
     "bin/**/*.js",
+    "bin/**/*.js.map",
     "bin/**/*.d.ts",
+    "bin/**/*.d.ts.map",
     "lib/**/*.js",
+    "lib/**/*.js.map",
     "lib/**/*.d.ts",
+    "lib/**/*.d.ts.map",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {
       "types": "./index.d.ts",
       "import": "./index.js",
       "default": "./index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "sideEffects": false,
   "dependencies": {
-    "@dinoconfig/dinoconfig-js-sdk": "^1.0.0"
+    "@dinoconfig/js-sdk": "^0.0.0"
   },
+  "peerDependencies": {},
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
