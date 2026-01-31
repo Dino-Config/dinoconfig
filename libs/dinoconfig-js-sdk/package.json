@@ -27,7 +27,7 @@
     "url": "https://dinoconfig.com"
   },
   "license": "MIT",
-  "homepage": "https://dinoconfig.com/docs/javascript-sdk",
+  "homepage": "https://developer.dinoconfig.com/docs/javascript-sdk",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dinoconfig/dinoconfig.git",
