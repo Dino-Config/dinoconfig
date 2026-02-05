@@ -135,7 +135,7 @@ public class DinoConfigSDK {
         Objects.requireNonNull(config, "Configuration cannot be null");
 
         String apiKey = config.getApiKey();
-        String baseUrl = config.getBaseUrl() != null ? config.getBaseUrl() : "http://localhost:3000";
+        String baseUrl = config.getBaseUrl() != null ? config.getBaseUrl() : "https://api.dinoconfig.com";
         Long timeout = config.getTimeout() != null ? config.getTimeout() : 10000L;
 
         if (apiKey == null || apiKey.trim().isEmpty()) {

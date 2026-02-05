@@ -21,12 +21,11 @@ import java.util.List;
  *   <li>SDK initialization with factory methods</li>
  *   <li>Retrieving entire configurations with {@link ConfigAPI#get(String, String)}</li>
  *   <li>Retrieving typed configurations with {@link ConfigAPI#getAs(String, String, Class)}</li>
- *   <li>Retrieving single values with {@link ConfigAPI#getValue(String, String, String)}</li>
+ *   <li>Retrieving single values with type safety: {@link ConfigAPI#getValue(String, Class)}</li>
  *   <li>Using path-based shorthand notation</li>
  *   <li>Using generated model classes for type-safe configuration access</li>
  *   <li>Discovery API for exploring brands and configs</li>
  *   <li>Full introspection capabilities</li>
- *   <li>Error handling and response checking</li>
  * </ul>
  */
 public class App {
@@ -63,7 +62,7 @@ public class App {
      */
     private void runDemo(String apiKey, String baseUrl) throws IOException {
         System.out.println("=========================================");
-        System.out.println("DinoConfig Java SDK Demo");
+        System.out.println("DinoConfig Java SDK Demo (v2.0 API)");
         System.out.println("=========================================\n");
 
         // Initialize SDK using factory method
@@ -99,8 +98,8 @@ public class App {
         // Demonstrate Config API - Using typed models (generated classes)
         demonstrateTypedModels(configAPI);
 
-        // Demonstrate Config API - Getting single values
-        demonstrateValueRetrieval(configAPI);
+        // Demonstrate Config API - Getting single values with type safety
+        demonstrateTypedValueRetrieval(configAPI);
 
         // Demonstrate path-based shorthand
         demonstratePathShorthand(configAPI);
@@ -108,13 +107,12 @@ public class App {
         System.out.println("=========================================");
         System.out.println("Demo Complete!");
         System.out.println("=========================================");
-        System.out.println("\nQuick Start Guide:");
+        System.out.println("\nQuick Start Guide (v2.0 Simplified API):");
         System.out.println("1. Initialize: DinoConfigSDK sdk = DinoConfigSDKFactory.create(\"your-api-key\");");
-        System.out.println("2. Get entire config: ApiResponse<ConfigData> config = sdk.getConfigAPI().get(\"Brand\", \"Config\");");
-        System.out.println("3. Get typed config: ApiResponse<MyConfig> config = sdk.getConfigAPI().getAs(\"Brand\", \"Config\", MyConfig.class);");
-        System.out.println("4. Get single value: ApiResponse<Object> value = sdk.getConfigAPI().getValue(\"Brand\", \"Config\", \"key\");");
-        System.out.println("5. Use path shorthand: ApiResponse<MyConfig> config = sdk.getConfigAPI().getAs(\"Brand.Config\", MyConfig.class);");
-        System.out.println("6. Explore: ApiResponse<List<BrandInfo>> brands = sdk.getDiscoveryAPI().listBrands();");
+        System.out.println("2. Get entire config: ConfigData config = sdk.getConfigAPI().get(\"Brand\", \"Config\");");
+        System.out.println("3. Get typed config: MyConfig config = sdk.getConfigAPI().getAs(\"Brand\", \"Config\", MyConfig.class);");
+        System.out.println("4. Get single value: String value = sdk.getConfigAPI().getValue(\"Brand.Config.key\", String.class);");
+        System.out.println("5. Explore: List<BrandInfo> brands = sdk.getDiscoveryAPI().listBrands();");
         System.out.println("\nGenerate type-safe models:");
         System.out.println("  npx @dinoconfig/cli javagen --api-key=YOUR_KEY --output=./src/main/java/your/package");
         System.out.println("\nSee README.md for complete documentation.");
@@ -128,35 +126,45 @@ public class App {
         System.out.println("Discovery API - Exploring Configurations");
         System.out.println("=========================================");
 
-        // List all brands
+        // List all brands - returns List<BrandInfo> directly!
         System.out.println("\n1. Listing all brands...");
-        ApiResponse<List<BrandInfo>> brandsResponse = discoveryAPI.listBrands();
-        if (brandsResponse.getSuccess() && brandsResponse.getData() != null) {
-            List<BrandInfo> brands = brandsResponse.getData();
-            System.out.println("   ✓ Found " + brands.size() + " brand(s):");
-            for (BrandInfo brand : brands) {
-                String description = brand.getDescription();
-                System.out.println("     - " + brand.getName() +
-                    (description != null && !description.isEmpty() ? " (" + description + ")" : "") +
-                    " - " + brand.getConfigCount() + " config(s)");
-            }
-        } else {
-            System.out.println("   ⚠ Could not retrieve brands: " + brandsResponse.getMessage());
+        List<BrandInfo> brands = discoveryAPI.listBrands();
+        System.out.println("   ✓ Found " + brands.size() + " brand(s):");
+        for (BrandInfo brand : brands) {
+            String description = brand.getDescription();
+            System.out.println("     - " + brand.getName() +
+                (description != null && !description.isEmpty() ? " (" + description + ")" : "") +
+                " - " + brand.getConfigCount() + " config(s)");
         }
 
-        // Full introspection
-        System.out.println("\n2. Performing full introspection...");
-        ApiResponse<IntrospectionResult> introspectionResponse = discoveryAPI.introspect();
-        if (introspectionResponse.getSuccess() && introspectionResponse.getData() != null) {
-            IntrospectionResult result = introspectionResponse.getData();
-            System.out.println("   ✓ Introspection complete");
-            System.out.println("     Company: " + result.getCompany());
-            System.out.println("     Total brands: " + result.getBrandCount());
-            System.out.println("     Total configs: " + result.getTotalConfigCount());
-            System.out.println("     Total keys: " + result.getTotalKeyCount());
-        } else {
-            System.out.println("   ⚠ Could not perform introspection: " + introspectionResponse.getMessage());
+        // List configs for a specific brand - returns List<ConfigInfo> directly!
+        System.out.println("\n2. Listing configs for brand 'Test'...");
+        List<ConfigInfo> configs = discoveryAPI.listConfigs("Test");
+        System.out.println("   ✓ Found " + configs.size() + " config(s):");
+        for (ConfigInfo config : configs) {
+            System.out.println("     - " + config.getName() + " (v" + config.getVersion() + ") - " + config.getKeys().size() + " key(s)");
         }
+
+        // Get schema for a config - returns ConfigSchema directly!
+        System.out.println("\n3. Getting schema for 'Test.Test3'...");
+        ConfigSchema schema = discoveryAPI.getSchema("Test", "Test3");
+        System.out.println("   ✓ Schema retrieved");
+        System.out.println("     Config: " + schema.getConfigName() + " (v" + schema.getVersion() + ")");
+        if (schema.getFields() != null) {
+            System.out.println("     Fields:");
+            schema.getFields().forEach((name, field) -> {
+                System.out.println("       - " + name + ": " + field.getType() + (field.isRequired() ? " (required)" : ""));
+            });
+        }
+
+        // Full introspection - returns IntrospectionResult directly!
+        System.out.println("\n4. Performing full introspection...");
+        IntrospectionResult result = discoveryAPI.introspect();
+        System.out.println("   ✓ Introspection complete");
+        System.out.println("     Company: " + result.getCompany());
+        System.out.println("     Total brands: " + result.getBrandCount());
+        System.out.println("     Total configs: " + result.getTotalConfigCount());
+        System.out.println("     Total keys: " + result.getTotalKeyCount());
 
         System.out.println();
     }
@@ -166,139 +174,72 @@ public class App {
      */
     private void demonstrateConfigRetrieval(ConfigAPI configAPI) throws IOException {
         System.out.println("=========================================");
-        System.out.println("Config API - Retrieving Entire Configurations");
+        System.out.println("Config API - Retrieving Configurations");
         System.out.println("=========================================");
 
-        System.out.println("\nExample: Get entire configuration");
-        System.out.println("  ApiResponse<ConfigData> response = configAPI.get(\"BrandName\", \"ConfigName\");");
-        System.out.println("  if (response.getSuccess()) {");
-        System.out.println("      ConfigData config = response.getData();");
-        System.out.println("      Map<String, Object> values = config.getValues();");
-        System.out.println("      String theme = config.getValue(\"theme\", String.class);");
-        System.out.println("  }");
+        System.out.println("\nNew simplified API (v2.0):");
+        System.out.println("  ConfigData config = configAPI.get(\"Brand\", \"Config\");");
+        System.out.println("  Map<String, Object> values = config.getValues();");
+        System.out.println("  String theme = config.getValue(\"theme\", String.class);");
         System.out.println();
 
-        // Try to get a config (will fail gracefully if it doesn't exist)
-        System.out.println("Trying to retrieve a sample configuration...");
-        // Note: This will only work if you have actual brands/configs configured
-        System.out.println("  → Fetching config...");
-        ApiResponse<ConfigData> configResponse = configAPI.get("Test", "Test3");
-        if (configResponse.getSuccess()) {
-            ConfigData config = configResponse.getData();
-            System.out.println("  ✓ Config retrieved: " + config.getName() + " (v" + config.getVersion() + ")");
-            System.out.println("  ✓ Values: " + config.getValues());
-        } else {
-            System.out.println("  ⚠ Config not found (this is expected if not configured)");
-        }
+        // Get config - returns ConfigData directly!
+        System.out.println("Fetching 'Test.Test3' configuration...");
+        ConfigData config = configAPI.get("Test", "Test3");
+        System.out.println("  ✓ Config retrieved: " + config.getName() + " (v" + config.getVersion() + ")");
+        System.out.println("  ✓ Values: " + config.getValues());
 
         System.out.println();
     }
 
     /**
      * Demonstrates using typed model classes for type-safe configuration access.
-     *
-     * <p>This showcases the {@code getAs()} methods that automatically deserialize
-     * configuration values into generated model classes.
      */
     private void demonstrateTypedModels(ConfigAPI configAPI) throws IOException {
         System.out.println("=========================================");
-        System.out.println("Config API - Using Generated Type-Safe Models");
+        System.out.println("Config API - Type-Safe Models");
         System.out.println("=========================================");
 
-        System.out.println("\nThe SDK supports type-safe configuration access using generated model classes.");
-        System.out.println("Generate models with: npx @dinoconfig/cli javagen --api-key=YOUR_KEY --output=./src/main/java/your/package");
+        System.out.println("\nNew simplified API (v2.0):");
+        System.out.println("  // Get config directly as your model type");
+        System.out.println("  MyConfig config = configAPI.getAs(\"Demo\", \"MyConfig\", MyConfig.class);");
+        System.out.println("  String test = config.getTest();  // Type-safe, no casting!");
         System.out.println();
 
-        // Example 1: Using getAs() with separate parameters
-        System.out.println("Example 1: Get config as typed model");
-        System.out.println("  // Import your generated model class");
-        System.out.println("  import org.example.models.demo.MyConfig;");
-        System.out.println();
-        System.out.println("  // Fetch config with full type safety");
-        System.out.println("  ApiResponse<MyConfig> response = configAPI.getAs(\"Demo\", \"MyConfig\", MyConfig.class);");
-        System.out.println("  if (response.getSuccess()) {");
-        System.out.println("      MyConfig config = response.getData();");
-        System.out.println("      String test = config.getTest();           // Type-safe access");
-        System.out.println("      String novoPolje = config.getNovoPolje(); // No casting needed");
-        System.out.println("  }");
-        System.out.println();
-
-        // Example 2: Using path-based notation with getAs()
-        System.out.println("Example 2: Get config as typed model using path notation");
-        System.out.println("  ApiResponse<MyConfig> response = configAPI.getAs(\"Demo.MyConfig\", MyConfig.class);");
-        System.out.println();
-
-        // Example 3: Multiple configs with different models
-        System.out.println("Example 3: Different configs with their own model classes");
-        System.out.println("  ApiResponse<MyConfig> myConfig = configAPI.getAs(\"Demo\", \"MyConfig\", MyConfig.class);");
-        System.out.println("  ApiResponse<Svejedno> svejedno = configAPI.getAs(\"Demo\", \"Svejedno\", Svejedno.class);");
-        System.out.println();
-
-        // Live demonstration
-        System.out.println("Live demonstration with actual API call...");
-
-        // Try to get MyConfig as typed model
-        System.out.println("\n  → Fetching 'Test.Test3' as typed Test3 model...");
-        ApiResponse<Test3> myConfigResponse = configAPI.getAs("Test", "Test3", Test3.class);
-        if (myConfigResponse.getSuccess() && myConfigResponse.getData() != null) {
-            Test3 config = myConfigResponse.getData();
-            System.out.println("  ✓ Config retrieved with type safety!");
-            System.out.println("    - config.getTime_1(): " + config.getTime_1());
-            System.out.println("    - config.getDatetime_1(): " + config.getDatetime_1());
-            System.out.println("    - Full object: " + config);
-        } else {
-            System.out.println("  ⚠ Could not retrieve Test3 (this is expected if not configured)");
-        }
-
-        // Comparison: Traditional vs Type-Safe approach
-        System.out.println("\n  Comparison: Traditional vs Type-Safe approach");
-        System.out.println("  ─────────────────────────────────────────────");
-        System.out.println("  Traditional (requires casting):");
-        System.out.println("    ApiResponse<ConfigData> resp = configAPI.get(\"Demo\", \"MyConfig\");");
-        System.out.println("    String test = (String) resp.getData().getValues().get(\"test\");");
-        System.out.println();
-        System.out.println("  Type-Safe (no casting, IDE autocomplete):");
-        System.out.println("    ApiResponse<MyConfig> resp = configAPI.getAs(\"Demo\", \"MyConfig\", MyConfig.class);");
-        System.out.println("    String test = resp.getData().getTest();  // ← Type-safe!");
+        // Get typed model - returns Test3 directly!
+        System.out.println("Fetching 'Test.Test3' as typed Test3 model...");
+        Test3 typedConfig = configAPI.getAs("Test", "Test3", Test3.class);
+        System.out.println("  ✓ Config retrieved with type safety!");
+        System.out.println("    - config.getTime_1(): " + typedConfig.getTime_1());
+        System.out.println("    - config.getDatetime_1(): " + typedConfig.getDatetime_1());
 
         System.out.println();
     }
 
     /**
-     * Demonstrates retrieving single configuration values
+     * Demonstrates retrieving single configuration values with type safety
      */
-    private void demonstrateValueRetrieval(ConfigAPI configAPI) throws IOException {
+    private void demonstrateTypedValueRetrieval(ConfigAPI configAPI) throws IOException {
         System.out.println("=========================================");
-        System.out.println("Config API - Retrieving Single Values");
+        System.out.println("Config API - Type-Safe Value Retrieval");
         System.out.println("=========================================");
 
-        System.out.println("\nExample 1: Get value with separate parameters");
-        System.out.println("  ApiResponse<Object> response = configAPI.getValue(\"BrandName\", \"ConfigName\", \"keyName\");");
-        System.out.println("  if (response.getSuccess()) {");
-        System.out.println("      Object value = response.getData();");
-        System.out.println("      // Cast to expected type");
-        System.out.println("      String stringValue = (String) value;");
-        System.out.println("      Boolean boolValue = (Boolean) value;");
-        System.out.println("  }");
+        System.out.println("\nNew simplified API (v2.0):");
+        System.out.println("  // Get a value with type safety - no casting needed!");
+        System.out.println("  String theme = configAPI.getValue(\"Brand.Config.theme\", String.class);");
+        System.out.println("  Integer count = configAPI.getValue(\"Brand.Config.count\", Integer.class);");
+        System.out.println("  Boolean flag = configAPI.getValue(\"Brand.Config.enabled\", Boolean.class);");
         System.out.println();
 
-        System.out.println("Example 2: Get value with RequestOptions");
-        System.out.println("  RequestOptions options = new RequestOptions();");
-        System.out.println("  options.setTimeout(30000L);  // 30 second timeout");
-        System.out.println("  options.setRetries(3);       // Retry up to 3 times");
-        System.out.println("  ApiResponse<Object> response = configAPI.getValue(\"Brand\", \"Config\", \"key\", options);");
-        System.out.println();
+        // Get typed value - returns the value directly!
+        System.out.println("Fetching 'Test.Test3.time_1' as String...");
+        String timeValue = configAPI.getValue("Test", "Test3", "time_1", String.class);
+        System.out.println("  ✓ Value retrieved: " + timeValue);
 
-        // Try to get a value (will fail gracefully if it doesn't exist)
-        System.out.println("Trying to retrieve a sample value...");
-        // Note: This will only work if you have actual brands/configs/keys configured
-        System.out.println("  → Fetching value...");
-        ApiResponse<Object> valueResponse = configAPI.getValue("Test", "Test3", "time_1");
-        if (valueResponse.getSuccess()) {
-            System.out.println("  ✓ Value retrieved: " + valueResponse.getData());
-        } else {
-            System.out.println("  ⚠ Value not found (this is expected if not configured)");
-        }
+        // Using path shorthand
+        System.out.println("\nFetching 'Test.Test3.datetime_1' using path shorthand...");
+        String datetimeValue = configAPI.getValue("Test.Test3.datetime_1", String.class);
+        System.out.println("  ✓ Value retrieved: " + datetimeValue);
 
         System.out.println();
     }
@@ -311,24 +252,33 @@ public class App {
         System.out.println("Path-Based Shorthand Notation");
         System.out.println("=========================================");
 
-        System.out.println("\nYou can use dot-separated paths for convenience:");
+        System.out.println("\nUse dot-separated paths for concise code:");
         System.out.println();
 
         System.out.println("Get entire config:");
-        System.out.println("  // These are equivalent:");
-        System.out.println("  ApiResponse<ConfigData> config1 = configAPI.get(\"Brand\", \"Config\");");
-        System.out.println("  ApiResponse<ConfigData> config2 = configAPI.get(\"Brand.Config\");");
+        System.out.println("  ConfigData config = configAPI.get(\"Brand.Config\");");
+        
+        ConfigData pathConfig = configAPI.get("Test.Test3");
+        System.out.println("  → Result: " + pathConfig.getName() + " with " + pathConfig.getValues().size() + " values");
+        System.out.println();
+
+        System.out.println("Get typed config:");
+        System.out.println("  MyConfig config = configAPI.getAs(\"Brand.Config\", MyConfig.class);");
+        
+        Test3 pathTypedConfig = configAPI.getAs("Test.Test3", Test3.class);
+        System.out.println("  → Result: time_1=" + pathTypedConfig.getTime_1());
         System.out.println();
 
         System.out.println("Get single value:");
-        System.out.println("  // These are equivalent:");
-        System.out.println("  ApiResponse<Object> value1 = configAPI.getValue(\"Brand\", \"Config\", \"key\");");
-        System.out.println("  ApiResponse<Object> value2 = configAPI.getValue(\"Brand.Config.key\");");
+        System.out.println("  String value = configAPI.getValue(\"Brand.Config.key\", String.class);");
+        
+        String pathValue = configAPI.getValue("Test.Test3.time_1", String.class);
+        System.out.println("  → Result: " + pathValue);
         System.out.println();
 
-        System.out.println("Path format:");
+        System.out.println("Path formats:");
         System.out.println("  • Config: \"BrandName.ConfigName\"");
-        System.out.println("  • Value: \"BrandName.ConfigName.KeyName\"");
+        System.out.println("  • Value:  \"BrandName.ConfigName.KeyName\"");
         System.out.println();
     }
 }

@@ -7,7 +7,7 @@ keywords: [java sdk, maven, gradle, spring boot, configuration management, dinoc
 
 # Getting Started with Java SDK
 
-The DinoConfig Java SDK provides a robust, thread-safe way to access your configurations from any Java application.
+The DinoConfig Java SDK provides a robust, thread-safe way to access your configurations from any Java application. The v2.0 API returns values directly with no wrapper objects needed.
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ Add the dependency to your `build.gradle`:
 
 ```gradle
 dependencies {
-    implementation 'com.dinoconfig:dinoconfig-java-sdk:1.1.0'
+    implementation 'com.dinoconfig:dinoconfig-java-sdk:2.0.0'
 }
 ```
 
@@ -35,7 +35,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>com.dinoconfig</groupId>
     <artifactId>dinoconfig-java-sdk</artifactId>
-    <version>1.1.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -48,35 +48,38 @@ import com.dinoconfig.sdk.DinoConfigSDK;
 import com.dinoconfig.sdk.DinoConfigSDKFactory;
 
 // Simple initialization
-DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_your-api-key-here");
+DinoConfigSDK sdk = DinoConfigSDKFactory.create(
+    "dino_your-api-key-here",
+    "https://api.dinoconfig.com"
+);
 ```
 
 ### 2. Fetch Configuration Values
 
 ```java
-// Get a single value using path notation
-var response = sdk.getConfigAPI().getValue("MyBrand.AppSettings.theme");
-System.out.println(response.getData()); // "dark"
+// Get a single value with type safety - returns the value directly!
+String theme = sdk.getConfigAPI().getValue("MyBrand.AppSettings.theme", String.class);
+System.out.println(theme); // "dark"
 
-// Get an entire configuration
-var config = sdk.getConfigAPI().get("MyBrand.AppSettings");
-System.out.println(config.getData().getValues()); // {theme=dark, maxItems=100, ...}
+// Get an entire configuration - returns ConfigData directly
+ConfigData config = sdk.getConfigAPI().get("MyBrand.AppSettings");
+System.out.println(config.getValues()); // {theme=dark, maxItems=100, ...}
 ```
 
 ### 3. Explore Available Configurations
 
 ```java
-// List all brands you have access to
-var brands = sdk.getDiscoveryAPI().listBrands();
-brands.getData().forEach(brand -> {
+// List all brands you have access to - returns List<BrandInfo> directly
+List<BrandInfo> brands = sdk.getDiscoveryAPI().listBrands();
+for (BrandInfo brand : brands) {
     System.out.println(brand.getName() + ": " + brand.getConfigCount() + " configurations");
-});
+}
 
 // List configurations for a brand
-var configs = sdk.getDiscoveryAPI().listConfigs("MyBrand");
-configs.getData().forEach(config -> {
+List<ConfigInfo> configs = sdk.getDiscoveryAPI().listConfigs("MyBrand");
+for (ConfigInfo config : configs) {
     System.out.println(config.getName() + " - " + config.getKeys());
-});
+}
 ```
 
 ## Basic Example
@@ -86,7 +89,6 @@ Here's a complete example of using the SDK:
 ```java
 import com.dinoconfig.sdk.DinoConfigSDK;
 import com.dinoconfig.sdk.DinoConfigSDKFactory;
-import com.dinoconfig.sdk.model.ApiResponse;
 import com.dinoconfig.sdk.model.ConfigData;
 
 public class App {
@@ -98,20 +100,20 @@ public class App {
         );
 
         try {
-            // Get application settings
-            ApiResponse<ConfigData> settings = sdk.getConfigAPI().get("MyApp.Settings");
+            // Get application settings - returns ConfigData directly
+            ConfigData settings = sdk.getConfigAPI().get("MyApp.Settings");
             
-            if (settings.getSuccess()) {
-                ConfigData data = settings.getData();
-                System.out.println("App Name: " + data.getValue("appName"));
-                System.out.println("Max Users: " + data.getValue("maxUsers", Integer.class));
-                System.out.println("Version: " + data.getVersion());
-            }
+            System.out.println("App Name: " + settings.getValue("appName", String.class));
+            System.out.println("Max Users: " + settings.getValue("maxUsers", Integer.class));
+            System.out.println("Version: " + settings.getVersion());
 
-            // Get a specific feature flag
-            var darkMode = sdk.getConfigAPI().getValue("MyApp.FeatureFlags.darkModeEnabled");
+            // Get a specific feature flag with type safety
+            Boolean darkMode = sdk.getConfigAPI().getValue(
+                "MyApp.FeatureFlags.darkModeEnabled", 
+                Boolean.class
+            );
             
-            if (Boolean.TRUE.equals(darkMode.getData())) {
+            if (Boolean.TRUE.equals(darkMode)) {
                 System.out.println("Dark mode is enabled!");
             }
         } catch (Exception e) {
@@ -151,7 +153,7 @@ The SDK provides two main APIs through the initialized instance:
 | `DiscoveryAPI` | Explore brands, configs, and schemas |
 
 ```java
-DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_...");
+DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_...", "https://api.dinoconfig.com");
 
 // Access the APIs
 ConfigAPI configApi = sdk.getConfigAPI();
@@ -189,7 +191,8 @@ The SDK is designed to be thread-safe after initialization:
 // Create once at application startup
 public class Application {
     private static final DinoConfigSDK SDK = DinoConfigSDKFactory.create(
-        System.getenv("DINOCONFIG_API_KEY")
+        System.getenv("DINOCONFIG_API_KEY"),
+        "https://api.dinoconfig.com"
     );
     
     public static DinoConfigSDK getSdk() {
@@ -201,7 +204,7 @@ public class Application {
 ExecutorService executor = Executors.newFixedThreadPool(10);
 for (int i = 0; i < 100; i++) {
     executor.submit(() -> {
-        var config = Application.getSdk().getConfigAPI().get("Brand.Config");
+        ConfigData config = Application.getSdk().getConfigAPI().get("Brand.Config");
         // Process config...
     });
 }

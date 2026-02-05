@@ -6,15 +6,14 @@
 package com.dinoconfig.sdk.api;
 
 import com.dinoconfig.sdk.http.HttpClient;
-import com.dinoconfig.sdk.model.ApiResponse;
 import com.dinoconfig.sdk.model.ConfigData;
 import com.dinoconfig.sdk.model.RequestOptions;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -28,22 +27,24 @@ import java.util.Objects;
  *
  * <pre>{@code
  * // Get SDK instance
- * DinoConfigSDK dinoconfig = DinoConfigSDKFactory.create("dino_your-api-key");
- *
- * // Get ConfigAPI instance
- * ConfigAPI configAPI = dinoconfig.getConfigAPI();
+ * DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_your-api-key");
+ * ConfigAPI configAPI = sdk.getConfigAPI();
  *
  * // Get an entire configuration
- * ApiResponse<ConfigData> config = configAPI.get("MyBrand", "AppSettings");
- * Map<String, Object> values = config.getData().getValues();
+ * ConfigData config = configAPI.get("MyBrand", "AppSettings");
+ * Map<String, Object> values = config.getValues();
  *
- * // Get a single configuration value
- * ApiResponse<Object> response = configAPI.getValue("MyBrand", "AppSettings", "theme");
- * String theme = (String) response.getData();
+ * // Get a typed configuration
+ * MyConfig config = configAPI.getAs("MyBrand", "AppSettings", MyConfig.class);
+ * String theme = config.getTheme();
+ *
+ * // Get a single value (typed)
+ * String theme = configAPI.getValue("MyBrand", "AppSettings", "theme", String.class);
+ * Integer maxUsers = configAPI.getValue("MyBrand.AppSettings.maxUsers", Integer.class);
  *
  * // Using path-based shorthand
- * ApiResponse<ConfigData> config2 = configAPI.get("MyBrand.AppSettings");
- * ApiResponse<Object> value = configAPI.getValue("MyBrand.AppSettings.theme");
+ * ConfigData config = configAPI.get("MyBrand.AppSettings");
+ * String theme = configAPI.getValue("MyBrand.AppSettings.theme", String.class);
  * }</pre>
  *
  * <p><b>Error Handling:</b> Methods throw {@link IOException} for network errors
@@ -53,11 +54,9 @@ import java.util.Objects;
  * multiple threads concurrently.
  *
  * @author DinoConfig Team
- * @version 1.0.0
+ * @version 2.0.0
  * @since 1.0.0
  * @see com.dinoconfig.sdk.DinoConfigSDK#getConfigAPI()
- * @see ApiResponse
- * @see RequestOptions
  */
 public class ConfigAPI {
 
@@ -67,7 +66,7 @@ public class ConfigAPI {
     /** The HTTP client for making API requests */
     private final HttpClient httpClient;
 
-    /** Shared ObjectMapper for JSON conversion with JavaTimeModule support */
+    /** Shared ObjectMapper for JSON conversion */
     private final ObjectMapper objectMapper;
 
     /**
@@ -83,18 +82,7 @@ public class ConfigAPI {
      */
     public ConfigAPI(HttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient, "HttpClient cannot be null");
-        this.objectMapper = createObjectMapper();
-    }
-
-    /**
-     * Creates and configures an ObjectMapper instance with JavaTimeModule support.
-     *
-     * @return A configured ObjectMapper instance
-     */
-    private static ObjectMapper createObjectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        return mapper;
+        this.objectMapper = httpClient.getObjectMapper();
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -104,91 +92,64 @@ public class ConfigAPI {
     /**
      * Retrieves an entire configuration with all its values.
      *
-     * <p>This method fetches all values from a configuration at once,
-     * returning them in a {@link ConfigData} object.
-     *
      * <p><b>Example:</b>
      * <pre>{@code
-     * ConfigAPI configAPI = dinoconfig.getConfigAPI();
+     * ConfigData config = configAPI.get("MyBrand", "AppSettings");
+     * System.out.printf("Config: %s (v%d)%n", config.getName(), config.getVersion());
      *
-     * ApiResponse<ConfigData> response = configAPI.get("MyBrand", "AppSettings");
-     * if (response.getSuccess()) {
-     *     ConfigData config = response.getData();
-     *     System.out.printf("Config: %s (v%d)%n",
-     *         config.getName(), config.getVersion());
+     * // Get all values
+     * Map<String, Object> values = config.getValues();
      *
-     *     // Get all values
-     *     Map<String, Object> values = config.getValues();
-     *
-     *     // Get typed values
-     *     String theme = config.getValue("theme", String.class);
-     *     Boolean darkMode = config.getValue("darkMode", Boolean.class);
-     * }
+     * // Get typed values
+     * String theme = config.getValue("theme", String.class);
+     * Boolean darkMode = config.getValue("darkMode", Boolean.class);
      * }</pre>
      *
      * @param brandName  The name of the brand containing the configuration.
-     *                   Must not be {@code null} or empty.
      * @param configName The name of the configuration.
-     *                   Must not be {@code null} or empty.
-     * @return An {@link ApiResponse} containing the {@link ConfigData}
+     * @return The {@link ConfigData} containing all configuration values
      * @throws IOException if a network error occurs or the request times out
      * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
      * @throws IllegalArgumentException if any parameter is null or empty
-     * @see ConfigData
      */
-    public ApiResponse<ConfigData> get(String brandName, String configName) throws IOException {
-        return get(brandName, configName, new RequestOptions());
+    public ConfigData get(String brandName, String configName) throws IOException {
+        return get(brandName, configName, null);
     }
 
     /**
      * Retrieves an entire configuration with custom request options.
      *
-     * <p><b>Example with custom options:</b>
-     * <pre>{@code
-     * RequestOptions options = new RequestOptions();
-     * options.setTimeout(30000L);  // 30 second timeout
-     * options.setRetries(3);       // Retry up to 3 times
-     *
-     * ApiResponse<ConfigData> response = configAPI.get("MyBrand", "AppSettings", options);
-     * }</pre>
-     *
-     * @param brandName  The name of the brand. Must not be {@code null} or empty.
-     * @param configName The name of the configuration. Must not be {@code null} or empty.
-     * @param options    Request options for customizing the request
-     * @return An {@link ApiResponse} containing the {@link ConfigData}
+     * @param brandName  The name of the brand.
+     * @param configName The name of the configuration.
+     * @param options    Request options for customizing the request (timeout, retries)
+     * @return The {@link ConfigData} containing all configuration values
      * @throws IOException if a network error occurs
      * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if any parameter is null or empty
      */
-    public ApiResponse<ConfigData> get(String brandName, String configName, RequestOptions options) throws IOException {
+    public ConfigData get(String brandName, String configName, RequestOptions options) throws IOException {
         validateBrandName(brandName);
         validateConfigName(configName);
-        ApiResponse<Object> response = httpClient.get(buildConfigUrl(brandName, configName), options);
-        return extractConfigData(response);
+        Object data = httpClient.get(buildConfigUrl(brandName, configName), options);
+        return objectMapper.convertValue(data, ConfigData.class);
     }
 
     /**
      * Retrieves an entire configuration using path-based notation.
      *
-     * <p>This is a convenient shorthand that accepts a dot-separated path
-     * in the format "brandName.configName".
-     *
      * <p><b>Example:</b>
      * <pre>{@code
      * // These are equivalent:
-     * ApiResponse<ConfigData> response1 = configAPI.get("MyBrand", "AppSettings");
-     * ApiResponse<ConfigData> response2 = configAPI.get("MyBrand.AppSettings");
+     * ConfigData config1 = configAPI.get("MyBrand", "AppSettings");
+     * ConfigData config2 = configAPI.get("MyBrand.AppSettings");
      * }</pre>
      *
      * @param path The dot-separated path in format "brandName.configName".
-     *             Must not be {@code null} or empty.
-     * @return An {@link ApiResponse} containing the {@link ConfigData}
+     * @return The {@link ConfigData} containing all configuration values
      * @throws IOException if a network error occurs
-     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
      * @throws IllegalArgumentException if the path format is invalid
      */
-    public ApiResponse<ConfigData> get(String path) throws IOException {
-        return get(path, new RequestOptions());
+    public ConfigData get(String path) throws IOException {
+        return get(path, (RequestOptions) null);
     }
 
     /**
@@ -196,12 +157,10 @@ public class ConfigAPI {
      *
      * @param path    The dot-separated path in format "brandName.configName"
      * @param options Request options for customizing the request
-     * @return An {@link ApiResponse} containing the {@link ConfigData}
+     * @return The {@link ConfigData} containing all configuration values
      * @throws IOException if a network error occurs
-     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if the path format is invalid
      */
-    public ApiResponse<ConfigData> get(String path, RequestOptions options) throws IOException {
+    public ConfigData get(String path, RequestOptions options) throws IOException {
         String[] parts = parseConfigPath(path);
         return get(parts[0], parts[1], options);
     }
@@ -213,266 +172,214 @@ public class ConfigAPI {
     /**
      * Retrieves a configuration and deserializes it directly to a typed model class.
      *
-     * <p>This method allows you to fetch configuration data and automatically
-     * deserialize it into a generated model class, providing full type safety.
-     *
-     * <p><b>Example with generated model:</b>
+     * <p><b>Example:</b>
      * <pre>{@code
      * // Import your generated model
      * import org.example.models.demo.MyConfig;
      *
-     * ConfigAPI configAPI = dinoconfig.getConfigAPI();
-     *
      * // Get config with full type safety
-     * ApiResponse<MyConfig> response = configAPI.getAs("Demo", "MyConfig", MyConfig.class);
-     * if (response.getSuccess()) {
-     *     MyConfig config = response.getData();
-     *     String test = config.getTest();
-     *     String novoPolje = config.getNovoPolje();
-     * }
+     * MyConfig config = configAPI.getAs("Demo", "MyConfig", MyConfig.class);
+     * String test = config.getTest();
+     * String novoPolje = config.getNovoPolje();
      * }</pre>
      *
      * @param <T>        The type of the model class
      * @param brandName  The name of the brand containing the configuration.
-     *                   Must not be {@code null} or empty.
      * @param configName The name of the configuration.
-     *                   Must not be {@code null} or empty.
      * @param modelClass The class to deserialize the configuration values into.
-     *                   Must have Jackson annotations or matching field names.
-     * @return An {@link ApiResponse} containing the typed model instance
-     * @throws IOException if a network error occurs or the request times out
+     * @return The typed model instance with configuration values
+     * @throws IOException if a network error occurs
      * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if any parameter is null or empty
      */
-    public <T> ApiResponse<T> getAs(String brandName, String configName, Class<T> modelClass) throws IOException {
-        return getAs(brandName, configName, modelClass, new RequestOptions());
+    public <T> T getAs(String brandName, String configName, Class<T> modelClass) throws IOException {
+        return getAs(brandName, configName, modelClass, null);
     }
 
     /**
-     * Retrieves a configuration and deserializes it to a typed model class with custom options.
-     *
-     * <p><b>Example with custom options:</b>
-     * <pre>{@code
-     * RequestOptions options = new RequestOptions();
-     * options.setTimeout(30000L);
-     *
-     * ApiResponse<MyConfig> response = configAPI.getAs("Demo", "MyConfig", MyConfig.class, options);
-     * }</pre>
+     * Retrieves a configuration as typed model with custom options.
      *
      * @param <T>        The type of the model class
-     * @param brandName  The name of the brand. Must not be {@code null} or empty.
-     * @param configName The name of the configuration. Must not be {@code null} or empty.
-     * @param modelClass The class to deserialize the configuration values into
-     * @param options    Request options for customizing the request
-     * @return An {@link ApiResponse} containing the typed model instance
+     * @param brandName  The name of the brand.
+     * @param configName The name of the configuration.
+     * @param modelClass The class to deserialize into
+     * @param options    Request options
+     * @return The typed model instance
      * @throws IOException if a network error occurs
-     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if any parameter is null or empty
      */
-    public <T> ApiResponse<T> getAs(String brandName, String configName, Class<T> modelClass, RequestOptions options) throws IOException {
+    public <T> T getAs(String brandName, String configName, Class<T> modelClass, RequestOptions options) throws IOException {
         validateBrandName(brandName);
         validateConfigName(configName);
         Objects.requireNonNull(modelClass, "Model class cannot be null");
-        ApiResponse<Object> response = httpClient.get(buildConfigUrl(brandName, configName), options);
-        return extractTypedModel(response, modelClass);
+        
+        ConfigData configData = get(brandName, configName, options);
+        return objectMapper.convertValue(configData.getValues(), modelClass);
     }
 
     /**
-     * Retrieves a configuration using path-based notation and deserializes it to a typed model.
+     * Retrieves a configuration using path notation and deserializes to typed model.
      *
      * <p><b>Example:</b>
      * <pre>{@code
      * // These are equivalent:
-     * ApiResponse<MyConfig> response1 = configAPI.getAs("Demo", "MyConfig", MyConfig.class);
-     * ApiResponse<MyConfig> response2 = configAPI.getAs("Demo.MyConfig", MyConfig.class);
+     * MyConfig config1 = configAPI.getAs("Demo", "MyConfig", MyConfig.class);
+     * MyConfig config2 = configAPI.getAs("Demo.MyConfig", MyConfig.class);
      * }</pre>
      *
      * @param <T>        The type of the model class
      * @param path       The dot-separated path in format "brandName.configName".
-     *                   Must not be {@code null} or empty.
-     * @param modelClass The class to deserialize the configuration values into
-     * @return An {@link ApiResponse} containing the typed model instance
+     * @param modelClass The class to deserialize into
+     * @return The typed model instance
      * @throws IOException if a network error occurs
-     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if the path format is invalid
      */
-    public <T> ApiResponse<T> getAs(String path, Class<T> modelClass) throws IOException {
-        return getAs(path, modelClass, new RequestOptions());
+    public <T> T getAs(String path, Class<T> modelClass) throws IOException {
+        return getAs(path, modelClass, null);
     }
 
     /**
-     * Retrieves a configuration using path-based notation and deserializes it to a typed model
-     * with custom request options.
+     * Retrieves a configuration using path notation as typed model with custom options.
      *
      * @param <T>        The type of the model class
      * @param path       The dot-separated path in format "brandName.configName"
-     * @param modelClass The class to deserialize the configuration values into
-     * @param options    Request options for customizing the request
-     * @return An {@link ApiResponse} containing the typed model instance
+     * @param modelClass The class to deserialize into
+     * @param options    Request options
+     * @return The typed model instance
      * @throws IOException if a network error occurs
-     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if the path format is invalid
      */
-    public <T> ApiResponse<T> getAs(String path, Class<T> modelClass, RequestOptions options) throws IOException {
+    public <T> T getAs(String path, Class<T> modelClass, RequestOptions options) throws IOException {
         String[] parts = parseConfigPath(path);
         return getAs(parts[0], parts[1], modelClass, options);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // Get Single Value
+    // Get Single Value (Typed)
     // ─────────────────────────────────────────────────────────────────────────────
 
     /**
-     * Retrieves a specific configuration value from DinoConfig.
+     * Retrieves a specific configuration value with type safety.
      *
-     * <p>This method fetches a single value from a configuration by specifying
-     * the brand name, configuration name, and the key within the configuration.
-     *
-     * <p><b>Basic Example:</b>
+     * <p><b>Example:</b>
      * <pre>{@code
-     * ConfigAPI configAPI = dinoconfig.getConfigAPI();
-     *
-     * ApiResponse<Object> response = configAPI.getValue("MyBrand", "AppSettings", "theme");
-     * if (response.getSuccess()) {
-     *     String theme = (String) response.getData();
-     *     System.out.println("Theme: " + theme);
-     * }
+     * String theme = configAPI.getValue("MyBrand", "AppSettings", "theme", String.class);
+     * Integer maxUsers = configAPI.getValue("MyBrand", "AppSettings", "maxUsers", Integer.class);
+     * Boolean enabled = configAPI.getValue("MyBrand", "FeatureFlags", "darkMode", Boolean.class);
      * }</pre>
      *
-     * <p><b>Feature Flag Example:</b>
-     * <pre>{@code
-     * ApiResponse<Object> response = configAPI.getValue("MyApp", "FeatureFlags", "enableBeta");
-     * if (response.getSuccess() && response.getData() instanceof Boolean) {
-     *     boolean isBetaEnabled = (Boolean) response.getData();
-     *     if (isBetaEnabled) {
-     *         // Show beta features
-     *     }
-     * }
-     * }</pre>
-     *
-     * @param brandName      The name of the brand containing the configuration.
-     *                       Must not be {@code null} or empty.
+     * @param <T>            The expected type of the value
+     * @param brandName      The name of the brand.
      * @param configName     The name of the configuration.
-     *                       Must not be {@code null} or empty.
      * @param configValueKey The key of the specific value to retrieve.
-     *                       Must not be {@code null} or empty.
-     * @return An {@link ApiResponse} containing the configuration value.
-     *         The data can be any JSON-compatible type (String, Boolean, Number, Map, List, etc.).
-     * @throws IOException if a network error occurs or the request times out
+     * @param valueType      The class of the expected type
+     * @return The configuration value cast to the specified type
+     * @throws IOException if a network error occurs
      * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if any parameter is null or empty
-     * @see ApiResponse
      */
-    public ApiResponse<Object> getValue(String brandName, String configName, String configValueKey) throws IOException {
-        return getValue(brandName, configName, configValueKey, new RequestOptions());
+    public <T> T getValue(String brandName, String configName, String configValueKey, Class<T> valueType) throws IOException {
+        return getValue(brandName, configName, configValueKey, valueType, null);
     }
 
     /**
-     * Retrieves a specific configuration value with custom request options.
+     * Retrieves a specific configuration value with type safety and custom options.
      *
-     * <p><b>Example with custom options:</b>
-     * <pre>{@code
-     * RequestOptions options = new RequestOptions();
-     * options.setTimeout(30000L);  // 30 second timeout
-     * options.setRetries(5);       // Retry up to 5 times
-     * options.setHeaders(Map.of(
-     *     "X-Request-ID", UUID.randomUUID().toString()
-     * ));
-     *
-     * ApiResponse<Object> response = configAPI.getValue(
-     *     "MyBrand", "CriticalConfig", "databaseUrl", options
-     * );
-     * }</pre>
-     *
-     * @param brandName      The name of the brand. Must not be {@code null} or empty.
-     * @param configName     The name of the configuration. Must not be {@code null} or empty.
-     * @param configValueKey The key to retrieve. Must not be {@code null} or empty.
-     * @param options        Request options for customizing the request (timeout, retries, headers)
-     * @return An {@link ApiResponse} containing the configuration value
+     * @param <T>            The expected type of the value
+     * @param brandName      The name of the brand.
+     * @param configName     The name of the configuration.
+     * @param configValueKey The key to retrieve.
+     * @param valueType      The class of the expected type
+     * @param options        Request options
+     * @return The configuration value cast to the specified type
      * @throws IOException if a network error occurs
-     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if any parameter is null or empty
      */
-    public ApiResponse<Object> getValue(String brandName, String configName, String configValueKey, RequestOptions options) throws IOException {
+    @SuppressWarnings("unchecked")
+    public <T> T getValue(String brandName, String configName, String configValueKey, Class<T> valueType, RequestOptions options) throws IOException {
         validateBrandName(brandName);
         validateConfigName(configName);
         validateKeyName(configValueKey);
-        return httpClient.get(buildValueUrl(brandName, configName, configValueKey), options);
+        Objects.requireNonNull(valueType, "Value type cannot be null");
+        
+        Object data = httpClient.get(buildValueUrl(brandName, configName, configValueKey), options);
+        
+        // Extract value from {value: actualValue} wrapper
+        Object actualValue = data;
+        if (data instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) data;
+            if (map.containsKey("value")) {
+                actualValue = map.get("value");
+            }
+        }
+        
+        return objectMapper.convertValue(actualValue, valueType);
     }
 
     /**
-     * Retrieves a specific configuration value using path-based notation.
-     *
-     * <p>This is a convenient shorthand that accepts a dot-separated path
-     * in the format "brandName.configName.keyName".
+     * Retrieves a specific configuration value using path notation with type safety.
      *
      * <p><b>Example:</b>
      * <pre>{@code
      * // These are equivalent:
-     * ApiResponse<Object> response1 = configAPI.getValue("MyBrand", "AppSettings", "theme");
-     * ApiResponse<Object> response2 = configAPI.getValue("MyBrand.AppSettings.theme");
-     *
-     * if (response2.getSuccess()) {
-     *     String theme = (String) response2.getData();
-     *     System.out.println("Theme: " + theme);
-     * }
+     * String theme1 = configAPI.getValue("MyBrand", "AppSettings", "theme", String.class);
+     * String theme2 = configAPI.getValue("MyBrand.AppSettings.theme", String.class);
      * }</pre>
      *
-     * @param path The dot-separated path in format "brandName.configName.keyName".
-     *             Must not be {@code null} or empty.
-     * @return An {@link ApiResponse} containing the configuration value
+     * @param <T>       The expected type of the value
+     * @param path      The dot-separated path in format "brandName.configName.keyName".
+     * @param valueType The class of the expected type
+     * @return The configuration value cast to the specified type
      * @throws IOException if a network error occurs
-     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if the path format is invalid
      */
-    public ApiResponse<Object> getValue(String path) throws IOException {
-        return getValue(path, new RequestOptions());
+    public <T> T getValue(String path, Class<T> valueType) throws IOException {
+        return getValue(path, valueType, null);
     }
 
     /**
-     * Retrieves a specific configuration value using path-based notation with custom options.
+     * Retrieves a specific configuration value using path notation with type safety and options.
      *
-     * @param path    The dot-separated path in format "brandName.configName.keyName"
-     * @param options Request options for customizing the request
-     * @return An {@link ApiResponse} containing the configuration value
+     * @param <T>       The expected type of the value
+     * @param path      The dot-separated path in format "brandName.configName.keyName"
+     * @param valueType The class of the expected type
+     * @param options   Request options
+     * @return The configuration value cast to the specified type
      * @throws IOException if a network error occurs
-     * @throws com.dinoconfig.sdk.model.ApiError if the API returns an error response
-     * @throws IllegalArgumentException if the path format is invalid
      */
-    public ApiResponse<Object> getValue(String path, RequestOptions options) throws IOException {
+    public <T> T getValue(String path, Class<T> valueType, RequestOptions options) throws IOException {
         String[] parts = parseValuePath(path);
-        return getValue(parts[0], parts[1], parts[2], options);
+        return getValue(parts[0], parts[1], parts[2], valueType, options);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // Deprecated methods (for backward compatibility)
+    // Get Single Value (Untyped - for backward compatibility)
     // ─────────────────────────────────────────────────────────────────────────────
 
     /**
-     * Retrieves a specific configuration value from DinoConfig.
+     * Retrieves a specific configuration value as Object.
      *
-     * @deprecated Use {@link #getValue(String, String, String, RequestOptions)} instead.
-     *             This method will be removed in a future version.
+     * <p>Consider using the typed version {@link #getValue(String, String, String, Class)}
+     * for better type safety.
      *
-     * @param brandName      The name of the brand
-     * @param configName     The name of the configuration
-     * @param configValueKey The key of the specific value to retrieve
-     * @param options        Request options
-     * @return An {@link ApiResponse} containing the configuration value
+     * @param brandName      The name of the brand.
+     * @param configName     The name of the configuration.
+     * @param configValueKey The key to retrieve.
+     * @return The configuration value
      * @throws IOException if a network error occurs
      */
-    @Deprecated(since = "1.1.0", forRemoval = true)
-    public ApiResponse<Object> getConfigValue(String brandName, String configName, String configValueKey, RequestOptions options) throws IOException {
-        return getValue(brandName, configName, configValueKey, options);
+    public Object getValue(String brandName, String configName, String configValueKey) throws IOException {
+        return getValue(brandName, configName, configValueKey, Object.class, null);
+    }
+
+    /**
+     * Retrieves a specific configuration value using path notation as Object.
+     *
+     * @param path The dot-separated path in format "brandName.configName.keyName".
+     * @return The configuration value
+     * @throws IOException if a network error occurs
+     */
+    public Object getValue(String path) throws IOException {
+        return getValue(path, Object.class, null);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // Private helpers
     // ─────────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Builds the URL for fetching an entire config.
-     */
     private String buildConfigUrl(String brandName, String configName) {
         return String.format("%s/%s/configs/%s",
                 API_BASE_PATH,
@@ -481,9 +388,6 @@ public class ConfigAPI {
         );
     }
 
-    /**
-     * Builds the URL for fetching a single value.
-     */
     private String buildValueUrl(String brandName, String configName, String keyName) {
         return String.format("%s/%s/configs/%s/%s",
                 API_BASE_PATH,
@@ -493,16 +397,10 @@ public class ConfigAPI {
         );
     }
 
-    /**
-     * URL-encodes a path segment.
-     */
     private String encode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
-    /**
-     * Parses a config path (brandName.configName) into its components.
-     */
     private String[] parseConfigPath(String path) {
         validatePath(path);
         String[] parts = path.split("\\.", 2);
@@ -514,9 +412,6 @@ public class ConfigAPI {
         return parts;
     }
 
-    /**
-     * Parses a value path (brandName.configName.keyName) into its components.
-     */
     private String[] parseValuePath(String path) {
         validatePath(path);
         String[] parts = path.split("\\.", 3);
@@ -528,123 +423,27 @@ public class ConfigAPI {
         return parts;
     }
 
-    /**
-     * Validates the path is not null or empty.
-     */
     private void validatePath(String path) {
         if (path == null || path.trim().isEmpty()) {
             throw new IllegalArgumentException("Path cannot be null or empty");
         }
     }
 
-    /**
-     * Validates the brand name parameter.
-     */
     private void validateBrandName(String brandName) {
         if (brandName == null || brandName.trim().isEmpty()) {
             throw new IllegalArgumentException("Brand name cannot be null or empty");
         }
     }
 
-    /**
-     * Validates the config name parameter.
-     */
     private void validateConfigName(String configName) {
         if (configName == null || configName.trim().isEmpty()) {
             throw new IllegalArgumentException("Config name cannot be null or empty");
         }
     }
 
-    /**
-     * Validates the key name parameter.
-     */
     private void validateKeyName(String keyName) {
         if (keyName == null || keyName.trim().isEmpty()) {
             throw new IllegalArgumentException("Key name cannot be null or empty");
         }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // Private: Response Conversion Helpers
-    // ─────────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Extracts ConfigData from the API response wrapper.
-     *
-     * @param response The raw API response
-     * @return An ApiResponse containing ConfigData
-     */
-    private ApiResponse<ConfigData> extractConfigData(ApiResponse<Object> response) {
-        ConfigData configData = convertValue(response.getData(), ConfigData.class);
-        return wrapResponse(configData, response);
-    }
-
-    /**
-     * Extracts a typed model from the API response by deserializing the config values.
-     *
-     * <p>This method extracts the 'values' field from the configuration data
-     * and deserializes it directly into the specified model class.
-     *
-     * @param <T> The target model type
-     * @param response The raw API response
-     * @param modelClass The class to deserialize into
-     * @return An ApiResponse containing the typed model
-     */
-    @SuppressWarnings("unchecked")
-    private <T> ApiResponse<T> extractTypedModel(ApiResponse<Object> response, Class<T> modelClass) {
-        if (response.getData() == null) {
-            return wrapResponse(null, response);
-        }
-
-        try {
-            // First convert to ConfigData to extract the values
-            ConfigData configData = convertValue(response.getData(), ConfigData.class);
-            if (configData == null || configData.getValues() == null) {
-                return wrapResponse(null, response);
-            }
-
-            // Deserialize the values directly to the model class
-            T model = objectMapper.convertValue(configData.getValues(), modelClass);
-            return wrapResponse(model, response);
-        } catch (Exception e) {
-            // If conversion fails, return null data with the original response metadata
-            return wrapResponse(null, response);
-        }
-    }
-
-    /**
-     * Converts a response data object to the specified type.
-     *
-     * @param <T> The target type
-     * @param data The data to convert
-     * @param targetClass The target class
-     * @return The converted object, or null if conversion fails
-     */
-    private <T> T convertValue(Object data, Class<T> targetClass) {
-        if (data == null) {
-            return null;
-        }
-
-        try {
-            return objectMapper.convertValue(data, targetClass);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    /**
-     * Wraps data in an ApiResponse with the same success and message from the original response.
-     *
-     * @param <T> The data type
-     * @param data The response data
-     * @param originalResponse The original ApiResponse to copy metadata from
-     * @return A new ApiResponse with the data and original metadata
-     */
-    private <T> ApiResponse<T> wrapResponse(T data, ApiResponse<Object> originalResponse) {
-        return new ApiResponse<>(
-            data,
-            originalResponse.getSuccess(),
-            originalResponse.getMessage()
-        );
     }
 }

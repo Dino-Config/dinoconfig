@@ -1,347 +1,372 @@
 ---
 sidebar_position: 2
-title: SDK Configuration Options
-description: Configure the DinoConfig Java SDK with custom options for authentication, timeouts, and request handling. Builder pattern and Spring Boot integration.
-keywords: [java sdk configuration, timeout, api key, authentication, spring boot, quarkus, sdk options]
+title: SDK Configuration
+description: Configure the DinoConfig Java SDK with custom settings including timeouts, logging, and HTTP client options.
+keywords: [configuration, sdk config, timeout, logging, http client, java sdk settings, customization]
 ---
 
-# Configuration
+# SDK Configuration
 
-The DinoConfig Java SDK can be configured with various options to customize its behavior for your specific use case.
+The DinoConfig Java SDK can be customized to fit your application's needs. This guide covers all configuration options.
 
-## Configuration Options
+## Configuration Methods
 
-```java
-public class DinoConfigSDKConfig {
-    private String apiKey;      // Required
-    private String baseUrl;     // Optional - default: "http://localhost:3000"
-    private Long timeout;       // Optional - default: 10000L (10 seconds)
-}
-```
+### Simple Initialization
 
-### Required Options
-
-#### `apiKey`
-
-Your DinoConfig API key. Keys are prefixed with `dino_`.
+For most use cases, use the factory methods:
 
 ```java
-DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_abc123xyz789");
-```
+// API key only (uses default base URL)
+DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_your-key");
 
-:::tip Getting an API Key
-You can generate API keys from the [DinoConfig Dashboard](https://dinoconfig.com). Each key can have different permission levels.
-:::
-
-### Optional Options
-
-#### `baseUrl`
-
-The base URL for the DinoConfig API. Defaults to `http://localhost:3000` for local development.
-
-```java
+// With base URL
 DinoConfigSDK sdk = DinoConfigSDKFactory.create(
-    "dino_your-api-key",
-    "https://api.dinoconfig.com"  // Production URL
+    "dino_your-key",
+    "https://api.dinoconfig.com"
 );
-```
 
-#### `timeout`
-
-Request timeout in milliseconds. Defaults to `10000` (10 seconds).
-
-```java
+// With timeout
 DinoConfigSDK sdk = DinoConfigSDKFactory.create(
-    "dino_your-api-key",
+    "dino_your-key",
     "https://api.dinoconfig.com",
-    30000L  // 30 seconds
+    15000L  // 15 seconds
 );
 ```
 
-## Using the Builder Pattern
+### Builder Configuration
 
-For more complex configurations, use the builder pattern:
+For advanced configuration, use the configuration builder:
 
 ```java
 DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
-    .apiKey("dino_your-api-key")
+    .apiKey("dino_your-key")
     .baseUrl("https://api.dinoconfig.com")
-    .timeout(15000L)
+    .timeout(30000L)
+    .retries(3)
     .build();
 
 DinoConfigSDK sdk = DinoConfigSDKFactory.create(config);
 ```
 
-## Request Options
+## Configuration Options
 
-Individual API calls can be customized with `RequestOptions`:
+### Core Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `apiKey` | `String` | **Required** | Your DinoConfig API key |
+| `baseUrl` | `String` | `http://localhost:3000` | API base URL |
+| `timeout` | `Long` | `10000` | Request timeout in milliseconds |
+| `retries` | `Integer` | `0` | Number of retry attempts |
 
 ```java
-public class RequestOptions {
-    private Map<String, String> headers;  // Custom headers
-    private Long timeout;                  // Per-request timeout
-    private Integer retries;               // Retry attempts
-    private Boolean cache;                 // Enable/disable caching
-    private Boolean forceRefresh;          // Bypass cache
+DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
+    .apiKey("dino_your-key")
+    .baseUrl("https://api.dinoconfig.com")
+    .timeout(30000L)   // 30 second timeout
+    .retries(3)        // Retry failed requests 3 times
+    .build();
+```
+
+### HTTP Client Settings
+
+#### Connection Pool
+
+```java
+DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
+    .apiKey("dino_key")
+    .baseUrl("https://api.dinoconfig.com")
+    .maxIdleConnections(5)       // Connection pool size
+    .keepAliveDuration(300000L)  // 5 minutes
+    .build();
+```
+
+#### Timeouts
+
+```java
+DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
+    .apiKey("dino_key")
+    .baseUrl("https://api.dinoconfig.com")
+    .connectTimeout(5000L)   // Connection timeout
+    .readTimeout(10000L)     // Read timeout
+    .writeTimeout(10000L)    // Write timeout
+    .build();
+```
+
+## Environment-Based Configuration
+
+### Using Environment Variables
+
+```java
+public class SDKConfig {
+    public static DinoConfigSDK create() {
+        String apiKey = System.getenv("DINOCONFIG_API_KEY");
+        String baseUrl = System.getenv().getOrDefault(
+            "DINOCONFIG_BASE_URL", 
+            "https://api.dinoconfig.com"
+        );
+        String timeout = System.getenv().getOrDefault(
+            "DINOCONFIG_TIMEOUT", 
+            "10000"
+        );
+        
+        return DinoConfigSDKFactory.create(
+            apiKey,
+            baseUrl,
+            Long.parseLong(timeout)
+        );
+    }
 }
 ```
 
-### Creating Request Options
+### Per-Environment Settings
 
 ```java
-// Using builder
-RequestOptions options = RequestOptions.builder()
-    .timeout(30000L)
-    .retries(3)
-    .addHeader("X-Custom-Header", "value")
-    .build();
-
-// Using fluent setters
-RequestOptions options = new RequestOptions()
-    .setTimeout(30000L)
-    .setRetries(3)
-    .addHeader("X-Custom-Header", "value");
+public class SDKConfig {
+    public static DinoConfigSDK create(String environment) {
+        DinoConfigSDKConfig.Builder builder = DinoConfigSDKConfig.builder()
+            .apiKey(System.getenv("DINOCONFIG_API_KEY"));
+        
+        switch (environment) {
+            case "development":
+                builder
+                    .baseUrl("http://localhost:3000")
+                    .timeout(30000L)
+                    .retries(0);
+                break;
+            case "staging":
+                builder
+                    .baseUrl("https://staging-api.dinoconfig.com")
+                    .timeout(15000L)
+                    .retries(2);
+                break;
+            case "production":
+                builder
+                    .baseUrl("https://api.dinoconfig.com")
+                    .timeout(10000L)
+                    .retries(3);
+                break;
+        }
+        
+        return DinoConfigSDKFactory.create(builder.build());
+    }
+}
 ```
 
-### Per-Request Configuration
+## Logging
+
+The SDK uses SLF4J for logging. Configure your logging framework to control SDK output.
+
+### Logback Example
+
+```xml
+<!-- logback.xml -->
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- SDK logging level -->
+    <logger name="com.dinoconfig.sdk" level="DEBUG" />
+    
+    <!-- HTTP client logging (verbose) -->
+    <logger name="com.dinoconfig.sdk.http" level="TRACE" />
+    
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>
+```
+
+### Log4j2 Example
+
+```xml
+<!-- log4j2.xml -->
+<Configuration>
+    <Loggers>
+        <Logger name="com.dinoconfig.sdk" level="debug" />
+        <Root level="info">
+            <AppenderRef ref="Console" />
+        </Root>
+    </Loggers>
+</Configuration>
+```
+
+## Request Options
+
+Override configuration per-request using `RequestOptions`:
 
 ```java
-// Custom timeout for a slow request
-var config = sdk.getConfigAPI().get("Brand.Config", 
+DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_key", "https://api.dinoconfig.com");
+
+// Default timeout from SDK config
+ConfigData config1 = sdk.getConfigAPI().get("Brand.Config");
+
+// Extended timeout for this specific request
+ConfigData config2 = sdk.getConfigAPI().get("Brand.LargeConfig",
     RequestOptions.builder()
         .timeout(60000L)
         .build()
 );
 
-// Retry on failure
-var reliable = sdk.getConfigAPI().getValue("Brand.Config.Key",
-    RequestOptions.builder()
-        .retries(5)
-        .build()
-);
-
-// Custom headers
-var custom = sdk.getConfigAPI().get("Brand.Config",
+// Custom headers for tracing
+ConfigData config3 = sdk.getConfigAPI().get("Brand.Config",
     RequestOptions.builder()
         .addHeader("X-Request-ID", UUID.randomUUID().toString())
+        .addHeader("X-Trace-ID", traceId)
         .build()
 );
 ```
 
-## Configuration Patterns
+## Singleton Pattern
 
-### Development Environment
-
-```java
-DinoConfigSDKConfig devConfig = DinoConfigSDKConfig.builder()
-    .apiKey(System.getenv("DINOCONFIG_API_KEY"))
-    .baseUrl("http://localhost:3000")
-    .timeout(5000L)  // Short timeout for fast feedback
-    .build();
-
-DinoConfigSDK sdk = DinoConfigSDKFactory.create(devConfig);
-```
-
-### Production Environment
+For most applications, create a single SDK instance:
 
 ```java
-DinoConfigSDKConfig prodConfig = DinoConfigSDKConfig.builder()
-    .apiKey(System.getenv("DINOCONFIG_API_KEY"))
-    .baseUrl("https://api.dinoconfig.com")
-    .timeout(15000L)  // Longer timeout for reliability
-    .build();
+public class DinoConfig {
+    private static volatile DinoConfigSDK instance;
+    
+    public static DinoConfigSDK getInstance() {
+        if (instance == null) {
+            synchronized (DinoConfig.class) {
+                if (instance == null) {
+                    instance = DinoConfigSDKFactory.create(
+                        System.getenv("DINOCONFIG_API_KEY"),
+                        "https://api.dinoconfig.com"
+                    );
+                }
+            }
+        }
+        return instance;
+    }
+}
 
-DinoConfigSDK sdk = DinoConfigSDKFactory.create(prodConfig);
+// Usage
+ConfigData config = DinoConfig.getInstance().getConfigAPI().get("Brand.Config");
 ```
 
-### Spring Boot Integration
+## Spring Boot Integration
 
-```java title="application.properties"
-dinoconfig.api-key=${DINOCONFIG_API_KEY}
-dinoconfig.base-url=https://api.dinoconfig.com
-dinoconfig.timeout=15000
-```
+### Configuration Class
 
-```java title="DinoConfigConfiguration.java"
+```java
 @Configuration
 public class DinoConfigConfiguration {
     
     @Value("${dinoconfig.api-key}")
     private String apiKey;
     
-    @Value("${dinoconfig.base-url}")
+    @Value("${dinoconfig.base-url:https://api.dinoconfig.com}")
     private String baseUrl;
     
-    @Value("${dinoconfig.timeout}")
+    @Value("${dinoconfig.timeout:10000}")
     private Long timeout;
     
     @Bean
     public DinoConfigSDK dinoConfigSDK() {
-        DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
-            .apiKey(apiKey)
-            .baseUrl(baseUrl)
-            .timeout(timeout)
-            .build();
-            
-        return DinoConfigSDKFactory.create(config);
-    }
-}
-```
-
-### Micronaut Integration
-
-```yaml title="application.yml"
-dinoconfig:
-  api-key: ${DINOCONFIG_API_KEY}
-  base-url: https://api.dinoconfig.com
-  timeout: 15000
-```
-
-```java title="DinoConfigFactory.java"
-@Factory
-public class DinoConfigFactory {
-    
-    @Singleton
-    public DinoConfigSDK dinoConfigSDK(
-        @Property(name = "dinoconfig.api-key") String apiKey,
-        @Property(name = "dinoconfig.base-url") String baseUrl,
-        @Property(name = "dinoconfig.timeout") Long timeout
-    ) {
         return DinoConfigSDKFactory.create(apiKey, baseUrl, timeout);
     }
-}
-```
-
-## Error Handling
-
-The SDK throws `ApiError` for failed requests:
-
-```java
-import com.dinoconfig.sdk.exception.ApiError;
-
-try {
-    DinoConfigSDK sdk = DinoConfigSDKFactory.create("invalid_key");
-    var config = sdk.getConfigAPI().get("Brand.Config");
-} catch (ApiError e) {
-    System.err.println("API Error: " + e.getMessage());
-    System.err.println("Status: " + e.getStatus());
-    System.err.println("Code: " + e.getCode());
     
-    if (e.isClientError()) {
-        // 4xx error - check your request
-    } else if (e.isServerError()) {
-        // 5xx error - retry may help
+    @Bean
+    public ConfigAPI configAPI(DinoConfigSDK sdk) {
+        return sdk.getConfigAPI();
     }
     
-    if (e.isRetryable()) {
-        // Safe to retry this request
+    @Bean
+    public DiscoveryAPI discoveryAPI(DinoConfigSDK sdk) {
+        return sdk.getDiscoveryAPI();
     }
 }
 ```
 
-### ApiError Properties
+### Application Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `message` | `String` | Error message |
-| `status` | `Integer` | HTTP status code |
-| `code` | `String` | Optional error code |
-| `isClientError()` | `boolean` | True if 4xx error |
-| `isServerError()` | `boolean` | True if 5xx error |
-| `isRetryable()` | `boolean` | True if retry may succeed |
+```properties
+# application.properties
+dinoconfig.api-key=${DINOCONFIG_API_KEY}
+dinoconfig.base-url=https://api.dinoconfig.com
+dinoconfig.timeout=10000
+```
 
-## Connection Pooling
-
-The SDK uses OkHttp which provides automatic connection pooling:
+### Using in Services
 
 ```java
-// OkHttp maintains a connection pool automatically
-// Connections are reused for multiple requests
-// Default: 5 idle connections, 5 minute keep-alive
-
-DinoConfigSDK sdk = DinoConfigSDKFactory.create(config);
-
-// All these requests may reuse the same connection
-sdk.getConfigAPI().get("Brand.Config1");
-sdk.getConfigAPI().get("Brand.Config2");
-sdk.getConfigAPI().get("Brand.Config3");
-```
-
-## Logging
-
-The SDK uses SLF4J for logging. Configure your preferred logging implementation:
-
-### Logback Configuration
-
-```xml title="logback.xml"
-<configuration>
-    <logger name="com.dinoconfig.sdk" level="DEBUG"/>
+@Service
+public class SettingsService {
+    private final ConfigAPI configApi;
     
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </root>
-</configuration>
-```
-
-### Log4j2 Configuration
-
-```xml title="log4j2.xml"
-<Configuration>
-    <Loggers>
-        <Logger name="com.dinoconfig.sdk" level="debug"/>
-    </Loggers>
-</Configuration>
+    public SettingsService(ConfigAPI configApi) {
+        this.configApi = configApi;
+    }
+    
+    public AppSettings getSettings() {
+        try {
+            return configApi.getAs("MyApp.Settings", AppSettings.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load settings", e);
+        }
+    }
+}
 ```
 
 ## Best Practices
 
-### 1. Create SDK Instance Once
+### 1. Store API Key Securely
 
 ```java
-// ✅ Create once, reuse everywhere
-public class AppConfig {
-    private static final DinoConfigSDK SDK = DinoConfigSDKFactory.create(
-        System.getenv("DINOCONFIG_API_KEY")
-    );
-    
-    public static DinoConfigSDK getSdk() {
-        return SDK;
-    }
-}
-
-// ❌ Don't create new instances for each request
-public void handleRequest() {
-    DinoConfigSDK sdk = DinoConfigSDKFactory.create(...); // Wasteful!
-}
-```
-
-### 2. Use Environment Variables
-
-```java
-// ✅ Load from environment
+// Good: Environment variable
 String apiKey = System.getenv("DINOCONFIG_API_KEY");
 
-// ❌ Never hardcode
-String apiKey = "dino_abc123"; // Security risk!
+// Good: Secrets manager
+String apiKey = secretsManager.getSecret("dinoconfig-api-key");
+
+// Bad: Hardcoded
+String apiKey = "dino_abc123...";  // Never do this!
 ```
 
-### 3. Handle Errors Gracefully
+### 2. Use Production URL
 
 ```java
-public AppSettings getSettings() {
-    try {
-        var response = sdk.getConfigAPI().get("MyApp.Settings");
-        return mapToSettings(response.getData());
-    } catch (ApiError e) {
-        log.error("Failed to fetch settings", e);
-        return AppSettings.defaults();
-    }
-}
+// Development
+DinoConfigSDK sdk = DinoConfigSDKFactory.create(apiKey, "http://localhost:3000");
+
+// Production - always use HTTPS
+DinoConfigSDK sdk = DinoConfigSDKFactory.create(apiKey, "https://api.dinoconfig.com");
+```
+
+### 3. Configure Appropriate Timeouts
+
+```java
+// Quick configs: shorter timeout
+DinoConfigSDKConfig quickConfig = DinoConfigSDKConfig.builder()
+    .apiKey(apiKey)
+    .baseUrl(baseUrl)
+    .timeout(5000L)
+    .build();
+
+// Large configs: longer timeout
+DinoConfigSDKConfig largeConfig = DinoConfigSDKConfig.builder()
+    .apiKey(apiKey)
+    .baseUrl(baseUrl)
+    .timeout(30000L)
+    .build();
+```
+
+### 4. Enable Retries for Production
+
+```java
+DinoConfigSDKConfig prodConfig = DinoConfigSDKConfig.builder()
+    .apiKey(apiKey)
+    .baseUrl("https://api.dinoconfig.com")
+    .timeout(10000L)
+    .retries(3)  // Retry on transient failures
+    .build();
 ```
 
 ## Next Steps
 
-- **[Configs API →](configs-api)** — Learn to fetch configurations
+- **[Configs API →](configs-api)** — Fetch configurations and values
 - **[Discovery API →](discovery-api)** — Explore available configurations
-- **[Typed Configs →](typed-configs)** — Generate type-safe models
 - **[Examples →](examples)** — Real-world usage patterns
