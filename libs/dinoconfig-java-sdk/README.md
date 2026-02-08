@@ -4,16 +4,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java](https://img.shields.io/badge/Java-21+-blue.svg)](https://www.oracle.com/java/)
 
-ix java sdk readmeOfficial Java SDK for the DinoConfig API. Simple, type-safe configuration management for Java applications.
+Official Java SDK for the DinoConfig API. Simple, type-safe configuration management for Java applications.
 
 ## Features
 
-- **Simple Factory Pattern** - Single factory method for easy SDK instantiation
+- **Simple API** - Methods return values directly, no wrappers needed
+- **Type-Safe** - Built-in typed `getValue()` with `Class<T>` parameter
 - **Automatic Authentication** - API key to token exchange handled automatically
-- **Type-Safe** - Full Java generics support with proper typing
 - **Discovery API** - Explore available brands, configs, and schemas
 - **Path-Based Access** - Convenient shorthand like `Brand.Config.Key`
-- **Builder Pattern** - Fluent API for configuration
+- **Generated Models** - CLI tool generates type-safe model classes
 - **Retry Logic** - Built-in exponential backoff for failed requests
 - **OkHttp & Jackson** - Battle-tested HTTP and JSON libraries
 
@@ -23,7 +23,7 @@ ix java sdk readmeOfficial Java SDK for the DinoConfig API. Simple, type-safe co
 
 ```gradle
 dependencies {
-    implementation 'com.dinoconfig:dinoconfig-java-sdk:1.0.0'
+    implementation 'com.dinoconfig:dinoconfig-java-sdk:2.0.0'
 }
 ```
 
@@ -33,7 +33,7 @@ dependencies {
 <dependency>
     <groupId>com.dinoconfig</groupId>
     <artifactId>dinoconfig-java-sdk</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -47,21 +47,22 @@ import com.dinoconfig.sdk.model.*;
 public class QuickStart {
     public static void main(String[] args) throws Exception {
         // Initialize the SDK
-        DinoConfigSDK dinoconfig = DinoConfigSDKFactory.create("dino_your-api-key");
+        DinoConfigSDK sdk = DinoConfigSDKFactory.create(
+            "dino_your-api-key",
+            "https://api.dinoconfig.com"
+        );
         
-        // Get entire configuration
-        ApiResponse<ConfigData> config = dinoconfig.getConfigAPI()
-            .get("MyBrand", "AppSettings");
-        System.out.println("Values: " + config.getData().getValues());
+        // Get entire configuration - returns ConfigData directly
+        ConfigData config = sdk.getConfigAPI().get("MyBrand", "AppSettings");
+        System.out.println("Values: " + config.getValues());
         
-        // Get single value using path shorthand
-        ApiResponse<Object> response = dinoconfig.getConfigAPI()
-            .getValue("MyBrand.AppSettings.theme");
-        System.out.println("Theme: " + response.getData());
+        // Get single value with type safety - no casting needed!
+        String theme = sdk.getConfigAPI().getValue("MyBrand.AppSettings.theme", String.class);
+        System.out.println("Theme: " + theme);
         
-        // Get typed values
-        String theme = config.getData().getValue("theme", String.class);
-        Boolean darkMode = config.getData().getValue("darkMode", Boolean.class);
+        // Get typed config using generated models
+        MyConfig typedConfig = sdk.getConfigAPI().getAs("MyBrand.AppSettings", MyConfig.class);
+        System.out.println("Max Items: " + typedConfig.getMaxItems());
     }
 }
 ```
@@ -70,16 +71,16 @@ public class QuickStart {
 
 ```java
 // Simple - API key only
-DinoConfigSDK dinoconfig = DinoConfigSDKFactory.create("dino_your-api-key");
+DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_your-api-key");
 
 // With custom base URL
-DinoConfigSDK dinoconfig = DinoConfigSDKFactory.create(
+DinoConfigSDK sdk = DinoConfigSDKFactory.create(
     "dino_your-api-key",
     "https://api.dinoconfig.com"
 );
 
 // With all options
-DinoConfigSDK dinoconfig = DinoConfigSDKFactory.create(
+DinoConfigSDK sdk = DinoConfigSDKFactory.create(
     "dino_your-api-key",
     "https://api.dinoconfig.com",
     15000L  // 15 second timeout
@@ -91,7 +92,7 @@ DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
     .baseUrl("https://api.dinoconfig.com")
     .timeout(15000L)
     .build();
-DinoConfigSDK dinoconfig = DinoConfigSDKFactory.create(config);
+DinoConfigSDK sdk = DinoConfigSDKFactory.create(config);
 ```
 
 | Option | Type | Required | Default | Description |
@@ -105,33 +106,39 @@ DinoConfigSDK dinoconfig = DinoConfigSDKFactory.create(config);
 ### ConfigAPI
 
 ```java
-ConfigAPI configAPI = dinoconfig.getConfigAPI();
+ConfigAPI configAPI = sdk.getConfigAPI();
 
-// Get entire configuration
-ApiResponse<ConfigData> config = configAPI.get("MyBrand", "AppSettings");
-ApiResponse<ConfigData> config = configAPI.get("MyBrand.AppSettings"); // shorthand
+// Get entire configuration - returns ConfigData directly
+ConfigData config = configAPI.get("MyBrand", "AppSettings");
+ConfigData config = configAPI.get("MyBrand.AppSettings"); // shorthand
 
-// Get single value
-ApiResponse<Object> value = configAPI.getValue("MyBrand", "AppSettings", "theme");
-ApiResponse<Object> value = configAPI.getValue("MyBrand.AppSettings.theme"); // shorthand
+// Get typed configuration - returns your model directly
+MyConfig config = configAPI.getAs("MyBrand", "AppSettings", MyConfig.class);
+MyConfig config = configAPI.getAs("MyBrand.AppSettings", MyConfig.class); // shorthand
+
+// Get single value with type safety - returns the typed value directly
+String theme = configAPI.getValue("MyBrand", "AppSettings", "theme", String.class);
+String theme = configAPI.getValue("MyBrand.AppSettings.theme", String.class); // shorthand
+Integer count = configAPI.getValue("MyBrand.AppSettings.maxItems", Integer.class);
+Boolean flag = configAPI.getValue("MyBrand.FeatureFlags.darkMode", Boolean.class);
 
 // With custom options
 RequestOptions options = RequestOptions.builder()
     .timeout(30000L)
     .retries(3)
     .build();
-ApiResponse<ConfigData> config = configAPI.get("MyBrand", "AppSettings", options);
+ConfigData config = configAPI.get("MyBrand", "AppSettings", options);
 ```
 
 ### ConfigData
 
 ```java
-ConfigData data = config.getData();
+ConfigData data = configAPI.get("MyBrand.AppSettings");
 
 // Get all values
 Map<String, Object> values = data.getValues();
 
-// Get typed values
+// Get typed values from ConfigData
 String theme = data.getValue("theme", String.class);
 Boolean enabled = data.getValue("enabled", Boolean.class);
 Integer count = data.getValue("count", Integer.class);
@@ -148,19 +155,19 @@ List<String> keys = data.getKeys();
 ### DiscoveryAPI
 
 ```java
-DiscoveryAPI discoveryAPI = dinoconfig.getDiscoveryAPI();
+DiscoveryAPI discoveryAPI = sdk.getDiscoveryAPI();
 
-// List all brands
-ApiResponse<List<BrandInfo>> brands = discoveryAPI.listBrands();
+// List all brands - returns List<BrandInfo> directly
+List<BrandInfo> brands = discoveryAPI.listBrands();
 
-// List configs for a brand
-ApiResponse<List<ConfigInfo>> configs = discoveryAPI.listConfigs("MyBrand");
+// List configs for a brand - returns List<ConfigInfo> directly
+List<ConfigInfo> configs = discoveryAPI.listConfigs("MyBrand");
 
-// Get config schema
-ApiResponse<ConfigSchema> schema = discoveryAPI.getSchema("MyBrand", "AppSettings");
+// Get config schema - returns ConfigSchema directly
+ConfigSchema schema = discoveryAPI.getSchema("MyBrand", "AppSettings");
 
-// Full introspection
-ApiResponse<IntrospectionResult> result = discoveryAPI.introspect();
+// Full introspection - returns IntrospectionResult directly
+IntrospectionResult result = discoveryAPI.introspect();
 ```
 
 ### RequestOptions
@@ -170,20 +177,17 @@ RequestOptions options = RequestOptions.builder()
     .timeout(30000L)
     .retries(3)
     .header("X-Request-ID", "unique-id")
-    .cache(true)
-    .forceRefresh(false)
     .build();
 ```
 
 ## Error Handling
 
+All methods throw exceptions on errors - no success flag to check:
+
 ```java
 try {
-    ApiResponse<Object> response = configAPI.getValue("MyBrand.MyConfig.myKey");
-    
-    if (response.getSuccess()) {
-        System.out.println("Value: " + response.getData());
-    }
+    String theme = configAPI.getValue("MyBrand.MyConfig.theme", String.class);
+    System.out.println("Theme: " + theme);
     
 } catch (ApiError e) {
     switch (e.getStatus()) {
@@ -211,7 +215,7 @@ public class DinoConfigConfiguration {
     
     @Bean
     public DinoConfigSDK dinoConfigSDK() throws Exception {
-        return DinoConfigSDKFactory.create(apiKey);
+        return DinoConfigSDKFactory.create(apiKey, "https://api.dinoconfig.com");
     }
 }
 ```
@@ -223,15 +227,15 @@ public class ConfigController {
     
     private final ConfigAPI configAPI;
     
-    public ConfigController(DinoConfigSDK dinoconfig) {
-        this.configAPI = dinoconfig.getConfigAPI();
+    public ConfigController(DinoConfigSDK sdk) {
+        this.configAPI = sdk.getConfigAPI();
     }
     
     @GetMapping("/{brand}/{config}/{key}")
     public Object getValue(@PathVariable String brand,
                           @PathVariable String config,
                           @PathVariable String key) throws Exception {
-        return configAPI.getValue(brand, config, key).getData();
+        return configAPI.getValue(brand, config, key, Object.class);
     }
 }
 ```
@@ -243,19 +247,37 @@ public class FeatureFlagService {
     
     private final ConfigAPI configAPI;
     
-    public FeatureFlagService(DinoConfigSDK dinoconfig) {
-        this.configAPI = dinoconfig.getConfigAPI();
+    public FeatureFlagService(DinoConfigSDK sdk) {
+        this.configAPI = sdk.getConfigAPI();
     }
     
     public boolean isEnabled(String feature) {
         try {
-            ApiResponse<Object> response = configAPI.getValue("MyApp.FeatureFlags." + feature);
-            return response.getSuccess() && Boolean.TRUE.equals(response.getData());
+            return configAPI.getValue("MyApp.FeatureFlags." + feature, Boolean.class);
         } catch (Exception e) {
             return false;
         }
     }
 }
+```
+
+## Type-Safe Models
+
+Generate model classes for full type safety:
+
+```bash
+npx @dinoconfig/cli javagen \
+  --api-key=dino_your-key \
+  --output=./src/main/java/com/example/config
+```
+
+Then use them:
+
+```java
+// Generated model provides full type safety
+MyAppSettings settings = configAPI.getAs("MyApp.Settings", MyAppSettings.class);
+String theme = settings.getTheme();       // Type-safe!
+int maxItems = settings.getMaxItems();    // No casting!
 ```
 
 ## Requirements
@@ -268,7 +290,7 @@ public class FeatureFlagService {
 
 ## Support
 
-- **Documentation**: [https://dinoconfig.com/docs](https://dinoconfig.com/docs)
+- **Documentation**: [https://developer.dinoconfig.com/docs/java-sdk](https://developer.dinoconfig.com/docs/java-sdk)
 - **Issues**: [GitHub Issues](https://github.com/Dino-Config/dinoconfig/issues)
 - **Email**: support@dinoconfig.com
 

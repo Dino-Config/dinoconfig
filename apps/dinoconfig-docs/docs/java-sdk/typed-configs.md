@@ -1,527 +1,477 @@
 ---
 sidebar_position: 5
 title: Typed Configurations
-description: Generate type-safe Java model classes for your DinoConfig configurations. Use Jackson annotations, Lombok, and Java records for type safety.
-keywords: [typed configs, type safety, code generation, jackson, lombok, java records, pojo]
+description: Create type-safe configuration models for the DinoConfig Java SDK. Generate POJOs from schemas for compile-time safety.
+keywords: [typed configs, pojo, type safety, jackson, deserialization, code generation, java models]
 ---
 
 # Typed Configurations
 
-The DinoConfig Java SDK supports fully typed configuration access through generated model classes. This provides compile-time type safety, IDE autocomplete, and eliminates runtime casting errors.
+Type-safe configurations provide compile-time safety and IDE autocompletion. Instead of working with generic `ConfigData` objects, you can deserialize configurations directly into your own Java classes.
 
 ## Overview
 
-Instead of working with generic `Map<String, Object>`:
+The v2.0 SDK makes typed configurations simple:
 
 ```java
-// ❌ Untyped - requires casting, no IDE support
-var config = sdk.getConfigAPI().get("MyApp.Settings");
-String theme = (String) config.getData().getValue("theme");
-Integer maxItems = (Integer) config.getData().getValue("maxItems");
-```
+// Define your model
+public class AppSettings {
+    private String theme;
+    private int maxItems;
+    // getters/setters
+}
 
-Use typed models:
-
-```java
-// ✅ Type-safe - full IDE support, no casting
-var config = sdk.getConfigAPI().getAs("MyApp.Settings", AppSettings.class);
-String theme = config.getData().getTheme();
-int maxItems = config.getData().getMaxItems();
+// Fetch with type safety - returns your model directly!
+AppSettings settings = sdk.getConfigAPI().getAs("MyBrand.AppSettings", AppSettings.class);
+System.out.println(settings.getTheme());  // IDE autocompletion works!
 ```
 
 ## Creating Model Classes
 
-### Manual Definition
+### Basic Model
 
-Define Java classes that match your configuration structure:
-
-```java title="src/main/java/com/example/config/AppSettings.java"
+```java
 public class AppSettings {
     private String theme;
     private int maxItems;
+    private boolean debugMode;
     private List<String> features;
-    private DatabaseConfig database;
     
-    // Getters and setters (required for Jackson)
+    // Default constructor (required for Jackson)
+    public AppSettings() {}
+    
+    // Getters
     public String getTheme() { return theme; }
-    public void setTheme(String theme) { this.theme = theme; }
-    
     public int getMaxItems() { return maxItems; }
-    public void setMaxItems(int maxItems) { this.maxItems = maxItems; }
-    
+    public boolean isDebugMode() { return debugMode; }
     public List<String> getFeatures() { return features; }
+    
+    // Setters
+    public void setTheme(String theme) { this.theme = theme; }
+    public void setMaxItems(int maxItems) { this.maxItems = maxItems; }
+    public void setDebugMode(boolean debugMode) { this.debugMode = debugMode; }
     public void setFeatures(List<String> features) { this.features = features; }
-    
-    public DatabaseConfig getDatabase() { return database; }
-    public void setDatabase(DatabaseConfig database) { this.database = database; }
 }
 ```
 
-```java title="src/main/java/com/example/config/DatabaseConfig.java"
-public class DatabaseConfig {
-    private String host;
-    private int port;
-    private String name;
-    private int poolSize;
-    private boolean ssl;
-    
-    // Getters and setters
-    public String getHost() { return host; }
-    public void setHost(String host) { this.host = host; }
-    
-    public int getPort() { return port; }
-    public void setPort(int port) { this.port = port; }
-    
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    
-    public int getPoolSize() { return poolSize; }
-    public void setPoolSize(int poolSize) { this.poolSize = poolSize; }
-    
-    public boolean isSsl() { return ssl; }
-    public void setSsl(boolean ssl) { this.ssl = ssl; }
-}
-```
+### With Jackson Annotations
 
-### Using Lombok
+Use Jackson annotations for field name mapping and customization:
 
-Simplify with Lombok:
-
-```java title="src/main/java/com/example/config/AppSettings.java"
-import lombok.Data;
-
-@Data
-public class AppSettings {
-    private String theme;
-    private int maxItems;
-    private List<String> features;
-    private DatabaseConfig database;
-}
-
-@Data
-public class DatabaseConfig {
-    private String host;
-    private int port;
-    private String name;
-    private int poolSize;
-    private boolean ssl;
-}
-```
-
-### Using Java Records (Java 16+)
-
-```java title="src/main/java/com/example/config/AppSettings.java"
-public record AppSettings(
-    String theme,
-    int maxItems,
-    List<String> features,
-    DatabaseConfig database
-) {}
-
-public record DatabaseConfig(
-    String host,
-    int port,
-    String name,
-    int poolSize,
-    boolean ssl
-) {}
-```
-
-## Generated Types with CLI
-
-For the best experience, use the DinoConfig CLI to generate Java classes from your configuration schemas.
-
-### Generate Classes
-
-```bash
-npx @dinoconfig/cli javagen \
-  --api-key=dino_your-key \
-  --output=./src/main/java/com/example/config \
-  --package=com.example.config
-```
-
-This generates properly typed Java classes:
-
-```java title="src/main/java/com/example/config/MyAppSettings.java"
-// Auto-generated by @dinoconfig/cli
-// Do not edit manually
-
-package com.example.config;
-
-import java.util.List;
+```java
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-public class MyAppSettings {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AppSettings {
+    @JsonProperty("theme_name")
+    private String theme;
     
-    @JsonProperty("theme")
-    private ThemeType theme;
-    
-    @JsonProperty("maxItems")
+    @JsonProperty("max_items")
     private int maxItems;
     
-    @JsonProperty("features")
+    @JsonProperty("debug_mode")
+    private boolean debugMode;
+    
+    @JsonProperty("enabled_features")
     private List<String> features;
     
-    @JsonProperty("database")
-    private DatabaseConfig database;
+    // Default constructor
+    public AppSettings() {}
     
-    public enum ThemeType {
-        @JsonProperty("light") LIGHT,
-        @JsonProperty("dark") DARK,
-        @JsonProperty("system") SYSTEM
+    // Getters and setters...
+}
+```
+
+### Immutable Model (Recommended)
+
+```java
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public final class AppSettings {
+    @JsonProperty("theme") private final String theme;
+    @JsonProperty("max_items") private final int maxItems;
+    @JsonProperty("debug_mode") private final boolean debugMode;
+    @JsonProperty("features") private final List<String> features;
+    
+    // Default constructor for Jackson
+    public AppSettings() {
+        this.theme = null;
+        this.maxItems = 0;
+        this.debugMode = false;
+        this.features = List.of();
     }
     
-    // Getters, setters, toString, equals, hashCode...
+    // Full constructor
+    public AppSettings(String theme, int maxItems, boolean debugMode, List<String> features) {
+        this.theme = theme;
+        this.maxItems = maxItems;
+        this.debugMode = debugMode;
+        this.features = features != null ? List.copyOf(features) : List.of();
+    }
+    
+    // Getters only (immutable)
+    public String getTheme() { return theme; }
+    public int getMaxItems() { return maxItems; }
+    public boolean isDebugMode() { return debugMode; }
+    public List<String> getFeatures() { return features; }
 }
 ```
 
-## Using Typed Models
+### Java Records (Java 16+)
+
+```java
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record AppSettings(
+    @JsonProperty("theme") String theme,
+    @JsonProperty("max_items") int maxItems,
+    @JsonProperty("debug_mode") boolean debugMode,
+    @JsonProperty("features") List<String> features
+) {}
+```
+
+## Using Typed Configs
 
 ### Basic Usage
 
 ```java
-import com.example.config.AppSettings;
+// Fetch as typed model - returns directly, no wrapper!
+AppSettings settings = sdk.getConfigAPI().getAs("MyBrand.AppSettings", AppSettings.class);
 
-var response = sdk.getConfigAPI().getAs("MyApp.Settings", AppSettings.class);
-
-if (response.hasData()) {
-    AppSettings settings = response.getData();
-    
-    // Full IDE autocomplete and type safety
-    String theme = settings.getTheme();
-    int maxItems = settings.getMaxItems();
-    List<String> features = settings.getFeatures();
-    
-    // Nested objects are also typed
-    DatabaseConfig db = settings.getDatabase();
-    String connectionUrl = String.format("jdbc:postgresql://%s:%d/%s",
-        db.getHost(),
-        db.getPort(),
-        db.getName()
-    );
-}
+// Use with full IDE support
+System.out.println("Theme: " + settings.getTheme());
+System.out.println("Max Items: " + settings.getMaxItems());
+System.out.println("Debug: " + settings.isDebugMode());
+settings.getFeatures().forEach(System.out::println);
 ```
 
-### Enums
+### Nested Objects
 
-Configure enum values for type-safe string fields:
-
-```java
-public class FeatureFlags {
-    private boolean darkMode;
-    private boolean newDashboard;
-    private RolloutStage stage;
-    
-    public enum RolloutStage {
-        @JsonProperty("alpha") ALPHA,
-        @JsonProperty("beta") BETA,
-        @JsonProperty("ga") GA
-    }
-    
-    // Getters and setters
-}
-
-// Usage
-var flags = sdk.getConfigAPI().getAs("MyApp.FeatureFlags", FeatureFlags.class);
-if (flags.getData().getStage() == RolloutStage.GA) {
-    enableFullFeatures();
-}
-```
-
-### Optional Fields
-
-Handle optional configuration values:
+Create nested models for complex configurations:
 
 ```java
-import java.util.Optional;
-
 public class AppSettings {
     private String theme;
-    private Integer timeout;  // Use wrapper types for optional primitives
-    private String customEndpoint;  // Nullable string
-    
-    public Optional<Integer> getTimeout() {
-        return Optional.ofNullable(timeout);
-    }
-    
-    public Optional<String> getCustomEndpoint() {
-        return Optional.ofNullable(customEndpoint);
-    }
-}
-
-// Usage
-settings.getTimeout().ifPresent(t -> {
-    configureTimeout(t);
-});
-
-String endpoint = settings.getCustomEndpoint()
-    .orElse("https://api.default.com");
-```
-
-### Default Values
-
-Handle missing fields with defaults:
-
-```java
-public class AppSettings {
-    private String theme = "light";  // Default value
-    private int maxItems = 50;
-    private List<String> features = new ArrayList<>();
+    private DatabaseConfig database;
+    private CacheConfig cache;
     
     // Getters and setters
 }
-```
 
-Or handle at runtime:
-
-```java
-int maxItems = settings.getMaxItems() > 0 
-    ? settings.getMaxItems() 
-    : DEFAULT_MAX_ITEMS;
-```
-
-## Type-Safe Configuration Service
-
-Create a service layer for clean access:
-
-```java title="src/main/java/com/example/service/ConfigService.java"
-import com.dinoconfig.sdk.DinoConfigSDK;
-import com.example.config.*;
-
-@Service
-public class ConfigService {
+public class DatabaseConfig {
+    private String host;
+    private int port;
+    private String name;
+    private PoolConfig pool;
     
-    private final DinoConfigSDK sdk;
+    // Getters and setters
+}
+
+public class PoolConfig {
+    private int minSize;
+    private int maxSize;
+    private long timeout;
     
-    public ConfigService(DinoConfigSDK sdk) {
-        this.sdk = sdk;
-    }
+    // Getters and setters
+}
+
+public class CacheConfig {
+    private boolean enabled;
+    private int ttlSeconds;
     
-    public AppSettings getAppSettings() {
-        var response = sdk.getConfigAPI().getAs(
-            "MyApp.Settings", 
-            AppSettings.class
-        );
-        
-        if (!response.hasData()) {
-            throw new ConfigurationException("Failed to load app settings");
-        }
-        
-        return response.getData();
-    }
-    
-    public FeatureFlags getFeatureFlags() {
-        var response = sdk.getConfigAPI().getAs(
-            "MyApp.FeatureFlags", 
-            FeatureFlags.class
-        );
-        
-        return response.hasData() 
-            ? response.getData() 
-            : FeatureFlags.defaults();
-    }
-    
-    public DatabaseConfig getDatabaseConfig() {
-        var response = sdk.getConfigAPI().getAs(
-            "MyApp.Database", 
-            DatabaseConfig.class
-        );
-        
-        if (!response.hasData()) {
-            throw new ConfigurationException("Failed to load database config");
-        }
-        
-        return response.getData();
-    }
+    // Getters and setters
 }
 ```
 
 Usage:
 
 ```java
-@Component
-public class Application {
-    
-    private final ConfigService configService;
-    
-    public Application(ConfigService configService) {
-        this.configService = configService;
-    }
-    
-    public void initialize() {
-        AppSettings settings = configService.getAppSettings();
-        System.out.println("Theme: " + settings.getTheme());
-        
-        FeatureFlags flags = configService.getFeatureFlags();
-        if (flags.isDarkMode()) {
-            enableDarkMode();
-        }
-        
-        DatabaseConfig db = configService.getDatabaseConfig();
-        initializeDatabase(db);
-    }
+AppSettings settings = sdk.getConfigAPI().getAs("MyBrand.AppSettings", AppSettings.class);
+
+// Access nested objects
+DatabaseConfig db = settings.getDatabase();
+System.out.println("DB Host: " + db.getHost());
+System.out.println("Pool Max: " + db.getPool().getMaxSize());
+
+if (settings.getCache().isEnabled()) {
+    System.out.println("Cache TTL: " + settings.getCache().getTtlSeconds());
 }
 ```
 
-## Jackson Annotations
-
-The SDK uses Jackson for deserialization. Use annotations for custom mapping:
-
-### Property Names
+### Collections and Maps
 
 ```java
-public class Config {
-    @JsonProperty("api_endpoint")  // Maps from snake_case
-    private String apiEndpoint;
+public class FeatureFlags {
+    private Map<String, Boolean> flags;
+    private List<Experiment> experiments;
+    private Set<String> enabledRegions;
     
-    @JsonProperty("max-retries")   // Maps from kebab-case
-    private int maxRetries;
+    // Getters and setters
+}
+
+public class Experiment {
+    private String name;
+    private double rolloutPercentage;
+    private List<String> targetGroups;
+    
+    // Getters and setters
 }
 ```
 
-### Ignore Unknown Fields
+## getValue() with Types
+
+For individual values, use the typed `getValue()` method:
+
+```java
+// Type-safe single value retrieval
+String theme = sdk.getConfigAPI().getValue("MyBrand.Settings.theme", String.class);
+Integer maxItems = sdk.getConfigAPI().getValue("MyBrand.Settings.maxItems", Integer.class);
+Boolean darkMode = sdk.getConfigAPI().getValue("MyBrand.Flags.darkMode", Boolean.class);
+
+// Complex types
+@SuppressWarnings("unchecked")
+List<String> features = sdk.getConfigAPI().getValue("MyBrand.Settings.features", List.class);
+
+@SuppressWarnings("unchecked")
+Map<String, Object> nested = sdk.getConfigAPI().getValue("MyBrand.Settings.database", Map.class);
+```
+
+## Date and Time Fields
+
+Handle date/time fields with proper Java types:
+
+```java
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+public class ScheduleConfig {
+    @JsonProperty("start_date")
+    private LocalDate startDate;
+    
+    @JsonProperty("end_date")
+    private LocalDate endDate;
+    
+    @JsonProperty("daily_start_time")
+    private LocalTime dailyStartTime;
+    
+    @JsonProperty("created_at")
+    private Instant createdAt;
+    
+    // Getters and setters
+}
+```
+
+:::tip
+The SDK includes `JavaTimeModule` for Jackson. Standard ISO-8601 date formats are supported out of the box.
+:::
+
+## Handling Unknown Fields
+
+Use `@JsonIgnoreProperties` to gracefully handle extra fields:
 
 ```java
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Config {
-    private String knownField;
-    // Unknown fields in JSON will be ignored
-}
-```
-
-### Custom Deserialization
-
-```java
-public class Config {
-    @JsonDeserialize(using = CustomDeserializer.class)
-    private CustomType customField;
-}
-```
-
-### Date/Time Handling
-
-The SDK registers `JavaTimeModule` automatically:
-
-```java
-public class Config {
-    private Instant createdAt;      // ISO-8601 string → Instant
-    private LocalDate expiryDate;   // ISO-8601 date → LocalDate
-    private Duration timeout;       // ISO-8601 duration → Duration
+public class AppSettings {
+    // Only fields you care about
+    private String theme;
+    private int maxItems;
+    
+    // Extra fields from API are ignored
 }
 ```
 
 ## Validation
 
-Add validation to your model classes:
+Add validation to your models:
 
-### Using Jakarta Validation
+```java
+public class AppSettings {
+    private String theme;
+    private int maxItems;
+    
+    public void setMaxItems(int maxItems) {
+        if (maxItems < 0) {
+            throw new IllegalArgumentException("maxItems must be non-negative");
+        }
+        this.maxItems = maxItems;
+    }
+    
+    public boolean isValid() {
+        return theme != null && !theme.isEmpty() && maxItems > 0;
+    }
+}
+```
+
+### With Bean Validation (JSR-380)
 
 ```java
 import jakarta.validation.constraints.*;
 
 public class AppSettings {
-    
     @NotBlank
-    @Pattern(regexp = "light|dark|system")
     private String theme;
     
-    @Min(1)
-    @Max(100)
+    @Min(1) @Max(1000)
     private int maxItems;
     
-    @NotNull
-    @Size(min = 1)
+    @NotEmpty
     private List<String> features;
+    
+    // Getters and setters
 }
 
-// Validate after loading
-var settings = sdk.getConfigAPI().getAs("MyApp.Settings", AppSettings.class);
-validator.validate(settings.getData());
+// Usage with validation
+AppSettings settings = sdk.getConfigAPI().getAs("Brand.Config", AppSettings.class);
+
+ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+Validator validator = factory.getValidator();
+Set<ConstraintViolation<AppSettings>> violations = validator.validate(settings);
+
+if (!violations.isEmpty()) {
+    throw new ValidationException("Invalid configuration: " + violations);
+}
 ```
 
-### Custom Validation
+## Organizing Models
+
+### Package Structure
+
+```
+src/main/java/com/myapp/
+├── config/
+│   ├── models/
+│   │   ├── AppSettings.java
+│   │   ├── DatabaseConfig.java
+│   │   ├── FeatureFlags.java
+│   │   └── CacheConfig.java
+│   └── ConfigService.java
+└── Application.java
+```
+
+### Configuration Service
 
 ```java
-public class AppSettings {
-    private String theme;
-    private int maxItems;
-    private DatabaseConfig database;
+@Service
+public class ConfigService {
+    private final ConfigAPI configApi;
     
-    public void validate() {
-        if (theme == null || theme.isBlank()) {
-            throw new ValidationException("theme is required");
-        }
-        if (maxItems < 1) {
-            throw new ValidationException("maxItems must be positive");
-        }
-        if (database == null) {
-            throw new ValidationException("database configuration is required");
-        }
-        database.validate();
+    public ConfigService(DinoConfigSDK sdk) {
+        this.configApi = sdk.getConfigAPI();
     }
+    
+    public AppSettings getAppSettings() throws IOException {
+        return configApi.getAs("MyApp.Settings", AppSettings.class);
+    }
+    
+    public FeatureFlags getFeatureFlags() throws IOException {
+        return configApi.getAs("MyApp.FeatureFlags", FeatureFlags.class);
+    }
+    
+    public DatabaseConfig getDatabaseConfig() throws IOException {
+        return configApi.getAs("MyApp.Database", DatabaseConfig.class);
+    }
+}
+```
+
+## Code Generation
+
+You can generate model classes from configuration schemas:
+
+### Using DinoConfig CLI
+
+```bash
+# Generate models from your configuration schema
+npx dinoconfig-cli generate-java \
+  --brand MyBrand \
+  --config AppSettings \
+  --output src/main/java/com/myapp/config/models \
+  --package com.myapp.config.models
+```
+
+This generates:
+
+```java
+// Auto-generated - do not edit
+package com.myapp.config.models;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public final class AppSettings {
+    @JsonProperty("theme")
+    private final String theme;
+    
+    @JsonProperty("max_items")
+    private final int maxItems;
+    
+    // ... rest of the class
 }
 ```
 
 ## Best Practices
 
-### 1. Use Immutable Models When Possible
+### 1. Use Immutable Models
 
 ```java
-// With records (Java 16+)
-public record AppSettings(
-    String theme,
-    int maxItems,
-    List<String> features
-) {
-    public AppSettings {
-        features = List.copyOf(features); // Defensive copy
-    }
+// Preferred: Immutable
+public final class AppSettings {
+    private final String theme;
+    public AppSettings(String theme) { this.theme = theme; }
+    public String getTheme() { return theme; }
+}
+
+// Or use records (Java 16+)
+public record AppSettings(String theme, int maxItems) {}
+```
+
+### 2. Always Handle Unknown Fields
+
+```java
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AppSettings {
+    // Fields may be added to config without breaking your app
 }
 ```
 
-### 2. Separate Configuration by Domain
+### 3. Provide Defaults
 
 ```java
-// ✅ Domain-specific models
-public class AuthConfig { ... }
-public class DatabaseConfig { ... }
-public class FeatureFlags { ... }
-
-// ❌ One giant config class
-public class AllSettings { ... }
-```
-
-### 3. Handle Deserialization Errors
-
-```java
-try {
-    var config = sdk.getConfigAPI().getAs("MyApp.Settings", AppSettings.class);
-} catch (ApiError e) {
-    // API error
-    log.error("API error: {}", e.getMessage());
-} catch (Exception e) {
-    // Deserialization error
-    log.error("Failed to deserialize config", e);
+public class AppSettings {
+    private String theme = "light";  // Default value
+    private int maxItems = 100;       // Default value
+    
+    // ...
 }
 ```
 
-### 4. Version Your Models
-
-When configs evolve, version your model classes:
+### 4. Document Your Models
 
 ```java
-// V1
-public class AppSettingsV1 {
+/**
+ * Application settings from DinoConfig.
+ * Brand: MyApp, Config: Settings
+ * 
+ * @see <a href="https://dinoconfig.com/brands/MyApp/Settings">Dashboard</a>
+ */
+public class AppSettings {
+    /** UI theme (light, dark, auto) */
     private String theme;
-}
-
-// V2 - added new fields
-public class AppSettingsV2 {
-    private String theme;
-    private int maxItems;  // New in v2
+    
+    /** Maximum items per page (1-1000) */
+    private int maxItems;
 }
 ```
 
 ## Next Steps
 
 - **[Examples →](examples)** — Real-world usage patterns
+- **[Configs API →](configs-api)** — API method reference
+- **[Configuration →](configuration)** — SDK setup options

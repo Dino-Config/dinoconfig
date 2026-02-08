@@ -6,9 +6,7 @@
 package com.dinoconfig.sdk.http;
 
 import com.dinoconfig.sdk.model.*;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import okhttp3.*;
 
@@ -37,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * The OkHttpClient is shared across all requests and handles connection pooling.
  * 
  * @author DinoConfig Team
- * @version 1.0.0
+ * @version 2.0.0
  * @since 1.0.0
  */
 public class HttpClient {
@@ -78,6 +76,16 @@ public class HttpClient {
                 .readTimeout(timeout, TimeUnit.MILLISECONDS)
                 .writeTimeout(timeout, TimeUnit.MILLISECONDS)
                 .build();
+    }
+    
+    /**
+     * Returns the ObjectMapper used for JSON serialization/deserialization.
+     * Useful for API classes that need to perform additional conversions.
+     * 
+     * @return The ObjectMapper instance
+     */
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
     
     /**
@@ -149,7 +157,7 @@ public class HttpClient {
     }
     
     /**
-     * Makes a generic HTTP request to the API.
+     * Makes a generic HTTP request to the API and returns the raw response data.
      * 
      * <p>Handles:
      * <ul>
@@ -160,16 +168,15 @@ public class HttpClient {
      *   <li>Retry logic with exponential backoff</li>
      * </ul>
      * 
-     * @param <T> The expected response data type
      * @param method HTTP method (GET, POST, PUT, PATCH, DELETE)
      * @param endpoint API endpoint path (e.g., "/api/configs/123")
      * @param data Request body data (for POST, PUT, PATCH)
      * @param options Request customization options
-     * @return The API response
+     * @return The raw response data as Object (Map, List, or primitive)
      * @throws IOException if a network error occurs
      * @throws ApiError if the API returns an error response
      */
-    private <T> ApiResponse<T> request(String method, String endpoint, Object data, RequestOptions options) throws IOException {
+    private Object request(String method, String endpoint, Object data, RequestOptions options) throws IOException {
         String url = baseUrl + endpoint;
         Long timeout = options != null && options.getTimeout() != null ? options.getTimeout() : defaultTimeout;
         Integer retries = options != null && options.getRetries() != null ? options.getRetries() : 0;
@@ -244,41 +251,12 @@ public class HttpClient {
                         throw apiError;
                     }
                     
-                    // Parse response
-                    ApiResponse<T> apiResponse;
+                    // Parse and return raw data
                     if (responseBody.isEmpty()) {
-                        apiResponse = new ApiResponse<>(null, true);
-                    } else {
-                        try {
-                            // Try to deserialize as ApiResponse structure first
-                            TypeFactory typeFactory = objectMapper.getTypeFactory();
-                            com.fasterxml.jackson.databind.JavaType responseType = typeFactory.constructParametricType(
-                                ApiResponse.class, 
-                                Object.class
-                            );
-                            @SuppressWarnings("unchecked")
-                            ApiResponse<Object> rawResponse = objectMapper.readValue(responseBody, responseType);
-                            
-                            // If it has success field, it's already wrapped in ApiResponse
-                            if (rawResponse.getSuccess() != null) {
-                                @SuppressWarnings("unchecked")
-                                T responseData = (T) rawResponse.getData();
-                                apiResponse = new ApiResponse<>(responseData, rawResponse.getSuccess(), rawResponse.getMessage());
-                            } else {
-                                // Not wrapped, treat entire response as data
-                                @SuppressWarnings("unchecked")
-                                T responseData = (T) objectMapper.readValue(responseBody, Object.class);
-                                apiResponse = new ApiResponse<>(responseData, true);
-                            }
-                        } catch (Exception e) {
-                            // If deserialization as ApiResponse fails, treat entire response as data
-                            @SuppressWarnings("unchecked")
-                            T responseData = (T) objectMapper.readValue(responseBody, Object.class);
-                            apiResponse = new ApiResponse<>(responseData, true);
-                        }
+                        return null;
                     }
                     
-                    return apiResponse;
+                    return objectMapper.readValue(responseBody, Object.class);
                 }
                 
             } catch (ApiError e) {
@@ -319,70 +297,80 @@ public class HttpClient {
     }
     
     /**
-     * Makes a GET request to the specified endpoint.
+     * Makes a GET request and returns raw response data.
      * 
-     * @param <T> The expected response data type
      * @param endpoint API endpoint path
      * @param options Request customization options
-     * @return The API response
+     * @return The raw response data
      * @throws IOException if the request fails
      */
-    public <T> ApiResponse<T> get(String endpoint, RequestOptions options) throws IOException {
+    public Object get(String endpoint, RequestOptions options) throws IOException {
         return request("GET", endpoint, null, options);
     }
     
     /**
-     * Makes a POST request to the specified endpoint.
+     * Makes a GET request and converts the response to the specified type.
      * 
-     * @param <T> The expected response data type
+     * @param <T> The expected response type
+     * @param endpoint API endpoint path
+     * @param responseType The class to deserialize to
+     * @param options Request customization options
+     * @return The response data converted to the specified type
+     * @throws IOException if the request fails
+     */
+    public <T> T get(String endpoint, Class<T> responseType, RequestOptions options) throws IOException {
+        Object data = request("GET", endpoint, null, options);
+        return objectMapper.convertValue(data, responseType);
+    }
+    
+    /**
+     * Makes a POST request and returns raw response data.
+     * 
      * @param endpoint API endpoint path
      * @param data Request body data
      * @param options Request customization options
-     * @return The API response
+     * @return The raw response data
      * @throws IOException if the request fails
      */
-    public <T> ApiResponse<T> post(String endpoint, Object data, RequestOptions options) throws IOException {
+    public Object post(String endpoint, Object data, RequestOptions options) throws IOException {
         return request("POST", endpoint, data, options);
     }
     
     /**
-     * Makes a PUT request to the specified endpoint.
+     * Makes a PUT request and returns raw response data.
      * 
-     * @param <T> The expected response data type
      * @param endpoint API endpoint path
      * @param data Request body data
      * @param options Request customization options
-     * @return The API response
+     * @return The raw response data
      * @throws IOException if the request fails
      */
-    public <T> ApiResponse<T> put(String endpoint, Object data, RequestOptions options) throws IOException {
+    public Object put(String endpoint, Object data, RequestOptions options) throws IOException {
         return request("PUT", endpoint, data, options);
     }
     
     /**
-     * Makes a PATCH request to the specified endpoint.
+     * Makes a PATCH request and returns raw response data.
      * 
-     * @param <T> The expected response data type
      * @param endpoint API endpoint path
      * @param data Request body data (partial update)
      * @param options Request customization options
-     * @return The API response
+     * @return The raw response data
      * @throws IOException if the request fails
      */
-    public <T> ApiResponse<T> patch(String endpoint, Object data, RequestOptions options) throws IOException {
+    public Object patch(String endpoint, Object data, RequestOptions options) throws IOException {
         return request("PATCH", endpoint, data, options);
     }
     
     /**
-     * Makes a DELETE request to the specified endpoint.
+     * Makes a DELETE request and returns raw response data.
      * 
-     * @param <T> The expected response data type
      * @param endpoint API endpoint path
      * @param options Request customization options
-     * @return The API response
+     * @return The raw response data
      * @throws IOException if the request fails
      */
-    public <T> ApiResponse<T> delete(String endpoint, RequestOptions options) throws IOException {
+    public Object delete(String endpoint, RequestOptions options) throws IOException {
         return request("DELETE", endpoint, null, options);
     }
     

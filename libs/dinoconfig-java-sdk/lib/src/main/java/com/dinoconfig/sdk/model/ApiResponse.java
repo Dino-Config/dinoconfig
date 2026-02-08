@@ -8,46 +8,29 @@ package com.dinoconfig.sdk.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Generic API response wrapper for all DinoConfig API responses.
- * 
- * <p>This class wraps the response data from API calls, providing a consistent
- * structure for handling both successful responses and errors.
- * 
- * <p><b>Usage Example:</b>
- * <pre>{@code
- * ApiResponse<Object> response = configAPI.getConfigValue(
- *     "mybrand", "myconfig", "mykey", new RequestOptions()
- * );
- * 
- * if (response.getSuccess()) {
- *     Object value = response.getData();
- *     System.out.println("Value: " + value);
- *     
- *     // Cast to expected type
- *     String stringValue = (String) response.getData();
- *     Boolean boolValue = (Boolean) response.getData();
- *     Map<String, Object> mapValue = (Map<String, Object>) response.getData();
- * } else {
- *     System.out.println("Error: " + response.getMessage());
- * }
- * }</pre>
- * 
- * <p><b>Response Data Types:</b>
- * The {@code data} field can contain any JSON-compatible type:
- * <ul>
- *   <li>{@code String} - for text values</li>
- *   <li>{@code Boolean} - for boolean flags</li>
- *   <li>{@code Number} (Integer, Long, Double) - for numeric values</li>
- *   <li>{@code Map<String, Object>} - for JSON objects</li>
- *   <li>{@code List<Object>} - for JSON arrays</li>
- *   <li>{@code null} - for null values</li>
- * </ul>
+ * Generic API response wrapper for DinoConfig API responses.
  * 
  * @param <T> The type of data contained in the response
  * @author DinoConfig Team
  * @version 1.0.0
  * @since 1.0.0
+ * @deprecated As of version 2.0.0, the SDK now returns values directly without
+ *             the ApiResponse wrapper. Methods throw exceptions on errors instead
+ *             of using a success flag. This class will be removed in a future version.
+ *             
+ *             <p><b>Migration:</b>
+ *             <pre>{@code
+ *             // Old (deprecated):
+ *             ApiResponse<Object> response = configAPI.getValue("Brand.Config.key");
+ *             if (response.getSuccess()) {
+ *                 Object value = response.getData();
+ *             }
+ *             
+ *             // New (recommended):
+ *             String value = configAPI.getValue("Brand.Config.key", String.class);
+ *             }</pre>
  */
+@Deprecated(since = "2.0.0", forRemoval = true)
 public class ApiResponse<T> {
     
     /**

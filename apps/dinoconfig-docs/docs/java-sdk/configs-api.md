@@ -1,20 +1,20 @@
 ---
 sidebar_position: 3
 title: Configs API Reference
-description: Fetch configurations and values using the DinoConfig Java SDK Configs API. Learn to use get(), getAs(), and getValue() methods.
+description: Fetch configurations and values using the DinoConfig Java SDK Configs API. Learn to use get(), getAs(), and getValue() methods with direct return types.
 keywords: [configs api, get configuration, getValue, getAs, fetch config, java sdk api, typed configs]
 ---
 
 # Configs API
 
-The Configs API is the primary interface for retrieving configuration values from DinoConfig. It provides methods to fetch entire configurations, individual values, and typed models.
+The Configs API is the primary interface for retrieving configuration values from DinoConfig. It provides methods to fetch entire configurations, individual values, and typed models. All methods return values directly — no wrapper objects needed.
 
 ## Overview
 
 Access the Configs API through your initialized SDK instance:
 
 ```java
-DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_...");
+DinoConfigSDK sdk = DinoConfigSDKFactory.create("dino_...", "https://api.dinoconfig.com");
 ConfigAPI configApi = sdk.getConfigAPI();
 ```
 
@@ -22,18 +22,18 @@ ConfigAPI configApi = sdk.getConfigAPI();
 
 ### `get()` — Fetch Entire Configuration
 
-Retrieves a complete configuration with all its values.
+Retrieves a complete configuration with all its values. Returns `ConfigData` directly.
 
 #### Signatures
 
 ```java
 // Using path notation
-ApiResponse<ConfigData> get(String path)
-ApiResponse<ConfigData> get(String path, RequestOptions options)
+ConfigData get(String path) throws IOException
+ConfigData get(String path, RequestOptions options) throws IOException
 
 // Using separate parameters
-ApiResponse<ConfigData> get(String brandName, String configName)
-ApiResponse<ConfigData> get(String brandName, String configName, RequestOptions options)
+ConfigData get(String brandName, String configName) throws IOException
+ConfigData get(String brandName, String configName, RequestOptions options) throws IOException
 ```
 
 #### Parameters
@@ -48,14 +48,6 @@ ApiResponse<ConfigData> get(String brandName, String configName, RequestOptions 
 #### Returns
 
 ```java
-public class ApiResponse<T> {
-    private T data;
-    private Boolean success;
-    private String message;
-    
-    public boolean hasData() { /* ... */ }
-}
-
 public class ConfigData {
     private String name;
     private String description;
@@ -75,48 +67,44 @@ public class ConfigData {
 #### Examples
 
 ```java
-// Using path notation (recommended)
-var response = sdk.getConfigAPI().get("MyBrand.AppSettings");
+// Using path notation (recommended) - returns ConfigData directly
+ConfigData config = sdk.getConfigAPI().get("MyBrand.AppSettings");
 
-if (response.hasData()) {
-    ConfigData config = response.getData();
-    
-    System.out.println("Name: " + config.getName());           // "AppSettings"
-    System.out.println("Version: " + config.getVersion());     // 3
-    System.out.println("Keys: " + config.getKeys());           // [theme, maxItems, ...]
-    
-    // Access values
-    Map<String, Object> values = config.getValues();
-    System.out.println("Theme: " + values.get("theme"));       // "dark"
-    
-    // Type-safe access
-    String theme = config.getValue("theme", String.class);
-    Integer maxItems = config.getValue("maxItems", Integer.class);
-    
-    // With default value
-    Integer timeout = config.getValueOrDefault("timeout", 5000);
-}
+System.out.println("Name: " + config.getName());           // "AppSettings"
+System.out.println("Version: " + config.getVersion());     // 3
+System.out.println("Keys: " + config.getKeys());           // [theme, maxItems, ...]
+
+// Access values from the config
+Map<String, Object> values = config.getValues();
+System.out.println("Theme: " + values.get("theme"));       // "dark"
+
+// Type-safe access within ConfigData
+String theme = config.getValue("theme", String.class);
+Integer maxItems = config.getValue("maxItems", Integer.class);
+
+// With default value
+Integer timeout = config.getValueOrDefault("timeout", 5000);
 
 // Using separate parameters
-var response = sdk.getConfigAPI().get("MyBrand", "AppSettings");
+ConfigData config = sdk.getConfigAPI().get("MyBrand", "AppSettings");
 ```
 
 ---
 
 ### `getAs()` — Fetch Typed Configuration
 
-Retrieves a configuration and deserializes it to a custom model class.
+Retrieves a configuration and deserializes it to a custom model class. Returns your model type directly.
 
 #### Signatures
 
 ```java
 // Using path notation
-<T> ApiResponse<T> getAs(String path, Class<T> modelClass)
-<T> ApiResponse<T> getAs(String path, Class<T> modelClass, RequestOptions options)
+<T> T getAs(String path, Class<T> modelClass) throws IOException
+<T> T getAs(String path, Class<T> modelClass, RequestOptions options) throws IOException
 
 // Using separate parameters
-<T> ApiResponse<T> getAs(String brandName, String configName, Class<T> modelClass)
-<T> ApiResponse<T> getAs(String brandName, String configName, Class<T> modelClass, RequestOptions options)
+<T> T getAs(String brandName, String configName, Class<T> modelClass) throws IOException
+<T> T getAs(String brandName, String configName, Class<T> modelClass, RequestOptions options) throws IOException
 ```
 
 #### Parameters
@@ -158,34 +146,35 @@ public class DatabaseConfig {
 Then use `getAs()`:
 
 ```java
-var response = sdk.getConfigAPI().getAs("MyBrand.AppSettings", AppSettings.class);
+// Returns your typed model directly - no wrapper!
+AppSettings settings = sdk.getConfigAPI().getAs("MyBrand.AppSettings", AppSettings.class);
 
-if (response.hasData()) {
-    AppSettings settings = response.getData();
-    
-    System.out.println("Theme: " + settings.getTheme());
-    System.out.println("Max Items: " + settings.getMaxItems());
-    System.out.println("Features: " + settings.getFeatures());
-    System.out.println("DB Host: " + settings.getDatabase().getHost());
-}
+System.out.println("Theme: " + settings.getTheme());
+System.out.println("Max Items: " + settings.getMaxItems());
+System.out.println("Features: " + settings.getFeatures());
+System.out.println("DB Host: " + settings.getDatabase().getHost());
 ```
 
 ---
 
 ### `getValue()` — Fetch Single Value
 
-Retrieves a specific configuration value by key.
+Retrieves a specific configuration value by key with type safety. Returns the typed value directly.
 
 #### Signatures
 
 ```java
-// Using path notation
-ApiResponse<Object> getValue(String path)
-ApiResponse<Object> getValue(String path, RequestOptions options)
+// Using path notation with type
+<T> T getValue(String path, Class<T> valueType) throws IOException
+<T> T getValue(String path, Class<T> valueType, RequestOptions options) throws IOException
 
-// Using separate parameters
-ApiResponse<Object> getValue(String brandName, String configName, String keyName)
-ApiResponse<Object> getValue(String brandName, String configName, String keyName, RequestOptions options)
+// Using separate parameters with type
+<T> T getValue(String brandName, String configName, String keyName, Class<T> valueType) throws IOException
+<T> T getValue(String brandName, String configName, String keyName, Class<T> valueType, RequestOptions options) throws IOException
+
+// Untyped versions (returns Object)
+Object getValue(String path) throws IOException
+Object getValue(String brandName, String configName, String keyName) throws IOException
 ```
 
 #### Parameters
@@ -196,43 +185,47 @@ ApiResponse<Object> getValue(String brandName, String configName, String keyName
 | `brandName` | `String` | Yes | Brand name |
 | `configName` | `String` | Yes | Configuration name |
 | `keyName` | `String` | Yes | Key name |
+| `valueType` | `Class<T>` | No | Target type for the value |
 | `options` | `RequestOptions` | No | Request customization |
 
 #### Returns
 
-```java
-ApiResponse<Object>  // Value type varies based on configuration
-```
+Returns the value directly with the specified type. No wrapper objects, no casting needed.
 
 #### Examples
 
 ```java
-// Using path notation (recommended)
-var themeResponse = sdk.getConfigAPI().getValue("MyBrand.AppSettings.theme");
-String theme = (String) themeResponse.getData();
+// Type-safe value retrieval - no casting needed!
+String theme = sdk.getConfigAPI().getValue("MyBrand.AppSettings.theme", String.class);
 System.out.println("Theme: " + theme);  // "dark"
 
-var maxItemsResponse = sdk.getConfigAPI().getValue("MyBrand.AppSettings.maxItems");
-Integer maxItems = (Integer) maxItemsResponse.getData();
+Integer maxItems = sdk.getConfigAPI().getValue("MyBrand.AppSettings.maxItems", Integer.class);
 System.out.println("Max Items: " + maxItems);  // 100
 
+Boolean darkMode = sdk.getConfigAPI().getValue("MyBrand.FeatureFlags.darkMode", Boolean.class);
+System.out.println("Dark Mode: " + darkMode);  // true
+
 // Using separate parameters
-var response = sdk.getConfigAPI().getValue("MyBrand", "AppSettings", "theme");
+String theme = sdk.getConfigAPI().getValue("MyBrand", "AppSettings", "theme", String.class);
 
-// Complex values (objects/arrays) come back as Maps/Lists
-var featuresResponse = sdk.getConfigAPI().getValue("MyBrand.AppSettings.features");
+// Complex values - use appropriate types
 @SuppressWarnings("unchecked")
-List<String> features = (List<String>) featuresResponse.getData();
+List<String> features = sdk.getConfigAPI().getValue(
+    "MyBrand.AppSettings.features", 
+    List.class
+);
 
-var dbResponse = sdk.getConfigAPI().getValue("MyBrand.AppSettings.database");
 @SuppressWarnings("unchecked")
-Map<String, Object> database = (Map<String, Object>) dbResponse.getData();
+Map<String, Object> database = sdk.getConfigAPI().getValue(
+    "MyBrand.AppSettings.database", 
+    Map.class
+);
 String host = (String) database.get("host");
 ```
 
 ## Request Options
 
-Both methods accept optional `RequestOptions`:
+All methods accept optional `RequestOptions`:
 
 ```java
 RequestOptions options = RequestOptions.builder()
@@ -241,28 +234,28 @@ RequestOptions options = RequestOptions.builder()
     .addHeader("X-Request-ID", "abc123")
     .build();
 
-var config = sdk.getConfigAPI().get("Brand.Config", options);
+ConfigData config = sdk.getConfigAPI().get("Brand.Config", options);
 ```
 
 ### Common Options
 
 ```java
 // Extended timeout for large configs
-var config = sdk.getConfigAPI().get("Brand.LargeConfig",
+ConfigData config = sdk.getConfigAPI().get("Brand.LargeConfig",
     RequestOptions.builder()
         .timeout(60000L)
         .build()
 );
 
 // Retry on failure
-var reliable = sdk.getConfigAPI().getValue("Brand.Config.Key",
+String value = sdk.getConfigAPI().getValue("Brand.Config.Key", String.class,
     RequestOptions.builder()
         .retries(5)
         .build()
 );
 
 // Custom headers for tracing
-var traced = sdk.getConfigAPI().get("Brand.Config",
+ConfigData traced = sdk.getConfigAPI().get("Brand.Config",
     RequestOptions.builder()
         .addHeader("X-Trace-ID", traceId)
         .addHeader("X-Span-ID", spanId)
@@ -285,17 +278,19 @@ sdk.getConfigAPI().get("MyBrand.AppSettings");
 sdk.getConfigAPI().get("MyBrand", "AppSettings");
 
 // These are equivalent:
-sdk.getConfigAPI().getValue("MyBrand.AppSettings.theme");
-sdk.getConfigAPI().getValue("MyBrand", "AppSettings", "theme");
+sdk.getConfigAPI().getValue("MyBrand.AppSettings.theme", String.class);
+sdk.getConfigAPI().getValue("MyBrand", "AppSettings", "theme", String.class);
 ```
 
 ## Error Handling
+
+All methods throw exceptions on failure — use try-catch:
 
 ```java
 import com.dinoconfig.sdk.exception.ApiError;
 
 try {
-    var config = sdk.getConfigAPI().get("Brand.NonExistent");
+    ConfigData config = sdk.getConfigAPI().get("Brand.NonExistent");
 } catch (ApiError e) {
     switch (e.getStatus()) {
         case 404:
@@ -310,6 +305,8 @@ try {
         default:
             System.err.println("API error: " + e.getMessage());
     }
+} catch (IOException e) {
+    System.err.println("Network error: " + e.getMessage());
 }
 ```
 
@@ -320,34 +317,38 @@ try {
 Path notation is more concise and readable:
 
 ```java
-// ✅ Preferred
-sdk.getConfigAPI().getValue("Brand.Config.Key");
+// Preferred
+sdk.getConfigAPI().getValue("Brand.Config.Key", String.class);
 
-// ❌ More verbose
-sdk.getConfigAPI().getValue("Brand", "Config", "Key");
+// More verbose
+sdk.getConfigAPI().getValue("Brand", "Config", "Key", String.class);
 ```
 
-### 2. Use `getAs()` for Type Safety
+### 2. Use Typed `getValue()` or `getAs()`
 
 ```java
-// ✅ Type-safe with custom model
-var config = sdk.getConfigAPI().getAs("Brand.Config", MyConfig.class);
+// Type-safe - no casting needed
+String theme = sdk.getConfigAPI().getValue("Brand.Config.theme", String.class);
+MyConfig config = sdk.getConfigAPI().getAs("Brand.Config", MyConfig.class);
 
-// ❌ Requires casting
-var config = sdk.getConfigAPI().get("Brand.Config");
-String theme = (String) config.getData().getValue("theme");
+// Avoid untyped access when possible
+Object value = sdk.getConfigAPI().getValue("Brand.Config.theme");
+String theme = (String) value;  // Requires casting
 ```
 
-### 3. Check Response Success
+### 3. Handle Errors Gracefully
 
 ```java
-var response = sdk.getConfigAPI().get("Brand.Config");
-
-if (response.hasData()) {
-    // Safe to use response.getData()
-    processConfig(response.getData());
-} else {
-    log.warn("Failed to get config: " + response.getMessage());
+public String getTheme() {
+    try {
+        return sdk.getConfigAPI().getValue("Brand.Settings.theme", String.class);
+    } catch (ApiError e) {
+        log.error("Failed to get theme: {}", e.getMessage());
+        return "light"; // Default fallback
+    } catch (IOException e) {
+        log.error("Network error getting theme", e);
+        return "light";
+    }
 }
 ```
 
@@ -356,20 +357,20 @@ if (response.hasData()) {
 Fetch entire configs when you need multiple values:
 
 ```java
-// ✅ Single request for multiple values
-var config = sdk.getConfigAPI().get("Brand.Settings");
-String theme = config.getData().getValue("theme", String.class);
-Integer maxItems = config.getData().getValue("maxItems", Integer.class);
+// Single request for multiple values
+ConfigData config = sdk.getConfigAPI().get("Brand.Settings");
+String theme = config.getValue("theme", String.class);
+Integer maxItems = config.getValue("maxItems", Integer.class);
 
-// ❌ Multiple requests (slower)
-var theme = sdk.getConfigAPI().getValue("Brand.Settings.theme");
-var maxItems = sdk.getConfigAPI().getValue("Brand.Settings.maxItems");
+// Avoid multiple requests when batching is possible
+String theme = sdk.getConfigAPI().getValue("Brand.Settings.theme", String.class);
+Integer maxItems = sdk.getConfigAPI().getValue("Brand.Settings.maxItems", Integer.class);
 ```
 
 ### 5. Use Default Values
 
 ```java
-ConfigData config = response.getData();
+ConfigData config = sdk.getConfigAPI().get("Brand.Settings");
 
 // With explicit default
 int timeout = config.getValueOrDefault("timeout", 5000);
