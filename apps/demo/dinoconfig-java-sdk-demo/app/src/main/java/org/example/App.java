@@ -72,7 +72,7 @@ public class App {
             System.out.println("  → Using custom base URL: " + baseUrl);
             sdk = DinoConfigSDKFactory.create(apiKey, baseUrl);
         } else {
-            System.out.println("  → Using default base URL: http://localhost:3000");
+            System.out.println("  → Using default base URL: https://api.dinoconfig.com");
             sdk = DinoConfigSDKFactory.create(apiKey);
         }
         System.out.println("  ✓ SDK initialized successfully\n");
@@ -212,6 +212,7 @@ public class App {
         System.out.println("  ✓ Config retrieved with type safety!");
         System.out.println("    - config.getTime_1(): " + typedConfig.getTime_1());
         System.out.println("    - config.getDatetime_1(): " + typedConfig.getDatetime_1());
+        System.out.println("    - config.getText(): " + typedConfig.getText());
 
         System.out.println();
     }
@@ -232,14 +233,14 @@ public class App {
         System.out.println();
 
         // Get typed value - returns the value directly!
-        System.out.println("Fetching 'Test.Test3.time_1' as String...");
-        String timeValue = configAPI.getValue("Test", "Test3", "time_1", String.class);
-        System.out.println("  ✓ Value retrieved: " + timeValue);
+        System.out.println("Fetching 'Test.Test3.text' as String...");
+        String textValue = configAPI.getValue("Test", "Test3", "text", String.class);
+        System.out.println("  ✓ Value retrieved: " + textValue);
 
         // Using path shorthand
-        System.out.println("\nFetching 'Test.Test3.datetime_1' using path shorthand...");
-        String datetimeValue = configAPI.getValue("Test.Test3.datetime_1", String.class);
-        System.out.println("  ✓ Value retrieved: " + datetimeValue);
+        System.out.println("\nFetching 'Test.Test3.text' using path shorthand...");
+        String pathValue = configAPI.getValue("Test.Test3.text", String.class);
+        System.out.println("  ✓ Value retrieved: " + pathValue);
 
         System.out.println();
     }
@@ -266,13 +267,13 @@ public class App {
         System.out.println("  MyConfig config = configAPI.getAs(\"Brand.Config\", MyConfig.class);");
         
         Test3 pathTypedConfig = configAPI.getAs("Test.Test3", Test3.class);
-        System.out.println("  → Result: time_1=" + pathTypedConfig.getTime_1());
+        System.out.println("  → Result: text=" + pathTypedConfig.getText());
         System.out.println();
 
         System.out.println("Get single value:");
         System.out.println("  String value = configAPI.getValue(\"Brand.Config.key\", String.class);");
         
-        String pathValue = configAPI.getValue("Test.Test3.time_1", String.class);
+        String pathValue = configAPI.getValue("Test.Test3.text", String.class);
         System.out.println("  → Result: " + pathValue);
         System.out.println();
 

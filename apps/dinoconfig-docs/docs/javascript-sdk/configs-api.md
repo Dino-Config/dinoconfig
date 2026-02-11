@@ -303,4 +303,5 @@ const features = await dinoconfig.configs.getValue('Brand.Settings.features');
 
 - **[Discovery API →](discovery-api)** — Explore available configurations
 - **[Cache API →](cache-api)** — Optimize performance
-- **[TypeScript →](typescript)** — Generate type-safe configs
+- **[TypeScript →](typescript)** — Type-safe config access with generics
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate TypeScript types

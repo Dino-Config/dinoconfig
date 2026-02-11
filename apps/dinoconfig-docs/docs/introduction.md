@@ -94,3 +94,4 @@ Brand.Config.Key      → Get specific value
 
 - **[JavaScript SDK →](/docs/javascript-sdk/getting-started)** — Guide for JavaScript/TypeScript developers
 - **[Java SDK →](/docs/java-sdk/getting-started)** — Guide for Java developers
+- **[DinoConfig CLI →](/docs/cli/getting-started)** — Generate TypeScript types and Java models from your schemas

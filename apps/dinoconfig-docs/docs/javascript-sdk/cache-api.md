@@ -483,5 +483,6 @@ cache: {
 
 ## Next Steps
 
-- **[TypeScript →](typescript)** — Generate type-safe configurations
+- **[TypeScript →](typescript)** — Type-safe configurations with generics
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate TypeScript types
 - **[Examples →](examples)** — Real-world usage patterns

@@ -5,6 +5,7 @@
  */
 package com.dinoconfig.sdk.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -32,6 +33,7 @@ import java.util.Objects;
  * @version 1.0.0
  * @since 1.0.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class KeyInfo {
 
     @JsonProperty("name")

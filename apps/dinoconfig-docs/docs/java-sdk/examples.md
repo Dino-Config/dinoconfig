@@ -506,7 +506,7 @@ public class ApiKeyValidator {
             
             List<String> missingBrands = new ArrayList<>();
             for (String brand : requiredBrands) {
-                if (!info.canAccessBrand(brand)) {
+                if (info.getBrand(brand).isEmpty()) {
                     missingBrands.add(brand);
                 }
             }
@@ -515,10 +515,6 @@ public class ApiKeyValidator {
                 return ValidationResult.failed(
                     "Missing access to brands: " + String.join(", ", missingBrands)
                 );
-            }
-            
-            if (!info.hasPermission("config:read")) {
-                return ValidationResult.failed("Missing config:read permission");
             }
             
             return ValidationResult.success(info);
@@ -654,4 +650,5 @@ public class Application {
 - **[Getting Started →](getting-started)** — Initial setup guide
 - **[Configs API →](configs-api)** — Full API reference
 - **[Discovery API →](discovery-api)** — Explore configurations
-- **[Typed Configs →](typed-configs)** — Type-safe models
+- **[Typed Configs →](typed-configs)** — Type-safe models with `getAs()`
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate Java models from your schemas
