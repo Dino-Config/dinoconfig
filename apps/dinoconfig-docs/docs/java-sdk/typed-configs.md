@@ -382,39 +382,13 @@ public class ConfigService {
 
 ## Code Generation
 
-You can generate model classes from configuration schemas:
-
-### Using DinoConfig CLI
+For the best experience, use the **[DinoConfig CLI](../cli/getting-started)** to generate Java model classes from your configuration schemas. The CLI creates POJO classes with Jackson annotations, proper package structure, and type-safe getters.
 
 ```bash
-# Generate models from your configuration schema
-npx dinoconfig-cli generate-java \
-  --brand MyBrand \
-  --config AppSettings \
-  --output src/main/java/com/myapp/config/models \
-  --package com.myapp.config.models
+npx @dinoconfig/cli javagen --api-key=dino_your-key --output=./src/main/java/com/myapp/config
 ```
 
-This generates:
-
-```java
-// Auto-generated - do not edit
-package com.myapp.config.models;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-public final class AppSettings {
-    @JsonProperty("theme")
-    private final String theme;
-    
-    @JsonProperty("max_items")
-    private final int maxItems;
-    
-    // ... rest of the class
-}
-```
+See the [DinoConfig CLI documentation](../cli/getting-started#javagen--generate-java-models) for installation, all options, and CI/CD integration.
 
 ## Best Practices
 
@@ -472,6 +446,7 @@ public class AppSettings {
 
 ## Next Steps
 
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate Java models from your schemas
 - **[Examples →](examples)** — Real-world usage patterns
 - **[Configs API →](configs-api)** — API method reference
 - **[Configuration →](configuration)** — SDK setup options

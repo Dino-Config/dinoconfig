@@ -384,5 +384,6 @@ if (config.hasKey("optionalFeature")) {
 ## Next Steps
 
 - **[Discovery API →](discovery-api)** — Explore available configurations
-- **[Typed Configs →](typed-configs)** — Generate type-safe models
+- **[Typed Configs →](typed-configs)** — Type-safe models with `getAs()`
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate Java models
 - **[Examples →](examples)** — Real-world usage patterns

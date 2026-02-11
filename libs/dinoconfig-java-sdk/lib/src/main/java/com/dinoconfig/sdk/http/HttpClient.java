@@ -70,11 +70,9 @@ public class HttpClient {
         this.objectMapper.registerModule(new JavaTimeModule());
         this.defaultHeaders = new HashMap<>();
         
-        // Configure OkHttpClient with timeouts
+        // Configure OkHttpClient with connect timeout only
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(timeout, TimeUnit.MILLISECONDS)
-                .readTimeout(timeout, TimeUnit.MILLISECONDS)
-                .writeTimeout(timeout, TimeUnit.MILLISECONDS)
                 .build();
     }
     
@@ -233,8 +231,6 @@ public class HttpClient {
                 if (timeout != null && !timeout.equals(defaultTimeout)) {
                     requestClient = client.newBuilder()
                             .connectTimeout(timeout, TimeUnit.MILLISECONDS)
-                            .readTimeout(timeout, TimeUnit.MILLISECONDS)
-                            .writeTimeout(timeout, TimeUnit.MILLISECONDS)
                             .build();
                 }
                 

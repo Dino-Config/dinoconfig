@@ -10,6 +10,7 @@
  */
 package org.example.models.test;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -20,6 +21,7 @@ import java.util.Objects;
  * <p>This class represents the typed structure of the configuration.
  * All fields are immutable.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class Test3 {
     /**
      * string - time_1
@@ -34,11 +36,18 @@ public final class Test3 {
     private final String datetime_1;
 
     /**
+     * string - text
+     */
+    @JsonProperty("text")
+    private final String text;
+
+    /**
      * Default constructor for Jackson deserialization.
      */
     public Test3() {
         this.time_1 = null;
         this.datetime_1 = null;
+        this.text = null;
     }
 
     /**
@@ -46,10 +55,12 @@ public final class Test3 {
      *
      * @param time_1 time_1 (string)
      * @param datetime_1 datetime_1 (string)
+     * @param text text (string)
      */
-    public Test3(String time_1, String datetime_1) {
+    public Test3(String time_1, String datetime_1, String text) {
         this.time_1 = time_1;
         this.datetime_1 = datetime_1;
+        this.text = text;
     }
 
     /**
@@ -70,18 +81,28 @@ public final class Test3 {
         return datetime_1;
     }
 
+    /**
+     * Returns text.
+     *
+     * @return text (string)
+     */
+    public String getText() {
+        return text;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Test3 that = (Test3) o;
         return Objects.equals(time_1, that.time_1)
-                && Objects.equals(datetime_1, that.datetime_1);
+                && Objects.equals(datetime_1, that.datetime_1)
+                && Objects.equals(text, that.text);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(time_1, datetime_1);
+        return Objects.hash(time_1, datetime_1, text);
     }
 
     @Override
@@ -89,6 +110,7 @@ public final class Test3 {
         return "Test3{" +
                 "time_1=" + time_1 +
                 ", datetime_1=" + datetime_1 +
+                ", text=" + text +
                 '}';
     }
 }

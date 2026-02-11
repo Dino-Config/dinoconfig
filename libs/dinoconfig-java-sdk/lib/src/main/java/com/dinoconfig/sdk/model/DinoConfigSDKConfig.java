@@ -36,7 +36,7 @@ import java.util.Objects;
  *
  * <p><b>Default Values:</b>
  * <ul>
- *   <li>{@code baseUrl}: {@code "http://localhost:3000"}</li>
+ *   <li>{@code baseUrl}: {@code "https://api.dinoconfig.com"}</li>
  *   <li>{@code timeout}: {@code 10000} milliseconds (10 seconds)</li>
  * </ul>
  *
@@ -48,7 +48,7 @@ import java.util.Objects;
 public final class DinoConfigSDKConfig {
 
     /** Default base URL */
-    public static final String DEFAULT_BASE_URL = "http://localhost:3000";
+    public static final String DEFAULT_BASE_URL = "https://api.dinoconfig.com";
 
     /** Default timeout in milliseconds */
     public static final long DEFAULT_TIMEOUT = 10000L;
@@ -67,7 +67,7 @@ public final class DinoConfigSDKConfig {
      *
      * <p>Initializes the configuration with:
      * <ul>
-     *   <li>{@code baseUrl}: {@code "http://localhost:3000"}</li>
+     *   <li>{@code baseUrl}: {@code "https://api.dinoconfig.com"}</li>
      *   <li>{@code timeout}: {@code 10000} ms</li>
      *   <li>{@code apiKey}: {@code null} (must be set before use)</li>
      * </ul>
@@ -156,7 +156,7 @@ public final class DinoConfigSDKConfig {
     /**
      * Returns the base URL of the DinoConfig API.
      *
-     * @return The base URL, defaults to {@code "http://localhost:3000"}
+     * @return The base URL, defaults to {@code "https://api.dinoconfig.com"}
      */
     public String getBaseUrl() {
         return baseUrl;

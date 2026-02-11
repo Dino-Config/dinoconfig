@@ -440,5 +440,6 @@ console.log(`You have access to ${brands.data.length} brands`);
 ## Next Steps
 
 - **[Cache API →](cache-api)** — Optimize performance with caching
-- **[TypeScript →](typescript)** — Generate type-safe configurations
+- **[TypeScript →](typescript)** — Type-safe configurations with generics
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate TypeScript types from introspection
 - **[Examples →](examples)** — Real-world usage patterns

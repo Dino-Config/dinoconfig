@@ -145,4 +145,5 @@ dinoconfig.cache        // → CacheAPI
 - **[Configs API →](configs-api)** — Fetch configurations and values
 - **[Discovery API →](discovery-api)** — Explore available configurations
 - **[Cache API →](cache-api)** — Optimize performance with caching
-- **[TypeScript Integration →](typescript)** — Generate type-safe config access
+- **[TypeScript Integration →](typescript)** — Type-safe config access with generics
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate TypeScript types from your schemas

@@ -42,7 +42,6 @@ DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
     .apiKey("dino_your-key")
     .baseUrl("https://api.dinoconfig.com")
     .timeout(30000L)
-    .retries(3)
     .build();
 
 DinoConfigSDK sdk = DinoConfigSDKFactory.create(config);
@@ -55,43 +54,18 @@ DinoConfigSDK sdk = DinoConfigSDKFactory.create(config);
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `apiKey` | `String` | **Required** | Your DinoConfig API key |
-| `baseUrl` | `String` | `http://localhost:3000` | API base URL |
+| `baseUrl` | `String` | `https://api.dinoconfig.com` | API base URL |
 | `timeout` | `Long` | `10000` | Request timeout in milliseconds |
-| `retries` | `Integer` | `0` | Number of retry attempts |
 
 ```java
 DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
     .apiKey("dino_your-key")
     .baseUrl("https://api.dinoconfig.com")
     .timeout(30000L)   // 30 second timeout
-    .retries(3)        // Retry failed requests 3 times
     .build();
 ```
 
-### HTTP Client Settings
-
-#### Connection Pool
-
-```java
-DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
-    .apiKey("dino_key")
-    .baseUrl("https://api.dinoconfig.com")
-    .maxIdleConnections(5)       // Connection pool size
-    .keepAliveDuration(300000L)  // 5 minutes
-    .build();
-```
-
-#### Timeouts
-
-```java
-DinoConfigSDKConfig config = DinoConfigSDKConfig.builder()
-    .apiKey("dino_key")
-    .baseUrl("https://api.dinoconfig.com")
-    .connectTimeout(5000L)   // Connection timeout
-    .readTimeout(10000L)     // Read timeout
-    .writeTimeout(10000L)    // Write timeout
-    .build();
-```
+> **Note:** For per-request retries and custom headers, use `RequestOptions` when calling API methods (e.g., `configAPI.get("Brand", "Config", RequestOptions.builder().retries(3).build())`).
 
 ## Environment-Based Configuration
 
@@ -131,20 +105,17 @@ public class SDKConfig {
             case "development":
                 builder
                     .baseUrl("http://localhost:3000")
-                    .timeout(30000L)
-                    .retries(0);
+                    .timeout(30000L);
                 break;
             case "staging":
                 builder
                     .baseUrl("https://staging-api.dinoconfig.com")
-                    .timeout(15000L)
-                    .retries(2);
+                    .timeout(15000L);
                 break;
             case "production":
                 builder
                     .baseUrl("https://api.dinoconfig.com")
-                    .timeout(10000L)
-                    .retries(3);
+                    .timeout(10000L);
                 break;
         }
         
@@ -354,19 +325,22 @@ DinoConfigSDKConfig largeConfig = DinoConfigSDKConfig.builder()
     .build();
 ```
 
-### 4. Enable Retries for Production
+### 4. Use RequestOptions for Retries
+
+For production resilience, use `RequestOptions` to add retries on specific requests:
 
 ```java
-DinoConfigSDKConfig prodConfig = DinoConfigSDKConfig.builder()
-    .apiKey(apiKey)
-    .baseUrl("https://api.dinoconfig.com")
-    .timeout(10000L)
-    .retries(3)  // Retry on transient failures
-    .build();
+ConfigData config = sdk.getConfigAPI().get("Brand.Config",
+    RequestOptions.builder()
+        .timeout(15000L)
+        .retries(3)  // Retry on transient failures
+        .build()
+);
 ```
 
 ## Next Steps
 
 - **[Configs API →](configs-api)** — Fetch configurations and values
 - **[Discovery API →](discovery-api)** — Explore available configurations
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate Java models
 - **[Examples →](examples)** — Real-world usage patterns

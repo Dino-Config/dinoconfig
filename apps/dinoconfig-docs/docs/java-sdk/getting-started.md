@@ -215,5 +215,6 @@ for (int i = 0; i < 100; i++) {
 - **[Configuration Options →](configuration)** — Customize SDK behavior
 - **[Configs API →](configs-api)** — Fetch configurations and values
 - **[Discovery API →](discovery-api)** — Explore available configurations
-- **[Typed Configs →](typed-configs)** — Generate type-safe models
+- **[Typed Configs →](typed-configs)** — Type-safe models with `getAs()`
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate Java models from your schemas
 - **[Examples →](examples)** — Real-world usage patterns

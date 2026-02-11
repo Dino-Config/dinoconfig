@@ -16,7 +16,7 @@ export const CODEGEN_COMMAND = 'dinoconfig-codegen';
 export const DEFAULT_OUTPUT = './src/types/dinoconfig.d.ts';
 
 /** Default API base URL */
-export const DEFAULT_BASE_URL = 'http://localhost:3000';
+export const DEFAULT_BASE_URL = 'https://api.dinoconfig.com';
 
 /** Default TypeScript namespace */
 export const DEFAULT_NAMESPACE = 'DinoConfig';

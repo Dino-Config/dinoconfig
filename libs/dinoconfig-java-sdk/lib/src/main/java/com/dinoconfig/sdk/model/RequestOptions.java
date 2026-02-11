@@ -316,6 +316,17 @@ public final class RequestOptions {
         }
 
         /**
+         * Adds a single header. Alias for {@link #header(String, String)} for API consistency.
+         *
+         * @param key   Header name
+         * @param value Header value
+         * @return This builder
+         */
+        public Builder addHeader(String key, String value) {
+            return header(key, value);
+        }
+
+        /**
          * Sets the request timeout.
          *
          * @param timeout Timeout in milliseconds

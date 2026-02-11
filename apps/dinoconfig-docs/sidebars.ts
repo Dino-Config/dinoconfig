@@ -9,6 +9,20 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'DinoConfig CLI',
+      collapsed: false,
+      link: {
+        type: 'generated-index',
+        title: 'DinoConfig CLI',
+        description: 'Command-line tools for code generation and configuration management.',
+        slug: '/cli',
+      },
+      items: [
+        'cli/getting-started',
+      ],
+    },
+    {
+      type: 'category',
       label: 'JavaScript SDK',
       collapsed: false,
       link: {

@@ -35,20 +35,16 @@ List<BrandInfo> listBrands(RequestOptions options) throws IOException
 
 ```java
 public class BrandInfo {
-    private String id;
     private String name;
     private String description;
     private int configCount;
     private Instant createdAt;
-    private Instant updatedAt;
     
     // Getters
-    public String getId() { return id; }
     public String getName() { return name; }
     public String getDescription() { return description; }
     public int getConfigCount() { return configCount; }
     public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
 }
 ```
 
@@ -59,7 +55,7 @@ public class BrandInfo {
 List<BrandInfo> brands = sdk.getDiscoveryAPI().listBrands();
 
 for (BrandInfo brand : brands) {
-    System.out.printf("Brand: %s (%s)%n", brand.getName(), brand.getId());
+    System.out.printf("Brand: %s%n", brand.getName());
     System.out.printf("  Description: %s%n", brand.getDescription());
     System.out.printf("  Configurations: %d%n", brand.getConfigCount());
 }
@@ -89,22 +85,18 @@ List<ConfigInfo> listConfigs(String brandName, RequestOptions options) throws IO
 
 ```java
 public class ConfigInfo {
-    private String id;
     private String name;
     private String description;
     private List<String> keys;
     private int version;
     private Instant createdAt;
-    private Instant updatedAt;
     
     // Getters
-    public String getId() { return id; }
     public String getName() { return name; }
     public String getDescription() { return description; }
     public List<String> getKeys() { return keys; }
     public int getVersion() { return version; }
     public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
 }
 ```
 
@@ -146,31 +138,29 @@ ConfigSchema getSchema(String brandName, String configName, RequestOptions optio
 
 ```java
 public class ConfigSchema {
-    private String name;
-    private String description;
-    private Map<String, SchemaField> fields;
+    private String configName;
     private int version;
+    private Map<String, FieldSchema> fields;
     
     // Getters
-    public String getName() { return name; }
-    public String getDescription() { return description; }
-    public Map<String, SchemaField> getFields() { return fields; }
+    public String getConfigName() { return configName; }
     public int getVersion() { return version; }
+    public Map<String, FieldSchema> getFields() { return fields; }
 }
 
-public class SchemaField {
-    private String type;
+public class FieldSchema {
+    private FieldType type;
     private String description;
-    private boolean required;
     private Object defaultValue;
-    private List<String> enumValues;  // For enum types
+    private Boolean required;
+    private FieldValidation validation;
     
     // Getters
-    public String getType() { return type; }
-    public String getDescription() { return description; }
-    public boolean isRequired() { return required; }
-    public Object getDefaultValue() { return defaultValue; }
-    public List<String> getEnumValues() { return enumValues; }
+    public FieldType getType() { return type; }
+    public Optional<String> getDescription() { return Optional.ofNullable(description); }
+    public Optional<Object> getDefaultValue() { return Optional.ofNullable(defaultValue); }
+    public boolean isRequired() { return Boolean.TRUE.equals(required); }
+    public Optional<FieldValidation> getValidation() { return Optional.ofNullable(validation); }
 }
 ```
 
@@ -180,31 +170,26 @@ public class SchemaField {
 // Returns ConfigSchema directly
 ConfigSchema schema = sdk.getDiscoveryAPI().getSchema("MyBrand", "AppSettings");
 
-System.out.printf("Schema: %s (v%d)%n", schema.getName(), schema.getVersion());
+System.out.printf("Schema: %s (v%d)%n", schema.getConfigName(), schema.getVersion());
 System.out.println("Fields:");
 
-for (Map.Entry<String, SchemaField> entry : schema.getFields().entrySet()) {
+for (Map.Entry<String, FieldSchema> entry : schema.getFields().entrySet()) {
     String fieldName = entry.getKey();
-    SchemaField field = entry.getValue();
+    FieldSchema field = entry.getValue();
     
     System.out.printf("  %s: %s%n", fieldName, field.getType());
     System.out.printf("    Required: %b%n", field.isRequired());
     
-    if (field.getDefaultValue() != null) {
-        System.out.printf("    Default: %s%n", field.getDefaultValue());
-    }
-    
-    if (field.getEnumValues() != null) {
-        System.out.printf("    Allowed: %s%n", field.getEnumValues());
-    }
+    field.getDefaultValue().ifPresent(d -> 
+        System.out.printf("    Default: %s%n", d));
 }
 ```
 
 ---
 
-### `introspect()` — API Key Introspection
+### `introspect()` — Full Introspection
 
-Returns information about your API key's permissions and capabilities.
+Returns a complete snapshot of all brands, configurations, and keys accessible to your API key. Useful for code generation, documentation, and understanding your configuration hierarchy.
 
 #### Signature
 
@@ -217,24 +202,20 @@ IntrospectionResult introspect(RequestOptions options) throws IOException
 
 ```java
 public class IntrospectionResult {
-    private String keyId;
-    private String keyName;
-    private List<String> permissions;
-    private List<String> allowedBrands;
-    private Instant expiresAt;
-    private boolean isAdmin;
+    private String company;
+    private List<BrandInfoDetail> brands;
+    private Instant generatedAt;
     
     // Getters
-    public String getKeyId() { return keyId; }
-    public String getKeyName() { return keyName; }
-    public List<String> getPermissions() { return permissions; }
-    public List<String> getAllowedBrands() { return allowedBrands; }
-    public Instant getExpiresAt() { return expiresAt; }
-    public boolean isAdmin() { return isAdmin; }
+    public String getCompany() { return company; }
+    public List<BrandInfoDetail> getBrands() { return brands; }
+    public Instant getGeneratedAt() { return generatedAt; }
     
     // Helper methods
-    public boolean hasPermission(String permission) { /* ... */ }
-    public boolean canAccessBrand(String brandName) { /* ... */ }
+    public Optional<BrandInfoDetail> getBrand(String brandName) { /* ... */ }
+    public int getBrandCount() { /* ... */ }
+    public int getTotalConfigCount() { /* ... */ }
+    public int getTotalKeyCount() { /* ... */ }
 }
 ```
 
@@ -244,21 +225,21 @@ public class IntrospectionResult {
 // Returns IntrospectionResult directly
 IntrospectionResult info = sdk.getDiscoveryAPI().introspect();
 
-System.out.println("API Key Info:");
-System.out.printf("  Key Name: %s%n", info.getKeyName());
-System.out.printf("  Key ID: %s%n", info.getKeyId());
-System.out.printf("  Is Admin: %b%n", info.isAdmin());
-System.out.printf("  Expires: %s%n", info.getExpiresAt());
-System.out.printf("  Permissions: %s%n", String.join(", ", info.getPermissions()));
-System.out.printf("  Allowed Brands: %s%n", String.join(", ", info.getAllowedBrands()));
+System.out.printf("Company: %s%n", info.getCompany());
+System.out.printf("Total brands: %d%n", info.getBrandCount());
+System.out.printf("Total configs: %d%n", info.getTotalConfigCount());
+System.out.printf("Total keys: %d%n", info.getTotalKeyCount());
 
-// Check specific permissions
-if (info.hasPermission("config:read")) {
-    System.out.println("This key can read configurations");
+// Check brand access
+if (info.getBrand("MyBrand").isPresent()) {
+    System.out.println("This key can access MyBrand");
 }
 
-if (info.canAccessBrand("MyBrand")) {
-    System.out.println("This key can access MyBrand");
+for (BrandInfoDetail brand : info.getBrands()) {
+    System.out.printf("Brand: %s%n", brand.getName());
+    for (ConfigInfoDetail config : brand.getConfigs()) {
+        System.out.printf("  Config: %s (v%d)%n", config.getName(), config.getVersion());
+    }
 }
 ```
 
@@ -303,19 +284,15 @@ public class ConfigBrowser {
 }
 ```
 
-### Validate Key Permissions
+### Validate Brand Access
 
 ```java
 public class PermissionValidator {
     public static void validateAccess(DinoConfigSDK sdk, String brandName) throws IOException {
         IntrospectionResult info = sdk.getDiscoveryAPI().introspect();
         
-        if (!info.canAccessBrand(brandName)) {
+        if (info.getBrand(brandName).isEmpty()) {
             throw new SecurityException("API key cannot access brand: " + brandName);
-        }
-        
-        if (!info.hasPermission("config:read")) {
-            throw new SecurityException("API key lacks config:read permission");
         }
         
         System.out.println("Access validated for brand: " + brandName);
@@ -330,25 +307,21 @@ public String generateConfigDocs(String brandName, String configName) throws IOE
     ConfigSchema schema = sdk.getDiscoveryAPI().getSchema(brandName, configName);
     
     StringBuilder docs = new StringBuilder();
-    docs.append("# ").append(schema.getName()).append("\n\n");
-    
-    if (schema.getDescription() != null) {
-        docs.append(schema.getDescription()).append("\n\n");
-    }
+    docs.append("# ").append(schema.getConfigName()).append("\n\n");
     
     docs.append("## Fields\n\n");
     docs.append("| Field | Type | Required | Default |\n");
     docs.append("|-------|------|----------|--------|\n");
     
-    for (Map.Entry<String, SchemaField> entry : schema.getFields().entrySet()) {
+    for (Map.Entry<String, FieldSchema> entry : schema.getFields().entrySet()) {
         String name = entry.getKey();
-        SchemaField field = entry.getValue();
+        FieldSchema field = entry.getValue();
         
         docs.append(String.format("| %s | %s | %s | %s |\n",
             name,
             field.getType(),
             field.isRequired() ? "Yes" : "No",
-            field.getDefaultValue() != null ? field.getDefaultValue() : "-"
+            field.getDefaultValue().map(Object::toString).orElse("-")
         ));
     }
     
@@ -359,7 +332,7 @@ public String generateConfigDocs(String brandName, String configName) throws IOE
 ## Error Handling
 
 ```java
-import com.dinoconfig.sdk.exception.ApiError;
+import com.dinoconfig.sdk.model.ApiError;
 
 try {
     List<BrandInfo> brands = sdk.getDiscoveryAPI().listBrands();
@@ -381,6 +354,7 @@ try {
 
 ## Next Steps
 
-- **[Typed Configs →](typed-configs)** — Generate type-safe models
+- **[Typed Configs →](typed-configs)** — Type-safe models with `getAs()`
+- **[DinoConfig CLI →](../cli/getting-started)** — Generate Java models from introspection
 - **[Examples →](examples)** — Real-world usage patterns
 - **[Configs API →](configs-api)** — Fetch configuration values
