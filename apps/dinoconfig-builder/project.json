@@ -52,6 +52,14 @@
           "outputHashing": "all",
           "deployUrl": "/"
         },
+        "integration": {
+          "fileReplacements": [
+            {
+              "replace": "apps/dinoconfig-builder/src/environments/environment.ts",
+              "with": "apps/dinoconfig-builder/src/environments/environment.integration.ts"
+            }
+          ]
+        },
         "development": {
           "optimization": false,
           "extractLicenses": false,
