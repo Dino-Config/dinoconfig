@@ -9,6 +9,16 @@ import { UsersService } from '../../users/user.service';
 import { ErrorMessages } from '../../constants/error-messages';
 import * as jwt from 'jsonwebtoken';
 
+/** Minimal shape of the Auth0 id_token payload used during login */
+interface IdTokenPayload {
+  sub: string;
+  email?: string;
+  name?: string;
+  email_verified?: boolean;
+  'X-INTERNAL-COMPANY'?: string;
+  'https://dinoconfig.com/company'?: string;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -45,8 +55,66 @@ export class AuthController {
       throw new HttpException(ErrorMessages.AUTH.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED);
     }
 
-     const { access_token, id_token, refresh_token } = authResponse;
+    const { access_token, id_token, refresh_token } = authResponse;
 
+    // Resolve user in DB before setting cookies - never allow login without a synced user
+    if (!id_token) {
+      throw new HttpException(
+        ErrorMessages.AUTH.UNABLE_TO_COMPLETE_AUTH,
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+
+    const decoded = jwt.decode(id_token) as IdTokenPayload | null;
+    if (!decoded?.sub) {
+      throw new HttpException(
+        ErrorMessages.AUTH.UNABLE_TO_COMPLETE_AUTH,
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+
+    const auth0Id = decoded.sub;
+    let user = await this.usersService.findByAuth0Id(auth0Id);
+    let auth0User: { email?: string; name?: string; email_verified?: boolean } | null = null;
+
+    if (!user) {
+      try {
+        auth0User = await this.authService.getUserById(auth0Id);
+        user = await this.usersService.createFromAuth0({
+          user_id: auth0Id,
+          email: decoded.email || auth0User.email,
+          name: decoded.name || auth0User.name,
+          company: decoded['X-INTERNAL-COMPANY'] || decoded['https://dinoconfig.com/company'] || null
+        });
+      } catch (error) {
+        if (error instanceof HttpException) {
+          throw error;
+        }
+        throw new HttpException(
+          ErrorMessages.AUTH.UNABLE_TO_COMPLETE_AUTH,
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
+      }
+    }
+
+    // Update email verification status (best-effort, do not fail login). Reuse auth0User when we just fetched it.
+    try {
+      const freshAuth0 = auth0User ?? await this.authService.getUserById(auth0Id);
+      const freshEmailVerified = freshAuth0.email_verified ?? false;
+      if (user.emailVerified !== freshEmailVerified) {
+        await this.usersService.updateEmailVerificationStatus(auth0Id, freshEmailVerified);
+        user.emailVerified = freshEmailVerified;
+      }
+    } catch (error) {
+      console.error('Failed to fetch email verification status from Auth0:', error);
+      const emailVerified = decoded.email_verified ?? false;
+      if (user.emailVerified !== emailVerified) {
+        await this.usersService.updateEmailVerificationStatus(auth0Id, emailVerified);
+        user.emailVerified = emailVerified;
+      }
+    }
+
+    // Only set cookies after we have a synced user in the DB
     res.cookie('access_token', access_token, {
       httpOnly: true,
       secure: true,
@@ -65,7 +133,6 @@ export class AuthController {
       maxAge: 15 * 60 * 1000 // 15 minutes
     });
 
-    // Set refresh token with longer expiration (1 day)
     if (refresh_token) {
       res.cookie('refresh_token', refresh_token, {
         httpOnly: true,
@@ -77,55 +144,9 @@ export class AuthController {
       });
     }
 
-    // Decode id_token to get auth0Id and fetch user data
-    let userData = null;
-    if (id_token) {
-      try {
-        const decoded = jwt.decode(id_token) as any;
-        if (decoded && decoded.sub) {
-          const auth0Id = decoded.sub;
-          let user = await this.usersService.findByAuth0Id(auth0Id);
-          
-          // If user doesn't exist in database, create them
-          if (!user) {
-            const auth0User = await this.authService.getUserById(auth0Id);
-            user = await this.usersService.createFromAuth0({
-              user_id: auth0Id,
-              email: decoded.email || auth0User.email,
-              name: decoded.name || auth0User.name,
-              company: decoded['X-INTERNAL-COMPANY'] || decoded['https://dinoconfig.com/company'] || null
-            });
-          }
-          
-          // Update email verification status if needed
-          try {
-            const auth0User = await this.authService.getUserById(auth0Id);
-            const freshEmailVerified = auth0User.email_verified || false;
-            
-            if (user.emailVerified !== freshEmailVerified) {
-              await this.usersService.updateEmailVerificationStatus(auth0Id, freshEmailVerified);
-              user.emailVerified = freshEmailVerified;
-            }
-          } catch (error) {
-            console.error('Failed to fetch email verification status from Auth0:', error);
-            const emailVerified = decoded.email_verified ?? false;
-            if (user.emailVerified !== emailVerified) {
-              await this.usersService.updateEmailVerificationStatus(auth0Id, emailVerified);
-              user.emailVerified = emailVerified;
-            }
-          }
-          
-          userData = user;
-        }
-      } catch (error) {
-        console.error('Failed to fetch user data after login:', error);
-        // Continue without user data - it can be fetched later via /users endpoint
-      }
-    }
-
     return {
       ...authResponse,
-      user: userData
+      user
     };
   }
 

@@ -80,7 +80,7 @@
         }
       },
       "options": {
-        "port": 4201
+        "port": 4200
       },
       "defaultConfiguration": "development"
     },
