@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus, ConflictException } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, ConflictException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/user.service';
 import { brandHeaderExtractor } from '../jwt-extractor';
@@ -22,7 +22,7 @@ interface Auth0LoginResponse {
 @Injectable()
 export class AuthService {
   private managementApiToken: string;
-
+  private readonly logger = new Logger(AuthService.name);
   private AUTH0_DOMAIN: string;
   private CLIENT_ID: string;
   private CLIENT_SECRET: string;
@@ -191,6 +191,7 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<Auth0LoginResponse> {
+    this.logger.log(`[AUTHENTICATION] Logging in user ${email}`);
     const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
