@@ -32,16 +32,14 @@ function pinoHttpOptions(configService: ConfigService) {
   return {
     level: isProduction ? 'info' : 'debug',
     redact: REDACT_PATHS,
-    transport: isProduction
-      ? undefined
-      : {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-            singleLine: true,
-            translateTime: 'SYS:standard',
-          },
-        },
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        singleLine: false,
+        translateTime: 'SYS:standard',
+      },
+    },
     autoLogging: false,
     genReqId: (req: any) => req.correlationId ?? uuidv4(),
     customProps: (req: any) => ({
