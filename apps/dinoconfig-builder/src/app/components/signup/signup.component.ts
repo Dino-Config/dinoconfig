@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AuthLayoutComponent } from '../shared/auth-layout/auth-layout.component';
 import { ErrorMessages } from '../../constants/error-messages';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'dc-signup',
@@ -21,6 +22,9 @@ export class SignupComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+
+  readonly termsUrl = `${environment.policiesBaseUrl}/policies/terms-of-service`;
+  readonly privacyUrl = `${environment.policiesBaseUrl}/policies/privacy-policy`;
 
   // Signals for component state
   isLoading = signal(false);

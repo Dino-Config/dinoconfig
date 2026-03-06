@@ -11,7 +11,10 @@ import { Logger } from 'nestjs-pino';
 import { CorrelationIdMiddleware } from './app/logging';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { 
+    bufferLogs: true,
+    rawBody: true, // Required for Stripe webhook signature verification (must receive exact raw body)
+  });
 
   app.useLogger(app.get(Logger));
 
