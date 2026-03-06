@@ -91,7 +91,22 @@
                                 </div>
                                 
                             </div>
-                            <img class="browser-image" src="assets/demo-image.png" alt="Builder Image" (click)="openSignupDialog()"/>
+                            <div class="browser-demo-video-wrap" (click)="openSignupDialog()">
+                                <video
+                                    class="browser-demo-video"
+                                    autoplay
+                                    loop
+                                    muted
+                                    playsinline
+                                    poster="assets/demo-image.png"
+                                    aria-label="Builder demo"
+                                >
+                                    <source src="assets/demo-video.mp4" type="video/mp4" />
+                                </video>
+                                <div class="browser-demo-video-overlay">
+                                    <span class="play-hint">Click to start building</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
