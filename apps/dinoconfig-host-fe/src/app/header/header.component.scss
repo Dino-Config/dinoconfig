@@ -198,6 +198,13 @@
         background-clip: text;
         font-weight: 500;
 
+        .mdc-button__label {
+          background: var(--primary-gradient);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
         &::after {
           display: none;
         }
@@ -208,6 +215,13 @@
           -webkit-text-fill-color: transparent;
           background-clip: text;
           background-color: transparent;
+
+          .mdc-button__label {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          }
         }
       }
     }

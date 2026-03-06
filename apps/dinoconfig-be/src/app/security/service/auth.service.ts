@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus, ConflictException } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, ConflictException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/user.service';
 import { brandHeaderExtractor } from '../jwt-extractor';
@@ -22,7 +22,7 @@ interface Auth0LoginResponse {
 @Injectable()
 export class AuthService {
   private managementApiToken: string;
-
+  private readonly logger = new Logger(AuthService.name);
   private AUTH0_DOMAIN: string;
   private CLIENT_ID: string;
   private CLIENT_SECRET: string;
@@ -94,10 +94,19 @@ export class AuthService {
       });
 
       if (!response.ok) {
-        console.error(`Failed to delete Auth0 user ${userId}:`, await response.text());
+        this.logger.warn({
+          message: 'Failed to delete Auth0 user',
+          userId,
+          status: response.status,
+          body: await response.text(),
+        });
       }
     } catch (error) {
-      console.error(`Error deleting Auth0 user ${userId}:`, error);
+      this.logger.error({
+        message: 'Error deleting Auth0 user',
+        userId,
+        error: (error as Error)?.message,
+      });
     }
   }
 
@@ -191,6 +200,7 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<Auth0LoginResponse> {
+    this.logger.log({ message: 'Login attempt', email });
     const res = await fetch(`https://${this.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

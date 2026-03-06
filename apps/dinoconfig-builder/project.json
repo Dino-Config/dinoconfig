@@ -52,6 +52,14 @@
           "outputHashing": "all",
           "deployUrl": "/"
         },
+        "integration": {
+          "fileReplacements": [
+            {
+              "replace": "apps/dinoconfig-builder/src/environments/environment.ts",
+              "with": "apps/dinoconfig-builder/src/environments/environment.integration.ts"
+            }
+          ]
+        },
         "development": {
           "optimization": false,
           "extractLicenses": false,
@@ -72,7 +80,7 @@
         }
       },
       "options": {
-        "port": 4201
+        "port": 4200
       },
       "defaultConfiguration": "development"
     },
