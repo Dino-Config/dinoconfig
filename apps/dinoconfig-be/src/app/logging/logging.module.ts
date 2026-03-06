@@ -36,7 +36,7 @@ function pinoHttpOptions(configService: ConfigService) {
       target: 'pino-pretty',
       options: {
         colorize: true,
-        singleLine: false,
+        singleLine: true,
         translateTime: 'SYS:standard',
       },
     },
