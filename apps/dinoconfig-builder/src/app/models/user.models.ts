@@ -1,6 +1,10 @@
 export interface User {
   id: number;
   auth0Id: string;
+  status?: 'active' | 'closed' | 'suspended' | 'deleted';
+  deletedAt?: string;
+  deletionScheduledAt?: string;
+  restoreToken?: string;
   firstName: string;
   lastName: string;
   email: string;

@@ -80,12 +80,10 @@ export class TokenBlacklistService {
   }
 
   /**
-   * Blacklist all tokens for a specific user
+   * Blacklist all tokens for a given Auth0 user (e.g. before permanent account deletion).
    */
-  async blacklistUserTokens(userId: string, reason: string = 'logout'): Promise<void> {
-    // This would require storing active tokens, which is more complex
-    // For now, we'll just clean up expired tokens
-    await this.cleanupExpiredTokens();
+  async deleteByAuth0Id(auth0Id: string): Promise<void> {
+    await this.tokenBlacklistRepo.delete({ userId: auth0Id });
   }
 
   /**

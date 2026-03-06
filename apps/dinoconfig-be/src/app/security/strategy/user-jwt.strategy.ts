@@ -5,12 +5,15 @@ import * as jwksRsa from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
 import { cookieExtractor } from '../jwt-extractor';
 import { TokenBlacklistService } from '../service/token-blacklist.service';
+import { UsersService } from '../../users/user.service';
+import { AccountStatus } from '../../users/entities/user.entity';
 
 @Injectable()
 export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
   constructor(
     private readonly configService: ConfigService,
     private readonly tokenBlacklistService: TokenBlacklistService,
+    private readonly usersService: UsersService,
   ) {
     const issuerUrl = configService.get<string>('AUTH0_ISSUER_URL');
     const audience = configService.get<string>('AUTH0_AUDIENCE');
@@ -35,7 +38,7 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
 
   async validate(req: any, payload: any) {
     const token = req.cookies?.access_token;
-  
+
     // Validate against blacklist
     if (token) {
       const tokenId = this.tokenBlacklistService.extractJtiFromToken(token);
@@ -45,10 +48,15 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
     } else {
       throw new UnauthorizedException('No token provided');
     }
-  
-    // Handle standard user flow
+
+    const auth0Id = payload.sub;
+    const user = await this.usersService.findByAuth0Id(auth0Id);
+    if (user?.status === AccountStatus.CLOSED) {
+      throw new UnauthorizedException('Account is closed');
+    }
+
     return {
-      auth0Id: payload.sub,
+      auth0Id,
       email: payload.email,
       emailVerified: payload.email_verified ?? false,
       name: payload.name,

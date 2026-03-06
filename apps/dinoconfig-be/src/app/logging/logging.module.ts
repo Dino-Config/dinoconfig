@@ -24,6 +24,7 @@ const REDACT_PATHS = [
   '*.apiKey',
   '*.api_key',
   '*.secret',
+  '*.restoreToken',
 ];
 
 function pinoHttpOptions(configService: ConfigService) {
