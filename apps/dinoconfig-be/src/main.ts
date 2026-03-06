@@ -5,13 +5,15 @@
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app/app.module';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
-import { json } from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true, // Required for Stripe webhook signature verification (must receive exact raw body)
+  });
 
   const configService = app.get(ConfigService);
 
@@ -22,18 +24,6 @@ async function bootstrap() {
     origin: [configService.get<string>('CORS_ORIGIN' as any), configService.get<string>('CORS_ORIGIN_ORG' as any)],
     credentials: true
   });
-  
-  app.use((req, res, next) => {
-    if (req.path === '/api/webhooks/stripe') {
-      next();
-    } else {
-      json()(req, res, next);
-    }
-  });
-  
-  app.use('/api/webhooks/stripe', json({ verify: (req: any, res, buf) => {
-    req.rawBody = buf;
-  }}));
   
   app.use(cookieParser());
 
