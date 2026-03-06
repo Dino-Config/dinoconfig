@@ -158,9 +158,9 @@
         />
         <span class="checkbox-text">
           I agree to the
-          <a href="#" class="checkbox-link">Terms of Service</a>
+          <a [href]="termsUrl" target="_blank" rel="noopener noreferrer" class="checkbox-link" (click)="$event.stopPropagation()">Terms of Service</a>
           and
-          <a href="#" class="checkbox-link">Privacy Policy</a>
+          <a [href]="privacyUrl" target="_blank" rel="noopener noreferrer" class="checkbox-link" (click)="$event.stopPropagation()">Privacy Policy</a>
         </span>
       </label>
       @if (getFieldError('agreeToTerms') && signupForm.get('agreeToTerms')?.touched) {
