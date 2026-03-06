@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { BrandsModule } from './brands/brands.module';
 import { ConfigsModule } from './configs/configs.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { AccountModule } from './account/account.module';
 import {
   LoggingModule,
   RequestLoggingInterceptor,
@@ -23,6 +24,7 @@ import {
     BrandsModule,
     ConfigsModule,
     SubscriptionsModule,
+    AccountModule,
     LoggingModule,
   ],
   controllers: [AppController, AuthController],

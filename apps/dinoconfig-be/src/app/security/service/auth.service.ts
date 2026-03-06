@@ -84,6 +84,26 @@ export class AuthService {
     return data;
   }
   
+  /**
+   * Permanently delete Auth0 user (used by account deletion worker). Idempotent - 404 is treated as success.
+   */
+  async permanentlyDeleteAuth0User(auth0UserId: string): Promise<void> {
+    const token = await this.getManagementToken();
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users/${auth0UserId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.status === 404) {
+      this.logger.log({ message: 'Auth0 user already deleted', auth0UserId });
+      return;
+    }
+    if (!response.ok) {
+      const body = await response.text();
+      this.logger.warn({ message: 'Failed to delete Auth0 user', auth0UserId, status: response.status, body });
+      throw new HttpException(body || 'Failed to delete Auth0 user', response.status);
+    }
+  }
+
   private async deleteAuth0User(userId: string, token: string): Promise<void> {
     try {
       const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
@@ -169,7 +189,7 @@ export class AuthService {
 
     const response = await fetch(url.toString(), {
       headers: {
-        Authorization: `${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -197,6 +217,55 @@ export class AuthService {
     }
 
     return response.json();
+  }
+
+  /**
+   * Verify user password via Auth0 Resource Owner flow (for account closure confirmation).
+   */
+  async verifyPassword(email: string, password: string): Promise<void> {
+    await this.login(email, password);
+  }
+
+  /**
+   * Block user in Auth0 (prevents login). Used when account is closed.
+   */
+  async blockUser(auth0UserId: string): Promise<void> {
+    const token = await this.getManagementToken();
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users/${auth0UserId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ blocked: true }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      this.logger.warn({ message: 'Failed to block Auth0 user', auth0UserId, status: response.status, err });
+      throw new HttpException(err || 'Failed to block user', response.status);
+    }
+  }
+
+  /**
+   * Unblock user in Auth0 (allows login again). Used when account is restored.
+   */
+  async unblockUser(auth0UserId: string): Promise<void> {
+    const token = await this.getManagementToken();
+    const response = await fetch(`https://${this.AUTH0_DOMAIN}/api/v2/users/${auth0UserId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ blocked: false }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      this.logger.warn({ message: 'Failed to unblock Auth0 user', auth0UserId, status: response.status, err });
+      throw new HttpException(err || 'Failed to unblock user', response.status);
+    }
   }
 
   async login(email: string, password: string): Promise<Auth0LoginResponse> {
