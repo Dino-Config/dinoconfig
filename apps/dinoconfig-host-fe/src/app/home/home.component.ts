@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,7 +15,9 @@ import { Observable, map } from 'rxjs';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent {
+export class HomeComponent implements AfterViewInit {
+  @ViewChild('demoVideo') demoVideoRef?: ElementRef<HTMLVideoElement>;
+
   private dialogService = inject(DialogService);
   private typewriterService = inject(TypewriterService);
 
@@ -56,6 +58,27 @@ export class HomeComponent {
         this.updateToggle('userPreferences', text, this.userPreferencesTitles);
         return text;
       }));
+  }
+
+  ngAfterViewInit(): void {
+    this.ensureDemoVideoLoadAndPlay();
+  }
+
+  /**
+   * Force the browser to load the video (so it appears in Network tab and buffers)
+   * and start playback. Without preload + load(), Chromium/Brave may not request
+   * the video until the user interacts (e.g. clicks play).
+   */
+  private ensureDemoVideoLoadAndPlay(): void {
+    const video = this.demoVideoRef?.nativeElement;
+    if (!video) return;
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.load(); // Triggers GET request for the video immediately
+    video.play().catch(() => {
+      // Autoplay blocked by browser; video is still loaded and will play on user interaction
+    });
   }
 
   private updateToggle(type: string, currentText: string, titles: string[]) {

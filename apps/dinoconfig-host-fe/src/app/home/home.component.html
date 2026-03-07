@@ -93,11 +93,13 @@
                             </div>
                             <div class="browser-demo-video-wrap" (click)="openSignupDialog()">
                                 <video
+                                    #demoVideo
                                     class="browser-demo-video"
                                     autoplay
                                     loop
                                     muted
                                     playsinline
+                                    preload="auto"
                                 >
                                     <source src="assets/demo-video.mp4" type="video/mp4" />
                                 </video>
