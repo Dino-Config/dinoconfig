@@ -7,12 +7,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { UserStateService } from '../../services/user-state.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { AuthService } from '../../services/auth.service';
-import { environment } from '../../../environments/environment';
 import { User } from '../../models/user.models';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { CloseAccountModalComponent } from './close-account-modal/close-account-modal.component';
 import { catchError, of } from 'rxjs';
+import { filter, switchMap, tap, delay } from 'rxjs/operators';
 
 @Component({
   selector: 'dc-profile',
@@ -41,6 +41,7 @@ export class ProfileComponent implements OnInit {
   expandedSections = signal<Set<string>>(new Set(['personal', 'address', 'account', 'subscription', 'brands']));
 
   closeAccountToast = signal<string | null>(null);
+  isRedirectingAfterClose = signal(false);
 
   ngOnInit(): void {
     // User is loaded automatically by UserStateService preflight
@@ -108,19 +109,18 @@ export class ProfileComponent implements OnInit {
       width: '520px',
       disableClose: true,
     });
-    dialogRef.afterClosed().subscribe((result: { message: string; restoreToken?: string } | null) => {
-      if (result) {
+    dialogRef.afterClosed().pipe(
+      filter((result): result is { message: string; restoreToken?: string } => !!result),
+      tap((result) => {
         this.closeAccountToast.set(result.message);
         setTimeout(() => this.closeAccountToast.set(null), 8000);
-        this.authService.logout().pipe(
-          catchError(() => of(null))
-        ).subscribe(() => {
-          // Delay redirect so user can see the success message
-          setTimeout(() => {
-            window.location.href = `${environment.homeUrl}/signin`;
-          }, 1500);
-        });
-      }
-    });
+      }),
+      switchMap(() => this.authService.logout().pipe(catchError(() => of(null)))),
+      delay(1500),
+      tap(() => {
+        this.isRedirectingAfterClose.set(true);
+        this.router.navigate(['/signin']);
+      }),
+    ).subscribe();
   }
 }
