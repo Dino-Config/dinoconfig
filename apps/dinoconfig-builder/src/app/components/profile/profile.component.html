@@ -258,6 +258,36 @@
                 }
               }
             </div>
+
+            <div class="profile-section danger-zone">
+              <button 
+                class="section-toggle"
+                (click)="toggleSection('danger')"
+              >
+                <mat-icon 
+                  class="chevron"
+                  [class.open]="isExpanded('danger')"
+                >
+                  expand_more
+                </mat-icon>
+                <span class="section-title">Danger Zone</span>
+              </button>
+              @if (isExpanded('danger')) {
+                <div class="danger-zone-content">
+                  @if (closeAccountToast()) {
+                    <p class="toast-success" role="status">{{ closeAccountToast() }}</p>
+                  }
+                  <p class="danger-description">Closing your account will deactivate it and schedule permanent deletion in 30 days. You can restore it during this period.</p>
+                  <button 
+                    type="button"
+                    class="btn-close-account"
+                    (click)="openCloseAccountModal()"
+                  >
+                    Close Account
+                  </button>
+                </div>
+              }
+            </div>
           </div>
         </div>
       </div>

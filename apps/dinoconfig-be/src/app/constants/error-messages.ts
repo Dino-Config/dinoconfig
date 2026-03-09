@@ -62,6 +62,16 @@ export const ErrorMessages = {
     NAME_ALREADY_EXISTS: (name: string) => `API key with name "${name}" already exists`,
   },
 
+  // Account closure
+  ACCOUNT: {
+    INVALID_PASSWORD: 'Invalid password. Please try again.',
+    ALREADY_CLOSED: 'Account is already closed.',
+    NOT_ELIGIBLE_FOR_RESTORE: 'Account cannot be restored. The grace period has ended or account is not closed.',
+    UNPAID_INVOICES: 'Cannot close account with unpaid invoices. Please resolve billing first.',
+    CLOSE_FAILED: 'Failed to close account. Please try again.',
+    RESTORE_FAILED: 'Failed to restore account. Please try again.',
+  },
+
   // External service errors
   EXTERNAL: {
     FAILED_TO_GET_MANAGEMENT_TOKEN: 'Failed to get management token',

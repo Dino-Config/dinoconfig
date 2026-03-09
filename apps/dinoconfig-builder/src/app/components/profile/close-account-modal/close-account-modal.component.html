@@ -1,0 +1,51 @@
+<div class="close-account-dialog" role="dialog" aria-labelledby="close-account-title" aria-describedby="close-account-desc">
+  <div class="dialog-header">
+    <div class="header-gradient"></div>
+    <div class="header-content">
+      <div class="icon-wrapper" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 id="close-account-title" class="dialog-title">Close your account?</h2>
+    </div>
+  </div>
+  <div class="dialog-content">
+    <p id="close-account-desc" class="dialog-message">
+      This will deactivate your account and schedule permanent deletion in 30 days.
+      You can restore your account during this period.
+    </p>
+    <div class="form-field">
+      <label for="close-account-password" class="field-label">Password (required)</label>
+      <input
+        id="close-account-password"
+        type="password"
+        class="field-input"
+        [value]="password()"
+        (input)="password.set($any($event.target).value)"
+        [attr.aria-invalid]="errorMessage() ? 'true' : null"
+        [attr.aria-describedby]="errorMessage() ? 'close-account-error' : null"
+        placeholder="Enter your password"
+        autocomplete="current-password"
+        [disabled]="loading()"
+      />
+    </div>
+    @if (errorMessage()) {
+      <p id="close-account-error" class="error-message" role="alert">
+        {{ errorMessage() }}
+      </p>
+    }
+  </div>
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-cancel" (click)="onCancel()" [disabled]="loading()">
+      Cancel
+    </button>
+    <button type="button" class="btn btn-danger" (click)="onSubmit()" [disabled]="isSubmitDisabled()">
+      @if (loading()) {
+        <span aria-live="polite">Closing...</span>
+      } @else {
+        Close Account
+      }
+    </button>
+  </div>
+</div>

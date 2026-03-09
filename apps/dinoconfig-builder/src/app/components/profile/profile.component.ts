@@ -3,12 +3,16 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { UserStateService } from '../../services/user-state.service';
 import { SubscriptionService } from '../../services/subscription.service';
+import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.models';
 import { SubscriptionStatus } from '../../models/subscription.models';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
+import { CloseAccountModalComponent } from './close-account-modal/close-account-modal.component';
 import { catchError, of } from 'rxjs';
+import { filter, switchMap, tap, delay } from 'rxjs/operators';
 
 @Component({
   selector: 'dc-profile',
@@ -16,8 +20,8 @@ import { catchError, of } from 'rxjs';
   imports: [
     MatButtonModule,
     MatIconModule,
-    SpinnerComponent
-],
+    SpinnerComponent,
+  ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })
@@ -25,6 +29,8 @@ export class ProfileComponent implements OnInit {
   private router = inject(Router);
   private userState = inject(UserStateService);
   private subscriptionService = inject(SubscriptionService);
+  private dialog = inject(MatDialog);
+  private authService = inject(AuthService);
 
   user = this.userState.user;
   subscription = signal<SubscriptionStatus | null>(null);
@@ -33,6 +39,9 @@ export class ProfileComponent implements OnInit {
   error = computed(() => this.userState.error());
   
   expandedSections = signal<Set<string>>(new Set(['personal', 'address', 'account', 'subscription', 'brands']));
+
+  closeAccountToast = signal<string | null>(null);
+  isRedirectingAfterClose = signal(false);
 
   ngOnInit(): void {
     // User is loaded automatically by UserStateService preflight
@@ -93,5 +102,25 @@ export class ProfileComponent implements OnInit {
 
   goToSubscription(): void {
     this.router.navigate(['/subscription']);
+  }
+
+  openCloseAccountModal(): void {
+    const dialogRef = this.dialog.open(CloseAccountModalComponent, {
+      width: '520px',
+      disableClose: true,
+    });
+    dialogRef.afterClosed().pipe(
+      filter((result): result is { message: string; restoreToken?: string } => !!result),
+      tap((result) => {
+        this.closeAccountToast.set(result.message);
+        setTimeout(() => this.closeAccountToast.set(null), 8000);
+      }),
+      switchMap(() => this.authService.logout().pipe(catchError(() => of(null)))),
+      delay(1500),
+      tap(() => {
+        this.isRedirectingAfterClose.set(true);
+        this.router.navigate(['/signin']);
+      }),
+    ).subscribe();
   }
 }
