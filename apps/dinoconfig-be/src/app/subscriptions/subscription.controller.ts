@@ -4,6 +4,7 @@ import { SubscriptionService } from './subscription.service';
 import { UsersService } from '../users/user.service';
 import { StripeService } from './stripe.service';
 import { ErrorMessages } from '../constants/error-messages';
+import { SubscriptionStatus } from './entities/subscription.entity';
 
 @Controller('subscriptions')
 @UseGuards(UserAuthGuard)
@@ -24,6 +25,7 @@ export class SubscriptionController {
       throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
+    await this.syncSubscriptionFromStripeIfNeeded(user.id);
     const subscription = await this.subscriptionService.getOrCreateDefaultSubscription(user.id);
     const limits = this.subscriptionService.getTierLimits(subscription.tier);
     const features = this.subscriptionService.getFeaturesMap(subscription.tier, subscription.status);
@@ -83,6 +85,37 @@ export class SubscriptionController {
     );
 
     return { url: session.url };
+  }
+
+  @Post('retry-payment')
+  async retryPayment(@Req() req) {
+    const { auth0Id } = req.user;
+    const user = await this.usersService.findByAuth0Id(auth0Id);
+    
+    if (!user) {
+      throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
+    }
+
+    const subscription = await this.subscriptionService.findByUserId(user.id);
+    
+    if (!subscription || !subscription.stripeSubscriptionId || !subscription.stripeCustomerId) {
+      throw new Error(ErrorMessages.SUBSCRIPTION.NO_STRIPE_CUSTOMER);
+    }
+
+    if (subscription.status !== 'past_due') {
+      throw new Error(ErrorMessages.SUBSCRIPTION.NO_PAST_DUE_INVOICE);
+    }
+
+    try {
+      const url = await this.stripeService.getRetryPaymentUrl(
+        subscription.stripeSubscriptionId,
+        subscription.stripeCustomerId
+      );
+      return { url };
+    } catch (error) {
+      console.error('Failed to get retry payment URL:', error);
+      throw new Error(ErrorMessages.SUBSCRIPTION.FAILED_TO_GET_RETRY_URL);
+    }
   }
 
   @Post('refresh-status')
@@ -326,6 +359,7 @@ export class SubscriptionController {
       throw new Error(ErrorMessages.AUTH.AUTHENTICATION_FAILED);
     }
 
+    await this.syncSubscriptionFromStripeIfNeeded(user.id);
     const violations = await this.subscriptionService.checkLimitViolations(user.id);
     const subscription = await this.subscriptionService.getOrCreateDefaultSubscription(user.id);
     const limits = this.subscriptionService.getTierLimits(subscription.tier);
@@ -346,6 +380,35 @@ export class SubscriptionController {
       hasViolations: violations.hasViolations,
       violations: violations.violations,
     };
+  }
+
+  /**
+   * When the user has a Stripe subscription, fetch current status from Stripe and update DB.
+   * Ensures we show cancelled/free after they cancel in Stripe (even if webhook was delayed or failed).
+   */
+  private async syncSubscriptionFromStripeIfNeeded(userId: number): Promise<void> {
+    const subscription = await this.subscriptionService.findByUserId(userId);
+    if (!subscription?.stripeSubscriptionId) {
+      return;
+    }
+    try {
+      const stripeSubscription = await this.stripeService.getSubscription(subscription.stripeSubscriptionId);
+      const status = this.stripeService.mapStripeStatus(stripeSubscription.status);
+      if (status === SubscriptionStatus.CANCELLED) {
+        await this.subscriptionService.cancelSubscription(userId);
+        return;
+      }
+      const tier = this.stripeService.getTierFromPriceId(stripeSubscription.items.data[0].price.id);
+      await this.subscriptionService.createOrUpdateSubscription(userId, {
+        tier,
+        status,
+        stripeSubscriptionId: stripeSubscription.id,
+        stripePriceId: stripeSubscription.items.data[0].price.id,
+      });
+    } catch {
+      // If Stripe API fails (e.g. subscription no longer exists), treat as cancelled
+      await this.subscriptionService.cancelSubscription(userId);
+    }
   }
 
 }

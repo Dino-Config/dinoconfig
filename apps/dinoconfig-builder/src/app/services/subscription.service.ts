@@ -77,6 +77,14 @@ export class SubscriptionService {
     );
   }
 
+  retryPayment(): Observable<{ url: string }> {
+    return this.http.post<{ url: string }>(
+      `${this.apiUrl}/subscriptions/retry-payment`,
+      {},
+      { withCredentials: true }
+    );
+  }
+
   changeSubscriptionPlan(priceId: string): Observable<LimitViolationsResult & { message: string; newTier: string; subscriptionId: string }> {
     return this.http.post<LimitViolationsResult & { message: string; newTier: string; subscriptionId: string }>(
       `${this.apiUrl}/subscriptions/change-plan`,

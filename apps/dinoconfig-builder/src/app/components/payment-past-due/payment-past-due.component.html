@@ -1,0 +1,58 @@
+<div class="payment-past-due">
+  <div class="past-due-card">
+    <div class="past-due-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4"/>
+        <path d="M12 16h.01"/>
+      </svg>
+    </div>
+
+    <h1>Payment past due</h1>
+
+    <p class="past-due-message">
+      Your subscription payment could not be completed. Access to premium features is paused until the invoice is paid.
+    </p>
+
+    <p class="past-due-instructions">
+      Please update your payment method or pay the outstanding invoice to restore full access.
+    </p>
+
+    <div class="past-due-actions">
+      <button
+        class="btn-primary"
+        (click)="retryPayment()"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <span class="spinner-small"></span>
+          <span>Loading...</span>
+        } @else {
+          <span>Pay invoice</span>
+        }
+      </button>
+
+      <button
+        class="btn-secondary"
+        (click)="updatePaymentMethod()"
+        [disabled]="loading()"
+      >
+        Update payment method
+      </button>
+
+      <button
+        class="btn-text"
+        (click)="refreshStatus()"
+        [disabled]="loading()"
+      >
+        I've already paid
+      </button>
+    </div>
+
+    @if (error()) {
+      <div class="alert alert-error">
+        {{ error() }}
+      </div>
+    }
+  </div>
+</div>

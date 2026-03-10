@@ -261,6 +261,19 @@ export class StripeService {
 
     if (!subscription) return;
 
+    // Do not overwrite with ACTIVE if the subscription was already cancelled in Stripe
+    // (e.g. user cancelled after paying; customer.subscription.deleted may run before or after this event)
+    try {
+      const stripeSubscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+      if (stripeSubscription.status === 'canceled' || stripeSubscription.status === 'unpaid') {
+        this.logger.log(`Skipping invoice.payment_succeeded for user ${subscription.user.id}: subscription is ${stripeSubscription.status}`);
+        return;
+      }
+    } catch {
+      // If we can't retrieve (e.g. deleted), skip updating to ACTIVE
+      return;
+    }
+
     await this.subscriptionService.updateStripeSubscription(
       subscription.user.id,
       subscriptionId,
@@ -336,6 +349,47 @@ export class StripeService {
     } catch (error) {
       this.logger.error(`Failed to cancel FREE subscriptions for customer ${customerId}:`, error);
     }
+  }
+
+  /**
+   * Returns a URL for the user to retry paying a past-due invoice.
+   * Prefers the subscription's latest unpaid invoice hosted page; falls back to Customer Portal.
+   */
+  async getRetryPaymentUrl(stripeSubscriptionId: string, stripeCustomerId: string): Promise<string> {
+    try {
+      const subscription = await this.stripe.subscriptions.retrieve(stripeSubscriptionId, {
+        expand: ['latest_invoice'],
+      });
+
+      const latestInvoice = subscription.latest_invoice;
+      if (latestInvoice) {
+        const invoice = typeof latestInvoice === 'string'
+          ? await this.stripe.invoices.retrieve(latestInvoice)
+          : latestInvoice as Stripe.Invoice;
+        if (invoice.status === 'open' && invoice.hosted_invoice_url) {
+          this.logger.log(`Returning hosted invoice URL for subscription ${stripeSubscriptionId}`);
+          return invoice.hosted_invoice_url;
+        }
+      }
+
+      // Fallback: list open invoices for this subscription
+      const openInvoices = await this.stripe.invoices.list({
+        subscription: stripeSubscriptionId,
+        status: 'open',
+        limit: 1,
+      });
+      if (openInvoices.data.length > 0 && openInvoices.data[0].hosted_invoice_url) {
+        this.logger.log(`Returning hosted invoice URL from list for subscription ${stripeSubscriptionId}`);
+        return openInvoices.data[0].hosted_invoice_url;
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Could not get hosted invoice URL for subscription ${stripeSubscriptionId}: ${msg}`);
+    }
+
+    // Fallback to Customer Portal so user can update payment method and pay
+    const portalSession = await this.createPortalSession(stripeCustomerId);
+    return portalSession.url;
   }
 
   public getTierFromPriceId(priceId: string): SubscriptionTier {

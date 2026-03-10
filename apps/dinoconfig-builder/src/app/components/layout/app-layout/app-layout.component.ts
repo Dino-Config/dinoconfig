@@ -7,6 +7,7 @@ import { filter, firstValueFrom } from 'rxjs';
 import { LeftNavigationComponent } from '../../navigation/left-navigation/left-navigation.component';
 import { SubscriptionViolationModalComponent } from '../../shared/subscription-violation-modal/subscription-violation-modal.component';
 import { IdleWarningModalComponent } from '../../shared/idle-warning-modal/idle-warning-modal.component';
+import { PaymentPastDueComponent } from '../../payment-past-due/payment-past-due.component';
 import { LimitViolationService } from '../../../services/limit-violation.service';
 import { TokenRenewalService } from '../../../services/token-renewal.service';
 import { AuthService } from '../../../services/auth.service';
@@ -20,7 +21,8 @@ import { environment } from '../../../../environments/environment';
     MatSidenavModule,
     LeftNavigationComponent,
     SubscriptionViolationModalComponent,
-    IdleWarningModalComponent
+    IdleWarningModalComponent,
+    PaymentPastDueComponent
 ],
   templateUrl: './app-layout.component.html',
   styleUrl: './app-layout.component.scss',
@@ -45,6 +47,8 @@ export class AppLayoutComponent {
 
   showViolationModal = computed(() => this.limitViolationService.showModal());
   violations = computed(() => this.limitViolationService.violations());
+  /** When true, subscription is past_due and we block the app with the retry-payment screen */
+  pastDueBlock = computed(() => this.limitViolationService.violations()?.status === 'past_due');
   idleVisible = computed(() => this.tokenRenewalService.isVisible());
   idleRemainingSeconds = computed(() => this.tokenRenewalService.remainingSeconds());
 

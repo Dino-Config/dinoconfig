@@ -30,6 +30,9 @@ export const ErrorMessages = {
   SUBSCRIPTION: {
     NO_STRIPE_CUSTOMER: 'No Stripe customer found',
     NO_ACTIVE_SUBSCRIPTION: 'No active subscription found',
+    PAYMENT_PAST_DUE: 'Your payment is past due. Please update your payment method to restore access.',
+    FAILED_TO_GET_RETRY_URL: 'Unable to load payment page. Please try again or contact support.',
+    NO_PAST_DUE_INVOICE: 'No past due payment found for your account.',
     FAILED_TO_CHANGE_PLAN: 'Failed to change subscription plan. Please try again.',
     FAILED_TO_CANCEL: 'Failed to cancel subscription. Please try again.',
     FAILED_TO_CLEANUP_FREE: 'Failed to cleanup FREE subscriptions. Please try again.',
