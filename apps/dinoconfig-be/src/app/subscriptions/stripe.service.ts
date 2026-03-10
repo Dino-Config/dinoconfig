@@ -338,6 +338,23 @@ export class StripeService {
     }
   }
 
+  /**
+   * Returns true if the Stripe customer has any open or uncollectible (unpaid) invoices.
+   * Used to block account closure when the user has outstanding balance.
+   */
+  async hasUnpaidInvoices(stripeCustomerId: string): Promise<boolean> {
+    try {
+      const [open, uncollectible] = await Promise.all([
+        this.stripe.invoices.list({ customer: stripeCustomerId, status: 'open', limit: 1 }),
+        this.stripe.invoices.list({ customer: stripeCustomerId, status: 'uncollectible', limit: 1 }),
+      ]);
+      return open.data.length > 0 || uncollectible.data.length > 0;
+    } catch (error) {
+      this.logger.warn({ message: 'Failed to list invoices for customer', stripeCustomerId, error: (error as Error)?.message });
+      return false;
+    }
+  }
+
   public getTierFromPriceId(priceId: string): SubscriptionTier {
     // Map your Stripe price IDs to tiers
     // You'll need to configure these in your environment variables

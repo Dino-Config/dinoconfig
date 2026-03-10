@@ -9,6 +9,7 @@ import { AccountClosureRateLimitGuard } from './guards/account-closure-rate-limi
 import { AccountEligibilityService } from './account-eligibility.service';
 import { AuthModule } from '../security/module/auth.module';
 import { UsersModule } from '../users/users.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { User } from '../users/entities/user.entity';
 
 @Module({
@@ -16,6 +17,7 @@ import { User } from '../users/entities/user.entity';
     TypeOrmModule.forFeature([AccountEvent, User]),
     AuthModule,
     UsersModule,
+    SubscriptionsModule,
   ],
   controllers: [AccountController],
   providers: [
