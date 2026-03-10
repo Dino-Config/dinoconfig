@@ -362,11 +362,12 @@ export class SubscriptionService implements OnModuleInit {
       throw new NotFoundException(ErrorMessages.SUBSCRIPTION.NOT_FOUND);
     }
 
-    subscription.status = SubscriptionStatus.CANCELLED;
+    // Downgrade to free tier with active status so user has normal access (isActive = true)
+    subscription.status = SubscriptionStatus.ACTIVE;
     subscription.tier = SubscriptionTier.FREE;
     subscription.maxBrands = 1;
     subscription.maxConfigsPerBrand = 1;
-    // Clear Stripe-related fields since subscription is cancelled
+    // Clear Stripe-related fields since paid subscription was cancelled
     subscription.stripeSubscriptionId = null;
     subscription.stripePriceId = null;
 

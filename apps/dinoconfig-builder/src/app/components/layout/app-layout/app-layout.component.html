@@ -1,3 +1,6 @@
+@if (pastDueBlock()) {
+  <dc-payment-past-due></dc-payment-past-due>
+} @else {
 <mat-sidenav-container autosize class="h-screen overflow-x-hidden">
   <mat-sidenav 
     mode="side" 
@@ -23,6 +26,7 @@
   <dc-subscription-violation-modal
     [violations]="violations()!"
   ></dc-subscription-violation-modal>
+}
 }
 
 <dc-idle-warning-modal
